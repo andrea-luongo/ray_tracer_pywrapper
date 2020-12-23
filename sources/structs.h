@@ -7,6 +7,27 @@ namespace num = Windows::Foundation::Numerics;
 
 const float machine_epsilon = std::numeric_limits<float>::epsilon() * 0.5;
 
+bool CompareFloat3(const num::float3& p0, const num::float3& p1, int dim) 
+{
+	if (dim == 0)
+		return p0.x == p1.x;
+	if (dim == 1)
+		return p0.y == p1.y;
+	if (dim == 2)
+		return p0.z == p1.z;
+	return false;
+}
+
+float GetFloat3Component(const num::float3& p, const int dim)
+{
+	if (dim == 0)
+		return p.x;
+	else if (dim == 1)
+		return p.y;
+	else
+		return p.z;
+}
+
 namespace MyStructures
 {
 	class Plane
@@ -86,9 +107,9 @@ namespace MyStructures
 			pMax = num::max(p0, p1);
 		}
 
-		const num::float3& operator[](int i) const { if (i == 0) return pMin; else return pMax; };
+		const num::float3& operator[](const int i) const { if (i == 0) return pMin; else return pMax; };
 
-		num::float3& operator[](int i) { if (i == 0) return pMin; else return pMax; };
+		num::float3& operator[](const int i) { if (i == 0) return pMin; else return pMax; };
 
 		num::float3 Corner(int corner) const
 		{
