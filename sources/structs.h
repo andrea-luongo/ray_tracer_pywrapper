@@ -165,6 +165,15 @@ namespace MyStructures
 			else
 				return 2;
 		}
+
+		num::float3 Offset(const num::float3& p) const 
+		{
+			num::float3 o = p - pMin;
+			if (pMax.x > pMin.x) o.x /= pMax.x - pMin.x;
+			if (pMax.y > pMin.y) o.y /= pMax.y - pMin.y;
+			if (pMax.z > pMin.z) o.z /= pMax.z - pMin.z;
+			return o;
+		}
 	};
 
 	class Primitive

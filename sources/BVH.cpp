@@ -61,7 +61,12 @@ BVHBuildNode* BVH::recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, 
 			}
 			else if (splitMethod == SplitMethod::SAH)
 			{
-				//TODO implement;
+				bool success = SAHSplit(primitiveInfo, start, end, dim, bounds, centroidBounds, mid);
+				if (!success)
+				{
+					node = createLeafBVHNode(primitiveInfo, start, end, orderedPrims, bounds);
+					return node;
+				}
 			}
 			node->initInterior(dim, recursiveBuild(primitiveInfo, start, mid, totalNodes, orderedPrims), recursiveBuild(primitiveInfo, mid, end, totalNodes, orderedPrims));
 		}
@@ -82,9 +87,9 @@ BVHBuildNode* BVH::createLeafBVHNode(std::vector<BVHPrimitiveInfo>& primitiveInf
 	return node;
 }
 
-bool BVH::middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& bounds, int& mid)
+bool BVH::middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& centroidBounds, int& mid)
 {
-	float pmid = (GetFloat3Component(bounds.pMin, dim) + GetFloat3Component(bounds.pMax, dim)) * 0.5;
+	float pmid = (GetFloat3Component(centroidBounds.pMin, dim) + GetFloat3Component(centroidBounds.pMax, dim)) * 0.5;
 	BVHPrimitiveInfo* midPtr = std::partition(&primitiveInfo[start], &primitiveInfo[end-1] + 1, [dim, pmid](const BVHPrimitiveInfo& pi) {
 		return GetFloat3Component(pi.centroid, dim) < pmid; });
 	mid = midPtr - &primitiveInfo[0];
@@ -100,4 +105,80 @@ bool BVH::equalCountsSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int sta
 	std::nth_element(&primitiveInfo[start], &primitiveInfo[mid], &primitiveInfo[end - 1] + 1, [dim](const BVHPrimitiveInfo& a, 
 		const BVHPrimitiveInfo& b) {return GetFloat3Component(a.centroid, dim) < GetFloat3Component(b.centroid, dim); });
 	return true;
+}
+
+bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& bounds, MyStructures::BBox& centroidBounds, int& mid)
+{
+	int nPrimitives = end - start;
+	if (nPrimitives < 4) 
+	{
+		//partition primitives into equally syzed subsets
+	} 
+	else 
+	{
+		//allocate bucketinfo for sah partition buckets
+		constexpr int nBuckets = 12;
+		struct BucketInfo 
+		{
+			int count = 0;
+			MyStructures::BBox bounds;
+		};
+		BucketInfo buckets[nBuckets];
+		//initialize bucketinfo for sah partition buckets
+		for (int i = start; i < end; ++i)
+		{
+			int b = nBuckets * GetFloat3Component(centroidBounds.Offset(primitiveInfo[i].centroid), dim);
+			if (b == nBuckets) b = nBuckets - 1;
+			buckets[b].count++;
+			buckets[b].bounds = MyStructures::BBox::Union(buckets[b].bounds, primitiveInfo[i].bounds);
+		}
+		//compute costs for splitting after each bucket
+		float cost[nBuckets-1];
+		for(int i=0; i<nBuckets-1; ++i)
+		{
+			MyStructures::BBox b0, b1;
+			int count0 = 0, count1 = 0;
+			for (int j = 0; j <= i; ++j)
+			{
+				b0 = MyStructures::BBox::Union(b0, buckets[j].bounds);
+				count0 += buckets[j].count;
+			}
+			for (int j = i + 1; j < nBuckets; ++j)
+			{
+				b1 = MyStructures::BBox::Union(b1, buckets[j].bounds);
+				count1 += buckets[j].count;
+			}
+			cost[i] = .125f + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / bounds.SurfaceArea();
+		}
+		//find bucket to split at that minimizes sah metric
+		float minCost = cost[0];
+		int minCostSplitBucket = 0;
+		for (int i = 1; i < nBuckets - 1; ++i)
+		{
+			if (cost[i] < minCost)
+			{
+				minCost = cost[i];
+				minCostSplitBucket = i;
+			}
+		}
+		//either create leaf or split primitives at selected sah bucket
+		float leafCost = nPrimitives;
+		if (nPrimitives > maxPrimsInNode || minCost < leafCost)
+		{
+			BVHPrimitiveInfo* pmid = std::partition(&primitiveInfo[start], &primitiveInfo[end - 1], 
+				[=](const BVHPrimitiveInfo& pi) 
+				{
+					int b = nBuckets * GetFloat3Component(centroidBounds.Offset(pi.centroid), dim);
+					if (b == nBuckets) b = nBuckets - 1;
+					return b <= minCostSplitBucket;
+				});
+			mid = pmid - &primitiveInfo[0];
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 }
