@@ -6,17 +6,45 @@ BVH::BVH(const std::vector<std::shared_ptr<MyStructures::Primitive>>& p, int max
 {
 	if (primitives.size() == 0)
 		return;
+	//initialize primitiveInfo array for primitives
 	std::vector<BVHPrimitiveInfo> primitiveInfo(primitives.size());
 	for (size_t i = 0; i < primitives.size(); i++)
 		primitiveInfo[i] = {i, primitives[i]->BBox()};
+	//build BVH tree for primitives using primitiveInfo
 	int totalNodes = 0;
 	std::vector<std::shared_ptr<MyStructures::Primitive>> orderedPrims;
 	BVHBuildNode* root;
-	if (splitMethod == SplitMethod::HLBVH)
-		root = HLBVHBuild(primitiveInfo, &totalNodes, orderedPrims);
-	else
-		root = recursiveBuild(primitiveInfo, 0, primitives.size(), &totalNodes, orderedPrims);
+	//if (splitMethod == SplitMethod::HLBVH)
+	//	root = HLBVHBuild(primitiveInfo, &totalNodes, orderedPrims);
+	//else
+	root = recursiveBuild(primitiveInfo, 0, primitives.size(), &totalNodes, orderedPrims);
+	primitives.swap(orderedPrims);
+	// Compute representation of depth-first traversal of BVH tree
+	nodes = new LinearBVHNode[totalNodes];
+	int offset = 0;
+	flattenBVHTree(root, &offset);
 }
+
+int BVH::flattenBVHTree(BVHBuildNode* node, int* offset)
+{
+	LinearBVHNode* linearNode = &nodes[*offset];
+	linearNode->bounds = node->bounds;
+	int myOffset = (*offset)++;
+	if (node->nPrimitives > 0)
+	{
+		linearNode->primitivesOffset = node->firstPrimOffset;
+		linearNode->nPrimitives = node->nPrimitives;
+	}
+	else
+	{
+		linearNode->axis = node->splitAxis;
+		linearNode->nPrimitives = 0;
+		flattenBVHTree(node->children[0], offset);
+		linearNode->secondChildOffset = flattenBVHTree(node->children[1], offset);
+	}
+	return myOffset;
+}
+
 
 BVHBuildNode* BVH::recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims)
 {
@@ -180,5 +208,191 @@ bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int 
 			return false;
 		}
 	}
+}
 
+bool BVH::intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info)
+{
+	bool hit = false;
+	num::float3 invDir(num::float3(1) / ray.direction);
+	int dirIsNeg[3] = {invDir.x < 0, invDir.y < 0, invDir.z < 0};
+	//follow ray through BVH nodes to find primitive intersections
+	int toVisitOffset = 0, currentNodeIndex = 0;
+	int nodesToVisit[1024];
+	while (true)
+	{
+		const LinearBVHNode* node = &nodes[currentNodeIndex];
+		//check ray against BVH node
+		if (node->bounds.AnyIntersect(ray, invDir, dirIsNeg))
+		{
+			if (node->nPrimitives > 0)
+			{
+				//intersect ray with primitives in leaf bvh node
+				for (int i = 0; i < node->nPrimitives; ++i)
+				{
+					if (primitives[node->primitivesOffset + i]->Intersect(ray, info))
+						hit = true;
+				}
+				if (toVisitOffset == 0) break;
+				currentNodeIndex = nodesToVisit[--toVisitOffset];
+			}
+			else
+			{
+				//put far bvh node on nodestovisit stack, advance to near node
+				if (dirIsNeg[node->axis])
+				{
+					nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+					currentNodeIndex = node->secondChildOffset;
+				}
+				else
+				{
+					nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+					currentNodeIndex = currentNodeIndex + 1;
+				}
+			}
+		}
+		else
+		{
+			if (toVisitOffset == 0) break;
+			currentNodeIndex = nodesToVisit[--toVisitOffset];
+		}
+	}
+	return hit;
+}
+
+bool BVH::any_intersect(MyStructures::Ray& ray)
+{
+	bool hit = false;
+	num::float3 invDir(num::float3(1) / ray.direction);
+	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
+	//follow ray through BVH nodes to find primitive intersections
+	int toVisitOffset = 0, currentNodeIndex = 0;
+	int nodesToVisit[1024];
+	while (true)
+	{
+		const LinearBVHNode* node = &nodes[currentNodeIndex];
+		//check ray against BVH node
+		if (node->bounds.AnyIntersect(ray, invDir, dirIsNeg))
+		{
+			if (node->nPrimitives > 0)
+			{
+				//intersect ray with primitives in leaf bvh node
+				for (int i = 0; i < node->nPrimitives; ++i)
+				{
+					if (primitives[node->primitivesOffset + i]->AnyIntersect(ray)) {
+						hit = true;
+						return hit;
+					}
+				}
+				if (toVisitOffset == 0) break;
+				currentNodeIndex = nodesToVisit[--toVisitOffset];
+			}
+			else
+			{
+				//put far bvh node on nodestovisit stack, advance to near node
+				if (dirIsNeg[node->axis])
+				{
+					nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+					currentNodeIndex = node->secondChildOffset;
+				}
+				else
+				{
+					nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+					currentNodeIndex = currentNodeIndex + 1;
+				}
+			}
+		}
+		else
+		{
+			if (toVisitOffset == 0) break;
+			currentNodeIndex = nodesToVisit[--toVisitOffset];
+		}
+	}
+	return hit;
+}
+
+bool BVH::all_intersects(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info)
+{
+	bool hit = false;
+	num::float3 invDir(num::float3(1) / ray.direction);
+	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
+	//follow ray through BVH nodes to find primitive intersections
+	int toVisitOffset = 0, currentNodeIndex = 0;
+	int nodesToVisit[1024];
+	while (true)
+	{
+		const LinearBVHNode* node = &nodes[currentNodeIndex];
+		//check ray against BVH node
+		if (node->bounds.AnyIntersect(ray, invDir, dirIsNeg))
+		{
+			if (node->nPrimitives > 0)
+			{
+				//intersect ray with primitives in leaf bvh node
+				for (int i = 0; i < node->nPrimitives; ++i)
+				{
+					if (primitives[node->primitivesOffset + i]->AllIntersect(ray, info))
+						hit = true;
+				}
+				if (toVisitOffset == 0) break;
+				currentNodeIndex = nodesToVisit[--toVisitOffset];
+			}
+			else
+			{
+				//put far bvh node on nodestovisit stack, advance to near node
+				if (dirIsNeg[node->axis])
+				{
+					nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+					currentNodeIndex = node->secondChildOffset;
+				}
+				else
+				{
+					nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+					currentNodeIndex = currentNodeIndex + 1;
+				}
+			}
+		}
+		else
+		{
+			if (toVisitOffset == 0) break;
+			currentNodeIndex = nodesToVisit[--toVisitOffset];
+		}
+	}
+	return hit;
+}
+
+bool BVH::plane_all_intersects(MyStructures::Plane& plane, MyStructures::PlaneIntersectionInfo& info)
+{
+	bool hit = false;
+	int toVisitOffset = 0, currentNodeIndex = 0;
+	int nodesToVisit[1024*1024];
+	while (true)
+	{
+		const LinearBVHNode* node = &nodes[currentNodeIndex];
+		//check ray against BVH node
+		if (node->bounds.PlaneAnyIntersect(plane))
+		{
+			if (node->nPrimitives > 0)
+			{
+				//intersect ray with primitives in leaf bvh node
+				for (int i = 0; i < node->nPrimitives; ++i)
+				{
+					if (primitives[node->primitivesOffset + i]->PlaneIntersect(plane, info))
+						hit = true;
+				}
+				if (toVisitOffset == 0) break;
+				currentNodeIndex = nodesToVisit[--toVisitOffset];
+			}
+			else
+			{
+				//put far bvh node on nodestovisit stack, advance to near node
+					nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+					currentNodeIndex = currentNodeIndex + 1;
+			}
+		}
+		else
+		{
+			if (toVisitOffset == 0) break;
+			currentNodeIndex = nodesToVisit[--toVisitOffset];
+		}
+	}
+	return hit;
 }

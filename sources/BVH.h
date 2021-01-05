@@ -34,15 +34,32 @@ struct BVHBuildNode
 	}
 };
 
+struct LinearBVHNode
+{
+	MyStructures::BBox bounds;
+	union {
+		int primitivesOffset;
+		int secondChildOffset;
+	};
+	uint32_t nPrimitives;
+	uint8_t axis;
+	uint8_t pad[3];
+};
+
 class BVH
 {
 private:
 	std::vector<std::shared_ptr<MyStructures::Primitive>> primitives;
 	const int maxPrimsInNode;
 	const SplitMethod splitMethod;
+	LinearBVHNode* nodes = nullptr;
+
 public:
 	BVH(const std::vector<std::shared_ptr<MyStructures::Primitive>>& p, int maxPrimsInNode, SplitMethod splitMethod);
-
+	bool intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info);
+	bool any_intersect(MyStructures::Ray& ray);
+	bool all_intersects(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info);
+	bool plane_all_intersects(MyStructures::Plane& plane, MyStructures::PlaneIntersectionInfo& info);
 protected:
 	BVHBuildNode* HLBVHBuild(const std::vector<BVHPrimitiveInfo>& primitiveInfo, int* totalNodes, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims);
 	BVHBuildNode* recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims);
@@ -50,4 +67,5 @@ protected:
 	bool middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& centroidBounds, int& mid);
 	bool equalCountsSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, int& mid);
 	bool SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& bounds, MyStructures::BBox& centroidBounds, int& mid);
+	int flattenBVHTree(BVHBuildNode* node, int* offset);
 };

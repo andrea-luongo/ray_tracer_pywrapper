@@ -28,6 +28,11 @@ float GetFloat3Component(const num::float3& p, const int dim)
 		return p.z;
 }
 
+inline constexpr float gamma(int n)
+{
+	return (n * machine_epsilon) / (1 - n * machine_epsilon);
+}
+
 namespace MyStructures
 {
 	class Plane
@@ -174,6 +179,77 @@ namespace MyStructures
 			if (pMax.z > pMin.z) o.z /= pMax.z - pMin.z;
 			return o;
 		}
+
+		bool Intersect(const Ray& ray, float* hit_t0, float* hit_t1) const
+		{
+			float t0 = 0, t1 = ray.t_max;
+			for (int i = 0; i < 3; ++i)
+			{
+				//update interval for ith bounding box slab
+				float invRayDir = 1 / GetFloat3Component(ray.direction, i);
+				float tNear = (GetFloat3Component(pMin, i) - GetFloat3Component(ray.origin, i)) * invRayDir;
+				float tFar = (GetFloat3Component(pMax, i) - GetFloat3Component(ray.origin, i)) * invRayDir;
+				//update parameteric interval from slab intersection t values
+				if (tNear > tFar) std::swap(tNear, tFar);
+				//update tFar to ensure robust ray-bounds intersection
+				tFar *= 1 + 2 * gamma(3);
+				t0 = tNear > t0 ? tNear : t0;
+				t0 = tFar < t1 ? tFar : t1;
+				if (t0 > t1) return false;
+			}
+			if(hit_t0)* hit_t0 = t0;
+			if(hit_t1)* hit_t1 = t1;
+			return true;
+		}
+
+		bool AnyIntersect(const Ray& ray, const num::float3& invDir, const int dirIsNeg[3]) const
+		{
+			const MyStructures::BBox& bounds = *this;
+			float tMin = (bounds[dirIsNeg[0]].x - ray.origin.x) * invDir.x;
+			float tMax = (bounds[1 - dirIsNeg[0]].x - ray.origin.x) * invDir.x;
+			float tyMin = (bounds[dirIsNeg[1]].y - ray.origin.y) * invDir.y;
+			float tyMax = (bounds[1 - dirIsNeg[1]].y - ray.origin.y) * invDir.y;
+			tMax *= 1 + 2 * gamma(3);
+			tyMax *= 1 + 2 * gamma(3);
+			if (tMin > tyMax || tyMin > tMax)
+				return false;
+			if (tyMin > tMin) tMin = tyMin;
+			if (tyMax < tMax) tMax = tyMax;
+			float tzMin = (bounds[dirIsNeg[2]].z - ray.origin.z) * invDir.z;
+			float tzMax = (bounds[1 - dirIsNeg[2]].z - ray.origin.z) * invDir.z;
+			tzMax *= 1 + 2 * gamma(3);
+			if (tMin > tzMax || tzMin > tMax)
+				return false;
+			if (tzMin > tMin) tMin = tzMin;
+			if (tzMax < tMax) tMax = tzMax;
+			return (tMin < ray.t_max) && (tMax > 0);
+		}
+
+		bool PlaneAnyIntersect(const Plane& plane) const
+		{
+			float d_0 = plane.DistFromPlane(pMin);
+			float d_1 = plane.DistFromPlane(pMax);
+			if (d_1 * d_0 < 0.0)
+				return true;
+			num::float3 p_2(pMin.x, pMin.y, pMax.z);
+			num::float3 p_3(pMax.x, pMax.y, pMin.z);
+			float d_2 = plane.DistFromPlane(p_2);
+			float d_3 = plane.DistFromPlane(p_3);
+			if (d_2 * d_3 < 0.0)
+				return true;
+			num::float3 p_4(pMin.x, pMax.y, pMax.z);
+			num::float3 p_5(pMax.x, pMin.y, pMin.z);
+			float d_4 = plane.DistFromPlane(p_4);
+			float d_5 = plane.DistFromPlane(p_5);
+			if (d_4 * d_5 < 0.0)
+				return true;
+			num::float3 p_6(pMin.x, pMax.y, pMin.z);
+			num::float3 p_7(pMax.x, pMin.y, pMax.z);
+			float d_6 = plane.DistFromPlane(p_6);
+			float d_7 = plane.DistFromPlane(p_7);
+			if (d_6 * d_7 < 0.0)
+				return true;
+		}
 	};
 
 	class Primitive
@@ -184,7 +260,7 @@ namespace MyStructures
 		Primitive() { bbox = MyStructures::BBox(); }
 		void ComputeBBox() {}
 		MyStructures::BBox BBox() { return bbox; }
-		bool CloseIntersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info) {
+		bool Intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info) {
 			return false;
 		}
 		bool AnyIntersect(MyStructures::Ray& ray) {
@@ -198,7 +274,7 @@ namespace MyStructures
 		}
 	};
 
-	class Sphere : Primitive
+	class Sphere : public Primitive
 	{
 	protected:
 		float radius;
@@ -212,7 +288,7 @@ namespace MyStructures
 			return;
 		};
 
-		bool CloseIntersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info) {
+		bool Intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info) {
 			num::float3 O = ray.origin - center;
 			float b = num::dot(O, ray.direction);
 			float c = num::dot(O, O) - radius * radius;
@@ -226,7 +302,10 @@ namespace MyStructures
 					num::float3 n = (O + t * ray.direction) / radius;
 					ray.t_max = t;
 					info.normal = num::normalize(n);
-					info.t_hits.insert(info.t_hits.begin(), t);
+					if (info.t_hits.size() > 0)
+						info.t_hits[0] = t;
+					else
+						info.t_hits.insert(info.t_hits.begin(), t);
 					return true;
 				}
 				t = -b + s_disc;
@@ -235,7 +314,10 @@ namespace MyStructures
 					num::float3 n = (O + t * ray.direction) / radius;
 					ray.t_max = t;
 					info.normal = num::normalize(n);
-					info.t_hits.insert(info.t_hits.begin(), t);
+					if (info.t_hits.size() > 0)
+						info.t_hits[0] = t;
+					else
+						info.t_hits.insert(info.t_hits.begin(), t);
 					return true;
 				}
 			}
@@ -282,7 +364,6 @@ namespace MyStructures
 				t = -b + s_disc;
 				if (ray.t_min < t && t < ray.t_max)
 				{
-					ray.t_max = t;
 					info.t_hits.push_back(t);
 					hit = true;
 				}
@@ -292,7 +373,7 @@ namespace MyStructures
 	};
 
 
-	class Triangle : Primitive
+	class Triangle : public Primitive
 	{
 	protected:
 		num::float3 v0;
@@ -316,7 +397,7 @@ namespace MyStructures
 			}
 		}
 
-		bool CloseIntersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info) {
+		bool Intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info) {
 			num::float3 e0 = v1 - v0;
 			num::float3 e1 = v0 - v2;
 			num::float3 n = num::cross(e1, e0);
@@ -329,7 +410,10 @@ namespace MyStructures
 			{
 				ray.t_max = t;
 				info.normal = num::normalize(n);
-				info.t_hits.insert(info.t_hits.begin(), t);
+				if (info.t_hits.size() > 0)
+					info.t_hits[0] = t;
+				else
+					info.t_hits.insert(info.t_hits.begin(), t);
 				return true;
 			}
 			return false;
