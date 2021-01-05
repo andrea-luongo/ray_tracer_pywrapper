@@ -7,7 +7,7 @@ namespace num = Windows::Foundation::Numerics;
 
 const float machine_epsilon = std::numeric_limits<float>::epsilon() * 0.5;
 
-bool CompareFloat3(const num::float3& p0, const num::float3& p1, int dim) 
+static bool CompareFloat3(const num::float3& p0, const num::float3& p1, int dim)
 {
 	if (dim == 0)
 		return p0.x == p1.x;
@@ -18,7 +18,7 @@ bool CompareFloat3(const num::float3& p0, const num::float3& p1, int dim)
 	return false;
 }
 
-float GetFloat3Component(const num::float3& p, const int dim)
+static float GetFloat3Component(const num::float3& p, const int dim)
 {
 	if (dim == 0)
 		return p.x;

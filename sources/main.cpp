@@ -30,7 +30,7 @@ public:
 };
 
 
-PYBIND11_MODULE(clearpathPyWrapper, m) {
+PYBIND11_MODULE(ray_tracer_pywrapper, m) {
     m.doc() = R"pbdoc(
         Pybind wrapper for BVH build and traversal
     )pbdoc";

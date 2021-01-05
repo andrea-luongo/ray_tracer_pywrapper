@@ -9,7 +9,13 @@ struct BVHPrimitiveInfo
 	size_t primitiveNumber;
 	MyStructures::BBox bounds;
 	num::float3 centroid;
-	BVHPrimitiveInfo(size_t primitiveNumber, const MyStructures::BBox& bounds) : primitiveNumber(primitiveNumber), bounds(bounds), centroid(0.5f * bounds.pMin + 0.5f * bounds.pMax) {};
+	BVHPrimitiveInfo() {};
+	BVHPrimitiveInfo(size_t pn, const MyStructures::BBox& b)
+	{
+		primitiveNumber = pn;
+		bounds = b;
+		centroid = 0.5f * bounds.pMin + 0.5f * bounds.pMax;
+	};
 };
 
 struct BVHBuildNode
