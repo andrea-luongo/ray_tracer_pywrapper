@@ -1,23 +1,23 @@
 #include "BVH.h"
 #include <algorithm>
 
-
-BVH::BVH(const std::vector<std::shared_ptr<MyStructures::Primitive>>& p, int maxPrimsInNode, SplitMethod splitMethod): maxPrimsInNode(std::min(255, maxPrimsInNode)), primitives(p), splitMethod(splitMethod)
+BVH::BVH(const std::vector<std::shared_ptr<Primitive>>& p, int maxPrimsInNode, SplitMethod splitMethod): maxPrimsInNode(std::min(255, maxPrimsInNode)), primitives(p), splitMethod(splitMethod)
 {
 	if (primitives.size() == 0)
 		return;
 	//initialize primitiveInfo array for primitives
 	std::vector<BVHPrimitiveInfo> primitiveInfo(primitives.size());
 	for (size_t i = 0; i < primitives.size(); i++)
-		primitiveInfo[i] = {i, primitives[i]->BBox()};
+		primitiveInfo[i] = {i, primitives[i]->GetBBox()};
 	//build BVH tree for primitives using primitiveInfo
 	int totalNodes = 0;
-	std::vector<std::shared_ptr<MyStructures::Primitive>> orderedPrims;
+	std::vector<std::shared_ptr<Primitive>> orderedPrims;
 	BVHBuildNode* root;
-	//if (splitMethod == SplitMethod::HLBVH)
-	//	root = HLBVHBuild(primitiveInfo, &totalNodes, orderedPrims);
-	//else
-	root = recursiveBuild(primitiveInfo, 0, primitives.size(), &totalNodes, orderedPrims);
+	if (splitMethod == SplitMethod::HLBVH)
+		//root = HLBVHBuild(primitiveInfo, &totalNodes, orderedPrims);
+		root = recursiveBuild(primitiveInfo, 0, primitives.size(), &totalNodes, orderedPrims);
+	else
+		root = recursiveBuild(primitiveInfo, 0, primitives.size(), &totalNodes, orderedPrims);
 	primitives.swap(orderedPrims);
 	// Compute representation of depth-first traversal of BVH tree
 	nodes = new LinearBVHNode[totalNodes];
@@ -46,13 +46,13 @@ int BVH::flattenBVHTree(BVHBuildNode* node, int* offset)
 }
 
 
-BVHBuildNode* BVH::recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims)
+BVHBuildNode* BVH::recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<Primitive>>& orderedPrims)
 {
 	BVHBuildNode* node = new BVHBuildNode();
 	(*totalNodes)++;
-	MyStructures::BBox bounds;
+	BBox bounds;
 	for (int i = start; i < end; i++) {
-		bounds = MyStructures::BBox::Union(bounds, primitiveInfo[i].bounds);
+		bounds = BBox::Union(bounds, primitiveInfo[i].bounds);
 	}
 	int nPrimitives = end - start;
 	if (nPrimitives == 1){
@@ -62,14 +62,14 @@ BVHBuildNode* BVH::recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, 
 	}
 	else {
 		// compute bound of primitive centroid, choose split dimension
-		MyStructures::BBox centroidBounds;
+		BBox centroidBounds;
 		for (int i = start; i < end; i++) {
-			centroidBounds = MyStructures::BBox::Union(centroidBounds, primitiveInfo[i].centroid);
+			centroidBounds = BBox::Union(centroidBounds, primitiveInfo[i].centroid);
 		}
 		int dim = centroidBounds.MaximumExtent();
 		// partition primitives into two sets and build children
 		int mid = (start + end) / 2;
-		if (CompareFloat3(centroidBounds.pMax, centroidBounds.pMin, dim)) {
+		if (CompareFloat3(centroidBounds.GetpMax(), centroidBounds.GetpMin(), dim)) {
 			// create leaf bvhbuildnode
 			node = createLeafBVHNode(primitiveInfo, start, end, orderedPrims, bounds);
 			return node;
@@ -102,7 +102,7 @@ BVHBuildNode* BVH::recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, 
 	return node;
 }
 
-BVHBuildNode* BVH::createLeafBVHNode(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims, MyStructures::BBox& bounds)
+BVHBuildNode* BVH::createLeafBVHNode(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, std::vector<std::shared_ptr<Primitive>>& orderedPrims, BBox& bounds)
 {
 	BVHBuildNode* node = new BVHBuildNode();
 	int nPrimitives = end - start;
@@ -115,9 +115,9 @@ BVHBuildNode* BVH::createLeafBVHNode(std::vector<BVHPrimitiveInfo>& primitiveInf
 	return node;
 }
 
-bool BVH::middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& centroidBounds, int& mid)
+bool BVH::middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, BBox& centroidBounds, int& mid)
 {
-	float pmid = (GetFloat3Component(centroidBounds.pMin, dim) + GetFloat3Component(centroidBounds.pMax, dim)) * 0.5;
+	float pmid = (GetFloat3Component(centroidBounds.GetpMin(), dim) + GetFloat3Component(centroidBounds.GetpMax(), dim)) * 0.5;
 	BVHPrimitiveInfo* midPtr = std::partition(&primitiveInfo[start], &primitiveInfo[end-1] + 1, [dim, pmid](const BVHPrimitiveInfo& pi) {
 		return GetFloat3Component(pi.centroid, dim) < pmid; });
 	mid = midPtr - &primitiveInfo[0];
@@ -135,7 +135,7 @@ bool BVH::equalCountsSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int sta
 	return true;
 }
 
-bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& bounds, MyStructures::BBox& centroidBounds, int& mid)
+bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, BBox& bounds, BBox& centroidBounds, int& mid)
 {
 	int nPrimitives = end - start;
 	if (nPrimitives < 4) 
@@ -149,7 +149,7 @@ bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int 
 		struct BucketInfo 
 		{
 			int count = 0;
-			MyStructures::BBox bounds;
+			BBox bounds;
 		};
 		BucketInfo buckets[nBuckets];
 		//initialize bucketinfo for sah partition buckets
@@ -158,22 +158,22 @@ bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int 
 			int b = nBuckets * GetFloat3Component(centroidBounds.Offset(primitiveInfo[i].centroid), dim);
 			if (b == nBuckets) b = nBuckets - 1;
 			buckets[b].count++;
-			buckets[b].bounds = MyStructures::BBox::Union(buckets[b].bounds, primitiveInfo[i].bounds);
+			buckets[b].bounds = BBox::Union(buckets[b].bounds, primitiveInfo[i].bounds);
 		}
 		//compute costs for splitting after each bucket
 		float cost[nBuckets-1];
 		for(int i=0; i<nBuckets-1; ++i)
 		{
-			MyStructures::BBox b0, b1;
+			BBox b0, b1;
 			int count0 = 0, count1 = 0;
 			for (int j = 0; j <= i; ++j)
 			{
-				b0 = MyStructures::BBox::Union(b0, buckets[j].bounds);
+				b0 = BBox::Union(b0, buckets[j].bounds);
 				count0 += buckets[j].count;
 			}
 			for (int j = i + 1; j < nBuckets; ++j)
 			{
-				b1 = MyStructures::BBox::Union(b1, buckets[j].bounds);
+				b1 = BBox::Union(b1, buckets[j].bounds);
 				count1 += buckets[j].count;
 			}
 			cost[i] = .125f + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / bounds.SurfaceArea();
@@ -210,10 +210,10 @@ bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int 
 	}
 }
 
-bool BVH::intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info)
+bool BVH::intersect(Ray& ray, RayIntersectionInfo& info)
 {
 	bool hit = false;
-	num::float3 invDir(num::float3(1) / ray.direction);
+	num::float3 invDir(num::float3(1) / ray.GetDirection());
 	int dirIsNeg[3] = {invDir.x < 0, invDir.y < 0, invDir.z < 0};
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
@@ -259,10 +259,10 @@ bool BVH::intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& i
 	return hit;
 }
 
-bool BVH::any_intersect(MyStructures::Ray& ray)
+bool BVH::any_intersect(Ray& ray)
 {
 	bool hit = false;
-	num::float3 invDir(num::float3(1) / ray.direction);
+	num::float3 invDir(num::float3(1) / ray.GetDirection());
 	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
@@ -310,10 +310,10 @@ bool BVH::any_intersect(MyStructures::Ray& ray)
 	return hit;
 }
 
-bool BVH::all_intersects(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info)
+bool BVH::all_intersects(Ray& ray, RayIntersectionInfo& info)
 {
 	bool hit = false;
-	num::float3 invDir(num::float3(1) / ray.direction);
+	num::float3 invDir(num::float3(1) / ray.GetDirection());
 	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
@@ -359,7 +359,7 @@ bool BVH::all_intersects(MyStructures::Ray& ray, MyStructures::RayIntersectionIn
 	return hit;
 }
 
-bool BVH::plane_all_intersects(MyStructures::Plane& plane, MyStructures::PlaneIntersectionInfo& info)
+bool BVH::plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info)
 {
 	bool hit = false;
 	int toVisitOffset = 0, currentNodeIndex = 0;

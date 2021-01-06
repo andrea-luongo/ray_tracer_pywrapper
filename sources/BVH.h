@@ -1,29 +1,34 @@
 #pragma once
+#ifdef RAYTRACER_EXPORTS
+#define RAYTRACER_API __declspec(dllexport)
+#else
+#define RAYTRACER_API __declspec(dllimport)
+#endif
 #include "structs.h"
 #include <mutex>
 
-enum class SplitMethod{ SAH, HLBVH, Middle, EqualCounts};
+enum class RAYTRACER_API SplitMethod{ SAH, HLBVH, Middle, EqualCounts};
 
 struct BVHPrimitiveInfo
 {
 	size_t primitiveNumber;
-	MyStructures::BBox bounds;
+	BBox bounds;
 	num::float3 centroid;
 	BVHPrimitiveInfo() {};
-	BVHPrimitiveInfo(size_t pn, const MyStructures::BBox& b)
+	BVHPrimitiveInfo(size_t pn, const BBox& b)
 	{
 		primitiveNumber = pn;
 		bounds = b;
-		centroid = 0.5f * bounds.pMin + 0.5f * bounds.pMax;
+		centroid = 0.5f * bounds.GetpMin() + 0.5f * bounds.GetpMax();
 	};
 };
 
 struct BVHBuildNode
 {
-	MyStructures::BBox bounds;
+	BBox bounds;
 	BVHBuildNode* children[2];
 	int splitAxis, firstPrimOffset, nPrimitives;
-	void initLeaf(int first, int n, const MyStructures::BBox& b)
+	void initLeaf(int first, int n, const BBox& b)
 	{
 		firstPrimOffset = first;
 		nPrimitives = n;
@@ -34,7 +39,7 @@ struct BVHBuildNode
 	{
 		children[0] = c0;
 		children[1] = c1;
-		bounds = MyStructures::BBox::Union(c0->bounds, c1->bounds);
+		bounds = BBox::Union(c0->bounds, c1->bounds);
 		splitAxis = axis;
 		nPrimitives = 0;
 	}
@@ -42,7 +47,7 @@ struct BVHBuildNode
 
 struct LinearBVHNode
 {
-	MyStructures::BBox bounds;
+	BBox bounds;
 	union {
 		int primitivesOffset;
 		int secondChildOffset;
@@ -55,23 +60,23 @@ struct LinearBVHNode
 class BVH
 {
 private:
-	std::vector<std::shared_ptr<MyStructures::Primitive>> primitives;
+	std::vector<std::shared_ptr<Primitive>> primitives;
 	const int maxPrimsInNode;
 	const SplitMethod splitMethod;
 	LinearBVHNode* nodes = nullptr;
 
 public:
-	BVH(const std::vector<std::shared_ptr<MyStructures::Primitive>>& p, int maxPrimsInNode, SplitMethod splitMethod);
-	bool intersect(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info);
-	bool any_intersect(MyStructures::Ray& ray);
-	bool all_intersects(MyStructures::Ray& ray, MyStructures::RayIntersectionInfo& info);
-	bool plane_all_intersects(MyStructures::Plane& plane, MyStructures::PlaneIntersectionInfo& info);
+	RAYTRACER_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, int maxPrimsInNode, SplitMethod splitMethod);
+	RAYTRACER_API bool intersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACER_API bool any_intersect(Ray& ray);
+	RAYTRACER_API bool all_intersects(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACER_API bool plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info);
 protected:
-	BVHBuildNode* HLBVHBuild(const std::vector<BVHPrimitiveInfo>& primitiveInfo, int* totalNodes, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims);
-	BVHBuildNode* recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims);
-	BVHBuildNode* createLeafBVHNode(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, std::vector<std::shared_ptr<MyStructures::Primitive>>& orderedPrims, MyStructures::BBox& bounds);
-	bool middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& centroidBounds, int& mid);
+	//BVHBuildNode* HLBVHBuild(const std::vector<BVHPrimitiveInfo>& primitiveInfo, int* totalNodes, std::vector<std::shared_ptr<Primitive>>& orderedPrims);
+	BVHBuildNode* recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<Primitive>>& orderedPrims);
+	BVHBuildNode* createLeafBVHNode(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, std::vector<std::shared_ptr<Primitive>>& orderedPrims, BBox& bounds);
+	bool middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, BBox& centroidBounds, int& mid);
 	bool equalCountsSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, int& mid);
-	bool SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, MyStructures::BBox& bounds, MyStructures::BBox& centroidBounds, int& mid);
+	bool SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, BBox& bounds, BBox& centroidBounds, int& mid);
 	int flattenBVHTree(BVHBuildNode* node, int* offset);
 };
