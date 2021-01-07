@@ -7,51 +7,46 @@
 
 #include <WindowsNumerics.h>
 #include <vector>
-
+#include "MyFloat3.h"
 namespace num = Windows::Foundation::Numerics;
-
-extern "C" RAYTRACER_API bool CompareFloat3(const num::float3 & p0, const num::float3 & p1, int dim);
-
-extern "C" RAYTRACER_API float GetFloat3Component(const num::float3 & p, const int dim);
 
 extern "C" RAYTRACER_API inline constexpr float gamma(int n);
 
-
 class Plane
-	{
-	private:
-		num::float3 x_0;
-		num::float3 normal;
-	public:
-		RAYTRACER_API Plane(const num::float3& x, const num::float3& n);
-		RAYTRACER_API float DistFromPlane(const num::float3& x);
-		RAYTRACER_API const float DistFromPlane(const num::float3& x) const ;
-		RAYTRACER_API bool OnPlane(const num::float3& x) ;
-		RAYTRACER_API const bool OnPlane(const num::float3& x) const;
-		RAYTRACER_API 	bool PlaneSegmentIntersection(const num::float3& p_0, const num::float3& p_1, num::float3& p) ;
-		RAYTRACER_API 	const bool PlaneSegmentIntersection(const num::float3& p_0, const num::float3& p_1, num::float3& p) const;
-	};
+{
+private:
+	float3 x_0;
+	float3 normal;
+public:
+	RAYTRACER_API Plane(const float3& x, const float3& n);
+	RAYTRACER_API float DistFromPlane(const float3& x);
+	RAYTRACER_API const float DistFromPlane(const float3& x) const ;
+	RAYTRACER_API bool OnPlane(const float3& x) ;
+	RAYTRACER_API const bool OnPlane(const float3& x) const;
+	RAYTRACER_API 	bool PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) ;
+	RAYTRACER_API 	const bool PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) const;
+};
 
 struct PlaneIntersectionInfo
 {
 private:
-	std::vector<num::float3> t_hits;
+	std::vector<float3> t_hits;
 public:
-	RAYTRACER_API void AddHit(num::float3 t) { t_hits.push_back(t); };
+	RAYTRACER_API void AddHit(float3 t) { t_hits.push_back(t); };
 	RAYTRACER_API int GetHitsSize() { return t_hits.size(); };
 };
 
 struct Ray
 {
 private:
-	num::float3 origin;
-	num::float3 direction;
+	float3 origin;
+	float3 direction;
 	float t_min;
 	float t_max;
 	int depth;
 	int seed;
 public:
-	RAYTRACER_API Ray(num::float3 o, num::float3 dir, float min, float max, int d, int s) 
+	RAYTRACER_API Ray(float3 o, float3 dir, float min, float max, int d, int s) 
 	{
 		origin = o;
 		direction = dir;
@@ -60,10 +55,10 @@ public:
 		depth = d;
 		seed = s;
 	};
-	RAYTRACER_API num::float3 GetOrigin() { return origin; };
-	RAYTRACER_API num::float3 GetOrigin() const { return origin; };
-	RAYTRACER_API num::float3 GetDirection() { return direction; };
-	RAYTRACER_API num::float3 GetDirection() const { return direction; };
+	RAYTRACER_API float3 GetOrigin() { return origin; };
+	RAYTRACER_API float3 GetOrigin() const { return origin; };
+	RAYTRACER_API float3 GetDirection() { return direction; };
+	RAYTRACER_API float3 GetDirection() const { return direction; };
 	RAYTRACER_API float GetMin() { return t_min; };
 	RAYTRACER_API float GetMin() const { return t_min; };
 	RAYTRACER_API float GetMax() { return t_max; };
@@ -75,12 +70,12 @@ public:
 struct RayIntersectionInfo
 {
 private:
-	num::float3 normal;
+	float3 normal;
 	std::vector<float> t_hits;
 public:
-	RAYTRACER_API RayIntersectionInfo();
-	RAYTRACER_API void SetNormal(num::float3 n) { normal = n; };
-	RAYTRACER_API num::float3 GetNormal() { return normal; };
+	RAYTRACER_API RayIntersectionInfo() {};
+	RAYTRACER_API void SetNormal(float3 n) { normal = n; };
+	RAYTRACER_API float3 GetNormal() { return normal; };
 	RAYTRACER_API std::vector<float>* GetHits() { return &t_hits; };
 	RAYTRACER_API void AddHit(float t) { t_hits.push_back(t); };
 	RAYTRACER_API void AddClosestHit(float t) {
@@ -95,30 +90,30 @@ public:
 class BBox
 {
 private:
-	num::float3 pMax;
-	num::float3 pMin;
+	float3 pMax;
+	float3 pMin;
 public:
 	RAYTRACER_API BBox();
-	RAYTRACER_API BBox(const num::float3& p);
-	RAYTRACER_API BBox(const num::float3& p0, const num::float3& p1);
-	RAYTRACER_API num::float3 GetpMax();
-	RAYTRACER_API num::float3 GetpMin();
-	RAYTRACER_API const num::float3& operator[](const int i) const;
-	RAYTRACER_API num::float3& operator[](const int i);
-	RAYTRACER_API num::float3 Corner(int corner) const;
-	RAYTRACER_API static BBox Union(const BBox& b, const num::float3& p);
+	RAYTRACER_API BBox(const float3& p);
+	RAYTRACER_API BBox(const float3& p0, const float3& p1);
+	RAYTRACER_API float3 GetpMax();
+	RAYTRACER_API float3 GetpMin();
+	RAYTRACER_API const float3& operator[](const int i) const;
+	RAYTRACER_API float3& operator[](const int i);
+	RAYTRACER_API float3 Corner(int corner) const;
+	RAYTRACER_API static BBox Union(const BBox& b, const float3& p);
 	RAYTRACER_API static BBox Union(const BBox& b0, const BBox& b1);
 	RAYTRACER_API static BBox Intersect(const BBox& b0, const BBox& b1);
 	RAYTRACER_API static bool Overlaps(const BBox& b0, const BBox& b1);
-	RAYTRACER_API static bool Inside(const num::float3& p, const BBox& b);
+	RAYTRACER_API static bool Inside(const float3& p, const BBox& b);
 	RAYTRACER_API static BBox Expand(const BBox& b, float delta);
-	RAYTRACER_API num::float3 Diagonal() const;
+	RAYTRACER_API float3 Diagonal() const;
 	RAYTRACER_API float SurfaceArea() const;
 	RAYTRACER_API float Volume() const;
 	RAYTRACER_API int MaximumExtent() const;
-	RAYTRACER_API num::float3 Offset(const num::float3& p) const;
+	RAYTRACER_API float3 Offset(const float3& p) const;
 	RAYTRACER_API bool Intersect(const Ray& ray, float* hit_t0, float* hit_t1) const;
-	RAYTRACER_API bool AnyIntersect(const Ray& ray, const num::float3& invDir, const int dirIsNeg[3]) const;
+	RAYTRACER_API bool AnyIntersect(const Ray& ray, const float3& invDir, const int dirIsNeg[3]) const;
 	RAYTRACER_API bool PlaneAnyIntersect(const Plane& plane) const;
 };
 
@@ -140,9 +135,9 @@ class Sphere : public Primitive
 {
 private:
 	float radius;
-	num::float3 center;
+	float3 center;
 public:
-	RAYTRACER_API Sphere(const float r, const num::float3& c);
+	RAYTRACER_API Sphere(const float r, const float3& c);
 	RAYTRACER_API void ComputeBBox();
 	RAYTRACER_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACER_API bool AnyIntersect(Ray& ray);
@@ -154,11 +149,11 @@ public:
 class Triangle : public Primitive
 {
 private:
-	num::float3 v0;
-	num::float3 v1;
-	num::float3 v2;
+	float3 v0;
+	float3 v1;
+	float3 v2;
 public:
-	RAYTRACER_API Triangle(const num::float3 p0, const num::float3 p1, const num::float3 p2);
+	RAYTRACER_API Triangle(const float3 p0, const float3 p1, const float3 p2);
 	RAYTRACER_API void ComputeBBox();
 	RAYTRACER_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACER_API bool AnyIntersect(Ray& ray);

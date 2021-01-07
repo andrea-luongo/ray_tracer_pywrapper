@@ -13,7 +13,7 @@ struct BVHPrimitiveInfo
 {
 	size_t primitiveNumber;
 	BBox bounds;
-	num::float3 centroid;
+	float3 centroid;
 	BVHPrimitiveInfo() {};
 	BVHPrimitiveInfo(size_t pn, const BBox& b)
 	{

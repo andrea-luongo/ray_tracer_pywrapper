@@ -78,6 +78,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)..\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -152,12 +153,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\sources\BVH.h" />
+    <ClInclude Include="..\..\sources\MyFloat3.h" />
     <ClInclude Include="..\..\sources\structs.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\sources\BVH.cpp" />
+    <ClCompile Include="..\..\sources\MyFloat3.cpp" />
     <ClCompile Include="..\..\sources\structs.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp">

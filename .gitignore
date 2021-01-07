@@ -1,2 +1,4 @@
 .vs/**
 ray_tracer_pywrapper/.vs/**
+ray_tracer/.vs/**
+ray_tracer/ray_tracer/x64/**

@@ -69,7 +69,7 @@ BVHBuildNode* BVH::recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, 
 		int dim = centroidBounds.MaximumExtent();
 		// partition primitives into two sets and build children
 		int mid = (start + end) / 2;
-		if (CompareFloat3(centroidBounds.GetpMax(), centroidBounds.GetpMin(), dim)) {
+		if (centroidBounds.GetpMax()[dim] == centroidBounds.GetpMin()[dim]) {
 			// create leaf bvhbuildnode
 			node = createLeafBVHNode(primitiveInfo, start, end, orderedPrims, bounds);
 			return node;
@@ -117,9 +117,9 @@ BVHBuildNode* BVH::createLeafBVHNode(std::vector<BVHPrimitiveInfo>& primitiveInf
 
 bool BVH::middlePointSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int dim, BBox& centroidBounds, int& mid)
 {
-	float pmid = (GetFloat3Component(centroidBounds.GetpMin(), dim) + GetFloat3Component(centroidBounds.GetpMax(), dim)) * 0.5;
+	float pmid = (centroidBounds.GetpMin()[dim] + centroidBounds.GetpMax()[dim]) * 0.5;
 	BVHPrimitiveInfo* midPtr = std::partition(&primitiveInfo[start], &primitiveInfo[end-1] + 1, [dim, pmid](const BVHPrimitiveInfo& pi) {
-		return GetFloat3Component(pi.centroid, dim) < pmid; });
+		return pi.centroid[dim] < pmid; });
 	mid = midPtr - &primitiveInfo[0];
 	if (mid != start && mid != end)
 		return true;
@@ -131,7 +131,7 @@ bool BVH::equalCountsSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int sta
 {
 	mid = (start + end) / 2;
 	std::nth_element(&primitiveInfo[start], &primitiveInfo[mid], &primitiveInfo[end - 1] + 1, [dim](const BVHPrimitiveInfo& a, 
-		const BVHPrimitiveInfo& b) {return GetFloat3Component(a.centroid, dim) < GetFloat3Component(b.centroid, dim); });
+		const BVHPrimitiveInfo& b) {return a.centroid[dim] < b.centroid[dim]; });
 	return true;
 }
 
@@ -155,7 +155,7 @@ bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int 
 		//initialize bucketinfo for sah partition buckets
 		for (int i = start; i < end; ++i)
 		{
-			int b = nBuckets * GetFloat3Component(centroidBounds.Offset(primitiveInfo[i].centroid), dim);
+			int b = nBuckets * centroidBounds.Offset(primitiveInfo[i].centroid)[dim];
 			if (b == nBuckets) b = nBuckets - 1;
 			buckets[b].count++;
 			buckets[b].bounds = BBox::Union(buckets[b].bounds, primitiveInfo[i].bounds);
@@ -196,7 +196,7 @@ bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int 
 			BVHPrimitiveInfo* pmid = std::partition(&primitiveInfo[start], &primitiveInfo[end - 1], 
 				[=](const BVHPrimitiveInfo& pi) 
 				{
-					int b = nBuckets * GetFloat3Component(centroidBounds.Offset(pi.centroid), dim);
+					int b = nBuckets * centroidBounds.Offset(pi.centroid)[dim];
 					if (b == nBuckets) b = nBuckets - 1;
 					return b <= minCostSplitBucket;
 				});
@@ -213,7 +213,7 @@ bool BVH::SAHSplit(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int 
 bool BVH::intersect(Ray& ray, RayIntersectionInfo& info)
 {
 	bool hit = false;
-	num::float3 invDir(num::float3(1) / ray.GetDirection());
+	float3 invDir(float3(1) / ray.GetDirection());
 	int dirIsNeg[3] = {invDir.x < 0, invDir.y < 0, invDir.z < 0};
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
@@ -262,7 +262,7 @@ bool BVH::intersect(Ray& ray, RayIntersectionInfo& info)
 bool BVH::any_intersect(Ray& ray)
 {
 	bool hit = false;
-	num::float3 invDir(num::float3(1) / ray.GetDirection());
+	float3 invDir(float3(1) / ray.GetDirection());
 	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
@@ -313,7 +313,7 @@ bool BVH::any_intersect(Ray& ray)
 bool BVH::all_intersects(Ray& ray, RayIntersectionInfo& info)
 {
 	bool hit = false;
-	num::float3 invDir(num::float3(1) / ray.GetDirection());
+	float3 invDir(float3(1) / ray.GetDirection());
 	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;

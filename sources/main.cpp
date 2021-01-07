@@ -18,9 +18,9 @@ public:
         for (int i = 0; i < (int)(vertices.size() / 9); i++)
         {
             
-            num::float3 p0(vertices[i*9], vertices[i*9+1], vertices[i*9+2]);
-            num::float3 p1(vertices[i*9+3], vertices[i*9+4], vertices[i*9+5]);
-            num::float3 p2(vertices[i*6], vertices[i*9+7], vertices[i*9+8]);
+            float3 p0(vertices[i*9], vertices[i*9+1], vertices[i*9+2]);
+            float3 p1(vertices[i*9+3], vertices[i*9+4], vertices[i*9+5]);
+            float3 p2(vertices[i*6], vertices[i*9+7], vertices[i*9+8]);
             std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
             primitives.push_back(primitive);
         }
