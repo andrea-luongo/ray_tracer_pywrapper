@@ -19,12 +19,9 @@ private:
 	float3 normal;
 public:
 	RAYTRACER_API Plane(const float3& x, const float3& n);
-	RAYTRACER_API float DistFromPlane(const float3& x);
-	RAYTRACER_API const float DistFromPlane(const float3& x) const ;
-	RAYTRACER_API bool OnPlane(const float3& x) ;
-	RAYTRACER_API const bool OnPlane(const float3& x) const;
-	RAYTRACER_API 	bool PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) ;
-	RAYTRACER_API 	const bool PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) const;
+	RAYTRACER_API float DistFromPlane(const float3& x) const ;
+	RAYTRACER_API bool OnPlane(const float3& x) const;
+	RAYTRACER_API bool PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) const;
 };
 
 struct PlaneIntersectionInfo
@@ -34,6 +31,7 @@ private:
 public:
 	RAYTRACER_API void AddHit(float3 t) { t_hits.push_back(t); };
 	RAYTRACER_API int GetHitsSize() { return t_hits.size(); };
+	RAYTRACER_API std::vector<float3>* GetHits() { return &t_hits; };
 };
 
 struct Ray
@@ -55,13 +53,9 @@ public:
 		depth = d;
 		seed = s;
 	};
-	RAYTRACER_API float3 GetOrigin() { return origin; };
-	RAYTRACER_API float3 GetOrigin() const { return origin; };
-	RAYTRACER_API float3 GetDirection() { return direction; };
 	RAYTRACER_API float3 GetDirection() const { return direction; };
-	RAYTRACER_API float GetMin() { return t_min; };
+	RAYTRACER_API float3 GetOrigin() const { return origin; };
 	RAYTRACER_API float GetMin() const { return t_min; };
-	RAYTRACER_API float GetMax() { return t_max; };
 	RAYTRACER_API float GetMax() const{ return t_max; };
 	RAYTRACER_API void SetMin(float t) { t_min = t; };
 	RAYTRACER_API void SetMax(float t) { t_max = t; };
@@ -133,7 +127,7 @@ public:
 
 class Sphere : public Primitive
 {
-private:
+public:
 	float radius;
 	float3 center;
 public:
@@ -148,7 +142,7 @@ public:
 
 class Triangle : public Primitive
 {
-private:
+public:
 	float3 v0;
 	float3 v1;
 	float3 v2;

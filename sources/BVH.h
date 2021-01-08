@@ -66,7 +66,7 @@ private:
 	LinearBVHNode* nodes = nullptr;
 
 public:
-	RAYTRACER_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, int maxPrimsInNode, SplitMethod splitMethod);
+	RAYTRACER_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrimsInNode=255);
 	RAYTRACER_API bool intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACER_API bool any_intersect(Ray& ray);
 	RAYTRACER_API bool all_intersects(Ray& ray, RayIntersectionInfo& info);

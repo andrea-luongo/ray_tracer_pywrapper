@@ -1,7 +1,7 @@
 #include "BVH.h"
 #include <algorithm>
 
-BVH::BVH(const std::vector<std::shared_ptr<Primitive>>& p, int maxPrimsInNode, SplitMethod splitMethod): maxPrimsInNode(std::min(255, maxPrimsInNode)), primitives(p), splitMethod(splitMethod)
+BVH::BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrimsInNode): maxPrimsInNode(std::min(255, maxPrimsInNode)), primitives(p), splitMethod(splitMethod)
 {
 	if (primitives.size() == 0)
 		return;
@@ -363,36 +363,43 @@ bool BVH::plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info)
 {
 	bool hit = false;
 	int toVisitOffset = 0, currentNodeIndex = 0;
-	int nodesToVisit[1024*1024];
-	while (true)
+	int nodesToVisit[1024];
+	try
 	{
-		const LinearBVHNode* node = &nodes[currentNodeIndex];
-		//check ray against BVH node
-		if (node->bounds.PlaneAnyIntersect(plane))
+		while (true)
 		{
-			if (node->nPrimitives > 0)
+			const LinearBVHNode* node = &nodes[currentNodeIndex];
+			//check ray against BVH node
+			if (node->bounds.PlaneAnyIntersect(plane))
 			{
-				//intersect ray with primitives in leaf bvh node
-				for (int i = 0; i < node->nPrimitives; ++i)
+				if (node->nPrimitives > 0)
 				{
-					if (primitives[node->primitivesOffset + i]->PlaneIntersect(plane, info))
-						hit = true;
+					//intersect ray with primitives in leaf bvh node
+					for (int i = 0; i < node->nPrimitives; ++i)
+					{
+						if (primitives[node->primitivesOffset + i]->PlaneIntersect(plane, info))
+							hit = true;
+					}
+					if (toVisitOffset == 0) break;
+					currentNodeIndex = nodesToVisit[--toVisitOffset];
 				}
-				if (toVisitOffset == 0) break;
-				currentNodeIndex = nodesToVisit[--toVisitOffset];
+				else
+				{
+					//put far bvh node on nodestovisit stack, advance to near node
+					nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+					currentNodeIndex = currentNodeIndex + 1;
+				}
 			}
 			else
 			{
-				//put far bvh node on nodestovisit stack, advance to near node
-					nodesToVisit[toVisitOffset++] = node->secondChildOffset;
-					currentNodeIndex = currentNodeIndex + 1;
+				if (toVisitOffset == 0) break;
+				currentNodeIndex = nodesToVisit[--toVisitOffset];
 			}
 		}
-		else
-		{
-			if (toVisitOffset == 0) break;
-			currentNodeIndex = nodesToVisit[--toVisitOffset];
-		}
+		return hit;
 	}
-	return hit;
+	catch(const std::exception & e)
+	{
+		return hit;
+	}
 }

@@ -13,28 +13,11 @@ Plane::Plane(const float3& x, const float3& n)
 	normal = float3::normalize(n); 
 };
 
-float Plane::DistFromPlane(const float3& x) { return float3::dot(normal, x - x_0); };
+float Plane::DistFromPlane(const float3& x) const { return float3::dot(normal, x - x_0); };
 
-const float Plane::DistFromPlane(const float3& x) const { return float3::dot(normal, x - x_0); };
+bool Plane::OnPlane(const float3& x) const { return abs(DistFromPlane(x)) < machine_epsilon; };
 
-bool Plane::OnPlane(const float3& x) { return abs(DistFromPlane(x)) < machine_epsilon; };
-
-const bool Plane::OnPlane(const float3& x) const { return abs(DistFromPlane(x)) < machine_epsilon; };
-
-bool Plane::PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p)
-{
-	float d_0 = DistFromPlane(p_0);
-	float d_1 = DistFromPlane(p_1);
-	if (d_0 * d_1 > 0)
-	{
-		return false;
-	}
-	float t = d_0 / (d_0 - d_1);
-	p = p_0 + t * (p_1 - p_0);
-	return true;
-};
-
-const bool Plane::PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) const
+bool Plane::PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) const
 {
 	float d_0 = DistFromPlane(p_0);
 	float d_1 = DistFromPlane(p_1);
