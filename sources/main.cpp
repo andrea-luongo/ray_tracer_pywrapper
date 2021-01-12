@@ -21,6 +21,7 @@ public:
         printf("%i\n", splitMethod);
         printf("%i\n", maxPrimsInNode);*/
         std::vector<std::shared_ptr<Primitive>> primitives;
+        clock_t tStart = clock();
         for (int i = 0; i < (int)(vertices.size() / 9); i++)
         {
             
@@ -30,7 +31,8 @@ public:
             std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
             primitives.push_back(primitive);
         }
-        clock_t tStart = clock();
+        printf("primitives converstion time: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+        tStart = clock();
         bvh = new BVH(primitives, splitMethod, maxPrimsInNode);
         printf("BVH construction time: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
     }
