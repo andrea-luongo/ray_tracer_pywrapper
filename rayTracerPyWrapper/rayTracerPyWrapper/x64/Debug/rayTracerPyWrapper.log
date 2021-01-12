@@ -1,0 +1,5 @@
+﻿  main.cpp
+C:\Users\aluo\Documents\Repos\ray_tracer_pywrapper\sources\structs.h(33,37): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\aluo\Documents\Repos\ray_tracer_pywrapper\sources\structs.h(81,37): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+  rayTracerPyWrapper.vcxproj -> C:\Users\aluo\Documents\Repos\ray_tracer_pywrapper\rayTracerPyWrapper\x64\Debug\rayTracerPyWrapper.pyd
+  0 File(s) copied

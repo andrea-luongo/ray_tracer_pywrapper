@@ -1,13 +1,13 @@
 #pragma once
-#ifdef RAYTRACER_EXPORTS
-#define RAYTRACER_API __declspec(dllexport)
+#ifdef RAYTRACERDLL_EXPORTS
+#define RAYTRACERDLL_API __declspec(dllexport)
 #else
-#define RAYTRACER_API __declspec(dllimport)
+#define RAYTRACERDLL_API __declspec(dllimport)
 #endif
 #include "structs.h"
 #include <mutex>
 
-enum class RAYTRACER_API SplitMethod{ SAH, HLBVH, Middle, EqualCounts};
+enum class RAYTRACERDLL_API SplitMethod{ SAH, HLBVH, Middle, EqualCounts};
 
 struct BVHPrimitiveInfo
 {
@@ -66,11 +66,11 @@ private:
 	LinearBVHNode* nodes = nullptr;
 
 public:
-	RAYTRACER_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrimsInNode=255);
-	RAYTRACER_API bool intersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACER_API bool any_intersect(Ray& ray);
-	RAYTRACER_API bool all_intersects(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACER_API bool plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info);
+	RAYTRACERDLL_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrimsInNode=255);
+	RAYTRACERDLL_API bool intersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API bool any_intersect(Ray& ray);
+	RAYTRACERDLL_API bool all_intersects(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API bool plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info);
 protected:
 	//BVHBuildNode* HLBVHBuild(const std::vector<BVHPrimitiveInfo>& primitiveInfo, int* totalNodes, std::vector<std::shared_ptr<Primitive>>& orderedPrims);
 	BVHBuildNode* recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<Primitive>>& orderedPrims);
