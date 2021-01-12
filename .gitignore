@@ -1,4 +1,10 @@
 .vs/**
 rayTracerPyWrapper/.vs/**
+rayTracerPyWrapper/rayTracerPyWrapper/Debug/**
+rayTracerPyWrapper/rayTracerPyWrapper/x64/**
 rayTracerDLL/.vs/**
+rayTracerDLL/rayTracerDLL/Debug/**
+rayTracerDLL/rayTracerDLL/x64/**
 TestDLL/.vs/**
+TestDLL/TestDLL/Debug/**
+TestDLL/TestDLL/x64/**
