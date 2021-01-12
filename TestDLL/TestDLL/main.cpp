@@ -52,10 +52,10 @@ int main() {
 
 	clock_t tStart = clock();
 	float box_size = 5;
-	primitives = build_box(box_size);
-	//std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
+	//primitives = build_box(box_size);
+	std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
 
-	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	//create BVH and time it
 	std::cout << "Building BVH" << std::endl;
@@ -64,7 +64,7 @@ int main() {
 
 	BVH* bvh = new BVH(primitives, SplitMethod::EqualCounts);
 
-	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	//test Ray BVH intersection
 	int number_of_rays = 1000;

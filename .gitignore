@@ -8,3 +8,5 @@ rayTracerDLL/rayTracerDLL/x64/**
 TestDLL/.vs/**
 TestDLL/TestDLL/Debug/**
 TestDLL/TestDLL/x64/**
+TestDLL/Debug/x64/**
+TestDLL/x64/**
