@@ -55,6 +55,8 @@ public:
 	};
 	RAYTRACERDLL_API float3 GetDirection() const { return direction; };
 	RAYTRACERDLL_API float3 GetOrigin() const { return origin; };
+	RAYTRACERDLL_API void SetOrigin(float3 o) { origin = o; };
+	RAYTRACERDLL_API void SetDirection(float3 d) { direction = d; };
 	RAYTRACERDLL_API float GetMin() const { return t_min; };
 	RAYTRACERDLL_API float GetMax() const{ return t_max; };
 	RAYTRACERDLL_API void SetMin(float t) { t_min = t; };

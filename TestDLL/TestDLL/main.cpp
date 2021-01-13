@@ -52,8 +52,8 @@ int main() {
 
 	clock_t tStart = clock();
 	float box_size = 5;
-	//primitives = build_box(box_size);
-	std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
+	primitives = build_box(box_size);
+	//std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
 
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
@@ -65,36 +65,45 @@ int main() {
 	BVH* bvh = new BVH(primitives, SplitMethod::EqualCounts);
 
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-
+	float3 o(1, 0, box_size + 1);
+	float3 d(0, 0, -1);
+	Ray ray(o, d, 0, 1000, 0, 0);
+	RayIntersectionInfo rinfo;
+	bvh->all_intersects(ray, rinfo);
+	std::vector<float> t_hits = *rinfo.GetHits();
+	for (int i = 0; i < t_hits.size(); i++)
+	{
+		printf("intersection %f\n", t_hits[i]);
+	}
 	//test Ray BVH intersection
 	int number_of_rays = 1000;
 	float offset = 2.0 * box_size / number_of_rays;
-	std::cout << "Testing ray intersection" << std::endl;
-	tStart = clock();
+	//std::cout << "Testing ray intersection" << std::endl;
+	//tStart = clock();
 
-	for (int i = 0; i < number_of_rays; i++) {
-		float3 o(-box_size + i * offset, 0, box_size + 1);
-		float3 d(0, 0, -1);
-		Ray ray(o, d, 0, 1000, 0, 0);
-		RayIntersectionInfo rinfo;
-		bvh->all_intersects(ray, rinfo);
-	}
-	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	std::cout << "Testing plane intersection" << std::endl;
-	tStart = clock();
-	Plane plane(float3(0, 0, 0), float3(0, 1, 0));
-	PlaneIntersectionInfo pinfo;
-	bvh->plane_all_intersects(plane, pinfo);
-	//for (int i = 0; i < primitives.size(); i++)
-	//{
-	//	//PlaneIntersectionInfo pinfo;
-	//	primitives[i]->PlaneIntersect(plane, pinfo);
-	//	std::vector<float3>* hits = pinfo.GetHits();
-	//	//for (int j = 0; j < hits->size(); j++)
-	//	//	std::cout << (*hits)[j] << std::endl;
-	//	//std::cout << std::endl;
+	//for (int i = 0; i < number_of_rays; i++) {
+	//	float3 o(-box_size + i * offset, 0, box_size + 1);
+	//	float3 d(0, 0, -1);
+	//	Ray ray(o, d, 0, 1000, 0, 0);
+	//	RayIntersectionInfo rinfo;
+	//	bvh->all_intersects(ray, rinfo);
 	//}
-	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//std::cout << "Testing plane intersection" << std::endl;
+	//tStart = clock();
+	//Plane plane(float3(0, 0, 0), float3(0, 1, 0));
+	//PlaneIntersectionInfo pinfo;
+	//bvh->plane_all_intersects(plane, pinfo);
+	////for (int i = 0; i < primitives.size(); i++)
+	////{
+	////	//PlaneIntersectionInfo pinfo;
+	////	primitives[i]->PlaneIntersect(plane, pinfo);
+	////	std::vector<float3>* hits = pinfo.GetHits();
+	////	//for (int j = 0; j < hits->size(); j++)
+	////	//	std::cout << (*hits)[j] << std::endl;
+	////	//std::cout << std::endl;
+	////}
+	//printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	
 	return 0;
 }
