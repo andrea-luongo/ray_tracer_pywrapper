@@ -356,6 +356,7 @@ bool BVH::all_intersects(Ray& ray, RayIntersectionInfo& info)
 			currentNodeIndex = nodesToVisit[--toVisitOffset];
 		}
 	}
+	std::sort(info.GetHits()->begin(), info.GetHits()->end());
 	return hit;
 }
 

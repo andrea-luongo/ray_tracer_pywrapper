@@ -7,9 +7,9 @@
 
 std::shared_ptr<Primitive> triangle_generator()
 {
-	float3 x0(rand() % 100, rand() % 100, rand() % 100);
-	float3 x1(rand() % 100, rand() % 100, rand() % 100);
-	float3 x2(rand() % 100, rand() % 100, rand() % 100);
+	float3 x0(rand() % 10, rand() % 10, rand() % 10);
+	float3 x1(rand() % 10, rand() % 10, rand() % 10);
+	float3 x2(rand() % 10, rand() % 10, rand() % 10);
 	std::shared_ptr<Primitive> t(new Triangle(x0, x1, x2));
 	return t;
 };
@@ -52,8 +52,8 @@ int main() {
 
 	clock_t tStart = clock();
 	float box_size = 5;
-	primitives = build_box(box_size);
-	//std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
+	//primitives = build_box(box_size);
+	std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
 
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
@@ -71,13 +71,13 @@ int main() {
 	RayIntersectionInfo rinfo;
 	bvh->all_intersects(ray, rinfo);
 	std::vector<float> t_hits = *rinfo.GetHits();
-	for (int i = 0; i < t_hits.size(); i++)
-	{
-		printf("intersection %f\n", t_hits[i]);
-	}
-	//test Ray BVH intersection
-	int number_of_rays = 1000;
-	float offset = 2.0 * box_size / number_of_rays;
+	//for (int i = 0; i < t_hits.size(); i++)
+	//{
+	//	printf("intersection %f\n", t_hits[i]);
+	//}
+	////test Ray BVH intersection
+	//int number_of_rays = 1000;
+	//float offset = 2.0 * box_size / number_of_rays;
 	//std::cout << "Testing ray intersection" << std::endl;
 	//tStart = clock();
 
