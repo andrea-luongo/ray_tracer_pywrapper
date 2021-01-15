@@ -217,7 +217,7 @@ bool BVH::intersect(Ray& ray, RayIntersectionInfo& info)
 	int dirIsNeg[3] = {invDir.x < 0, invDir.y < 0, invDir.z < 0};
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
-	int nodesToVisit[1024];
+	int nodesToVisit[100];
 	while (true)
 	{
 		const LinearBVHNode* node = &nodes[currentNodeIndex];
@@ -266,7 +266,7 @@ bool BVH::any_intersect(Ray& ray)
 	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
-	int nodesToVisit[1024];
+	int nodesToVisit[100];
 	while (true)
 	{
 		const LinearBVHNode* node = &nodes[currentNodeIndex];
@@ -317,7 +317,7 @@ bool BVH::all_intersects(Ray& ray, RayIntersectionInfo& info)
 	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
 	//follow ray through BVH nodes to find primitive intersections
 	int toVisitOffset = 0, currentNodeIndex = 0;
-	int nodesToVisit[1024];
+	int nodesToVisit[100];
 	while (true)
 	{
 		const LinearBVHNode* node = &nodes[currentNodeIndex];
@@ -364,7 +364,7 @@ bool BVH::plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info)
 {
 	bool hit = false;
 	int toVisitOffset = 0, currentNodeIndex = 0;
-	int nodesToVisit[1024];
+	int nodesToVisit[100];
 	try
 	{
 		while (true)

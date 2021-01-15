@@ -7,6 +7,99 @@
 
 namespace py = pybind11;
 
+class PyBindPlane
+{
+public:
+    Plane* plane = nullptr;
+public:
+    PyBindPlane()
+    {
+        plane = new Plane();
+    }
+    PyBindPlane(py::array_t<float> x, py::array_t<float> n)
+    {
+        float3 x0(x.at(0), x.at(1), x.at(2));
+        float3 normal(n.at(0), n.at(1), n.at(2));
+        plane = new Plane(x0, normal);
+    }
+    py::array_t<float> GetX() const {
+        float3 x = plane->GetX();
+        auto result = py::array(py::buffer_info(
+            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
+            sizeof(float),     /* Size of one item */
+            py::format_descriptor<float>::value, /* Buffer format */
+            1,          /* How many dimensions? */
+            { 3 },  /* Number of elements for each dimension */
+            { sizeof(float) }  /* Strides for each dimension */
+        ));
+        auto buf = result.request();
+        float* ptr = (float*)buf.ptr;
+        ptr[0] = x.x;
+        ptr[1] = x.y;
+        ptr[2] = x.z;
+        return result;
+    };
+    py::array_t<float> GetNormal() const {
+        float3 n = plane->GetNormal();
+        auto result = py::array(py::buffer_info(
+            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
+            sizeof(float),     /* Size of one item */
+            py::format_descriptor<float>::value, /* Buffer format */
+            1,          /* How many dimensions? */
+            { 3 },  /* Number of elements for each dimension */
+            { sizeof(float) }  /* Strides for each dimension */
+        ));
+        auto buf = result.request();
+        float* ptr = (float*)buf.ptr;
+        ptr[0] = n.x;
+        ptr[1] = n.y;
+        ptr[2] = n.z;
+        return result;
+    };
+};
+
+class PyBindPlaneInfo
+{
+public:
+    PlaneIntersectionInfo* planeInfo = nullptr;
+public:
+    PyBindPlaneInfo()
+    {
+        planeInfo = new PlaneIntersectionInfo();
+    };
+    std::vector<py::array_t<float>> GetHits()
+    { 
+        std::vector<float3> hits = *planeInfo->GetHits();
+        std::vector<py::array_t<float>> result(planeInfo->GetHitsSize());
+        for (int i = 0; i < planeInfo->GetHitsSize(); i++)
+        {
+            float3 value = hits[i];
+            auto tmp = py::array(py::buffer_info(
+                nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
+                sizeof(float),     /* Size of one item */
+                py::format_descriptor<float>::value, /* Buffer format */
+                1,          /* How many dimensions? */
+                { 3 },  /* Number of elements for each dimension */
+                { sizeof(float) }  /* Strides for each dimension */
+            ));
+            auto buf = tmp.request();
+            float* ptr = (float*)buf.ptr;
+            ptr[0] = value.x;
+            ptr[1] = value.y;
+            ptr[2] = value.z;
+            result.push_back(tmp);
+        }
+        return result;
+    };
+    void AddHit(py::array_t<float> t)
+    { 
+        float3 x0(t.at(0), t.at(1), t.at(2));
+        planeInfo->AddHit(x0);
+    };
+    int GetHitsSize() { return planeInfo->GetHitsSize(); };
+
+};
+
 class PyBindRay {
 public:
     Ray* ray = nullptr;
@@ -169,7 +262,11 @@ public:
         bool result = bvh->all_intersects(*ray.ray, *info.rayInfo);
         return result;
     };
-    //bool plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info);
+    bool PlaneAllIntersects(PyBindPlane& plane, PyBindPlaneInfo& info)
+    {
+        bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
+        return result;
+    }
 };
 PYBIND11_MODULE(rayTracerPyWrapper, m) {
     m.doc() = R"pbdoc(
@@ -183,6 +280,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     bvh.def("AllIntersects", &PyBindBVH::AllIntersects);
     bvh.def("MultiRayIntersect", &PyBindBVH::MultiRayIntersect);
     bvh.def("MultiRayAllIntersects", &PyBindBVH::MultiRayAllIntersects);
+    bvh.def("PlaneAllIntersects", &PyBindBVH::PlaneAllIntersects);
     py::enum_ <SplitMethod> (bvh, "SplitMethod")
         .value("SAH", SplitMethod::SAH)
         .value("HLBVH", SplitMethod::HLBVH)
@@ -206,6 +304,16 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     rayInfo.def("AddHit", &PyBindRayInfo::AddHit);
     rayInfo.def("AddClosestHit", &PyBindRayInfo::AddClosestHit);
     rayInfo.def("GetHitsSize", &PyBindRayInfo::GetHitsSize);
+    py::class_<PyBindPlane> plane(m, "PyBindPlane");
+    plane.def(py::init<py::array_t<float>, py::array_t<float>>());
+    plane.def(py::init<>());
+    plane.def("GetX", &PyBindPlane::GetX);
+    plane.def("GetNormal", &PyBindPlane::GetNormal);
+    py::class_<PyBindPlaneInfo> planeInfo(m, "PyBindPlaneInfo");
+    planeInfo.def(py::init<>());
+    planeInfo.def("GetHits", &PyBindPlaneInfo::GetHits);
+    planeInfo.def("AddHit", &PyBindPlaneInfo::AddHit);
+    planeInfo.def("GetHitsSize", &PyBindPlaneInfo::GetHitsSize);
     
 #ifdef VERSION_INFO
     m.attr("__version__") = VERSION_INFO;

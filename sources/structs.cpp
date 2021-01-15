@@ -7,6 +7,12 @@ inline constexpr float gamma(int n)
 	return (n * machine_epsilon) / (1 - n * machine_epsilon);
 }
 
+Plane::Plane() 
+{ 
+	x_0 = float3(0); 
+	normal = float3(0, 0, 1); 
+};
+
 Plane::Plane(const float3& x, const float3& n) 
 { 
 	x_0 = x; 
@@ -32,8 +38,8 @@ bool Plane::PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float
 
 BBox::BBox()
 {
-	pMin = float3(std::numeric_limits<float>::min());
-	pMax = float3(std::numeric_limits<float>::max());
+	pMin = float3(std::numeric_limits<float>::max());
+	pMax = -1 * float3(std::numeric_limits<float>::max());
 };
 
 BBox::BBox(const float3& p) : pMin(p), pMax(p) { };
@@ -105,9 +111,9 @@ float BBox::Volume() const { float3 d = Diagonal(); return d.x * d.y * d.z; }
 int BBox::MaximumExtent() const
 {
 	float3 d = Diagonal();
-	if (d.x > d.y && d.x > d.z)
+	if (d.x >= d.y && d.x >= d.z)
 		return 0;
-	else if (d.y > d.z)
+	else if (d.y >= d.z)
 		return 1;
 	else
 		return 2;

@@ -1,9 +1,73 @@
 #include <iostream>
-#include <BVH.h>
-#include <structs.h>
-#include <MyFloat3.h>
+#include "../../sources/BVH2.h"
+#include "../../sources/MyFloat32.h"
+#include "../../sources/structs2.h"
+//#include <BVH.h>
 #include <random>
 #include <time.h>
+#include <fstream>
+#include <sstream>
+
+bool load_obj(const char* filename, std::vector<float3> &out_vertices, float3 &b_min, float3 &b_max)
+{
+	std::vector< unsigned int > vertexIndices;
+	std::vector<float3> temp_vertices;
+	bool bbox_defined = false;
+	std::ifstream file(filename);
+	if (file.is_open()) {
+		std::string line;
+		while (std::getline(file, line)) {
+			std::vector<std::string> parsed_line;
+			std::string delimiter = " ";
+			size_t pos = 0;
+			std::string token;
+			while ((pos = line.find(delimiter)) != std::string::npos) {
+				token = line.substr(0, pos);
+				parsed_line.push_back(token);
+				line.erase(0, pos + delimiter.length());
+			}
+			parsed_line.push_back(line);
+			if (parsed_line[0] == "v")
+			{
+				float3 vertex(std::stof(parsed_line[1]), std::stof(parsed_line[2]), std::stof(parsed_line[3]));
+				temp_vertices.push_back(vertex);
+				if (!bbox_defined)
+				{
+					b_min = vertex;
+					b_max = vertex;
+					bbox_defined = true;
+				}
+				else
+				{
+					b_min = float3::min(b_min, vertex);
+					b_max = float3::max(b_max, vertex);
+				}
+			}
+			else if (parsed_line[0] == "f")
+			{
+				delimiter = "/";
+				for (int i = 1; i < parsed_line.size(); i++)
+				{
+					pos = parsed_line[i].find(delimiter);
+					token = parsed_line[i].substr(0, pos);
+					vertexIndices.push_back(std::stoi(token));
+				}
+				
+			}
+		}
+		file.close();
+	}
+	float3 bbox_center = 0.5 * (b_max + b_min);
+	b_max = b_max - bbox_center;
+	b_min = b_min - bbox_center;
+	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
+		unsigned int vertexIndex = vertexIndices[i];
+		float3 vertex = temp_vertices[vertexIndex - 1] - bbox_center;
+		out_vertices.push_back(vertex);
+	}
+
+	return true;
+}
 
 std::shared_ptr<Primitive> triangle_generator()
 {
@@ -36,75 +100,79 @@ std::vector<std::shared_ptr<Primitive>> build_box(float l)
 	std::shared_ptr<Primitive> t9(new Triangle(v2, v7, v3));
 	std::shared_ptr<Primitive> t10(new Triangle(v2, v0, v6));
 	std::shared_ptr<Primitive> t11(new Triangle(v0, v4, v6));
-	std::vector<std::shared_ptr<Primitive>> cube = { t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11 };
+	//std::vector<std::shared_ptr<Primitive>> cube = { t0, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11 };
+	std::vector<std::shared_ptr<Primitive>> cube = { t0, t1, t2, t3};
 	return cube;
 }
 
 
 int main() {
 	// TESTING BVH CONSTRUCTION AND INTERSECTION
-
-	//generate "number_of_primitives" random triangles and store them in a vector
-	srand((unsigned)time(NULL));
-	int number_of_primitives = 65000;
 	std::vector<std::shared_ptr<Primitive>> primitives;
-	std::cout << "Generating " << number_of_primitives << " random primitives" << std::endl;
+	clock_t tStart;
 
-	clock_t tStart = clock();
-	float box_size = 5;
-	//primitives = build_box(box_size);
-	std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
+	////////////////////// CUBE 
+	//float width = 5;
+	//float depth = 5;
+	//float height = 5;
+	//primitives = build_box(width);
+	///////////////////////
 
-	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//////////////////////RANDOM PRIMITIVES
+	//generate "number_of_primitives" random triangles and store them in a vector
+	//srand((unsigned)time(NULL));
+	//int number_of_primitives = 65000;
+	//std::cout << "Generating " << number_of_primitives << " random primitives" << std::endl;
+	//tStart = clock();
+	//std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
+	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	/////////////////////////////////////////////////////////
 
-	//create BVH and time it
+	/////////////// LOAD OBJ
+	std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
+	filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
+	float3 b_min, b_max;
+	std::vector<float3> vertices;
+	load_obj(filename.c_str(), vertices, b_min, b_max);
+	float width = b_max.x - b_min.x;
+	float height = b_max.y - b_min.y;
+	float depth = b_max.z - b_min.z;
+	for (int i = 0; i < (int)(vertices.size() / 3); i++)
+	{
+		float3 p0 = vertices[i * 3];
+		float3 p1 = vertices[i * 3 +1 ];
+		float3 p2 = vertices[i * 3 + 2];
+		std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
+		primitives.push_back(primitive);
+	}
+	//////////////////////////////////
+
+	/////////////////////BUILD BVH
 	std::cout << "Building BVH" << std::endl;
-
 	tStart = clock();
-
 	BVH* bvh = new BVH(primitives, SplitMethod::EqualCounts);
-
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	float3 o(1, 0, box_size + 1);
-	float3 d(0, 0, -1);
-	Ray ray(o, d, 0, 1000, 0, 0);
-	RayIntersectionInfo rinfo;
-	bvh->all_intersects(ray, rinfo);
-	std::vector<float> t_hits = *rinfo.GetHits();
-	//for (int i = 0; i < t_hits.size(); i++)
-	//{
-	//	printf("intersection %f\n", t_hits[i]);
-	//}
-	////test Ray BVH intersection
-	//int number_of_rays = 1000;
-	//float offset = 2.0 * box_size / number_of_rays;
-	//std::cout << "Testing ray intersection" << std::endl;
-	//tStart = clock();
+	/////////////////////////////
 
-	//for (int i = 0; i < number_of_rays; i++) {
-	//	float3 o(-box_size + i * offset, 0, box_size + 1);
-	//	float3 d(0, 0, -1);
-	//	Ray ray(o, d, 0, 1000, 0, 0);
-	//	RayIntersectionInfo rinfo;
-	//	bvh->all_intersects(ray, rinfo);
-	//}
-	//printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	//std::cout << "Testing plane intersection" << std::endl;
-	//tStart = clock();
-	//Plane plane(float3(0, 0, 0), float3(0, 1, 0));
-	//PlaneIntersectionInfo pinfo;
-	//bvh->plane_all_intersects(plane, pinfo);
-	////for (int i = 0; i < primitives.size(); i++)
-	////{
-	////	//PlaneIntersectionInfo pinfo;
-	////	primitives[i]->PlaneIntersect(plane, pinfo);
-	////	std::vector<float3>* hits = pinfo.GetHits();
-	////	//for (int j = 0; j < hits->size(); j++)
-	////	//	std::cout << (*hits)[j] << std::endl;
-	////	//std::cout << std::endl;
-	////}
-	//printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	
+	////////////////RAY TRACING
+	int number_of_rays = 10000;
+	int number_of_layers = 100;
+	float w_offset = width / number_of_rays;
+	float h_offset = height / number_of_rays;
+	std::cout << "Testing ray intersection" << std::endl;
+	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
+	{
+		tStart = clock();
+		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++) {
+			float3 o(-width * 0.5 + ray_idx * w_offset, -0.5 * height + l_idx*h_offset, depth);
+			float3 d(0, 0, -1);
+			Ray ray(o, d, 0, 100000, 0, 0);
+			RayIntersectionInfo rinfo;
+			bvh->all_intersects(ray, rinfo);
+		}
+		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	}
+	///////////////////////////////
 	return 0;
 }
 

@@ -18,7 +18,10 @@ private:
 	float3 x_0;
 	float3 normal;
 public:
+	RAYTRACERDLL_API Plane();
 	RAYTRACERDLL_API Plane(const float3& x, const float3& n);
+	RAYTRACERDLL_API float3 GetX() const { return x_0; };
+	RAYTRACERDLL_API float3 GetNormal() const { return normal; };
 	RAYTRACERDLL_API float DistFromPlane(const float3& x) const ;
 	RAYTRACERDLL_API bool OnPlane(const float3& x) const;
 	RAYTRACERDLL_API bool PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float3& p) const;
