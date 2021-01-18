@@ -1,8 +1,8 @@
 #include <iostream>
-#include "../../sources/BVH2.h"
-#include "../../sources/MyFloat32.h"
-#include "../../sources/structs2.h"
-//#include <BVH.h>
+//#include "../../sources/BVH2.h"
+//#include "../../sources/MyFloat32.h"
+//#include "../../sources/structs2.h"
+#include <BVH.h>
 #include <random>
 #include <time.h>
 #include <fstream>
@@ -110,11 +110,13 @@ int main() {
 	// TESTING BVH CONSTRUCTION AND INTERSECTION
 	std::vector<std::shared_ptr<Primitive>> primitives;
 	clock_t tStart;
-
+	bool is_cube = false;
+	float height, width, depth;
 	////////////////////// CUBE 
-	//float width = 5;
-	//float depth = 5;
-	//float height = 5;
+	//width = 5;
+	//depth = 5;
+	//height = 5;
+	//is_cube = true;
 	//primitives = build_box(width);
 	///////////////////////
 
@@ -129,14 +131,17 @@ int main() {
 	/////////////////////////////////////////////////////////
 
 	/////////////// LOAD OBJ
+	std::cout << "LOAD GEOMETRY" << std::endl;
+	is_cube = false;
+	tStart = clock();
 	std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
 	filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
 	float3 b_min, b_max;
 	std::vector<float3> vertices;
 	load_obj(filename.c_str(), vertices, b_min, b_max);
-	float width = b_max.x - b_min.x;
-	float height = b_max.y - b_min.y;
-	float depth = b_max.z - b_min.z;
+	width = b_max.x - b_min.x;
+	height = b_max.y - b_min.y;
+	depth = b_max.z - b_min.z;
 	for (int i = 0; i < (int)(vertices.size() / 3); i++)
 	{
 		float3 p0 = vertices[i * 3];
@@ -145,6 +150,7 @@ int main() {
 		std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
 		primitives.push_back(primitive);
 	}
+	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	//////////////////////////////////
 
 	/////////////////////BUILD BVH
@@ -156,15 +162,29 @@ int main() {
 
 	////////////////RAY TRACING
 	int number_of_rays = 10000;
-	int number_of_layers = 100;
-	float w_offset = width / number_of_rays;
-	float h_offset = height / number_of_rays;
+	int number_of_layers = 10;
+	float w_offset, h_offset;
+	float x_start, y_start;
+	if (is_cube)
+	{
+		w_offset = 2 * width / number_of_rays;
+		h_offset = 2 * height / number_of_layers;
+		x_start = -width;
+		y_start = -height;
+	}
+	else
+	{
+		w_offset = width / number_of_rays;
+		h_offset = height / number_of_layers;
+		x_start = -0.5*width;
+		y_start = -0.5*height;
+	}
 	std::cout << "Testing ray intersection" << std::endl;
 	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
 	{
 		tStart = clock();
 		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++) {
-			float3 o(-width * 0.5 + ray_idx * w_offset, -0.5 * height + l_idx*h_offset, depth);
+			float3 o(x_start + ray_idx * w_offset, y_start + l_idx*h_offset, depth);
 			float3 d(0, 0, -1);
 			Ray ray(o, d, 0, 100000, 0, 0);
 			RayIntersectionInfo rinfo;
@@ -173,6 +193,26 @@ int main() {
 		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	}
 	///////////////////////////////
+
+
+	////////////// PLANE TRACING
+	std::cout << "Testing Plane intersection" << std::endl;
+	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
+	{
+		tStart = clock();
+		float3 x0(0.0, y_start + h_offset * l_idx, 0.0);
+		float3 n(0, 1, 0);
+		Plane plane(x0, n);
+		PlaneIntersectionInfo pinfo;
+		bvh->plane_all_intersects(plane, pinfo);
+		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+		std::vector<float3> *hits = pinfo.GetHits();
+		//for (int i = 0; i < hits->size(); i++)
+		//{
+		//	std::cout << (*hits)[i] << std::endl;
+		//}
+	}
+	//////////////////
 	return 0;
 }
 

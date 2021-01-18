@@ -70,7 +70,7 @@ public:
     std::vector<py::array_t<float>> GetHits()
     { 
         std::vector<float3> hits = *planeInfo->GetHits();
-        std::vector<py::array_t<float>> result(planeInfo->GetHitsSize());
+        std::vector<py::array_t<float>> result;
         for (int i = 0; i < planeInfo->GetHitsSize(); i++)
         {
             float3 value = hits[i];
