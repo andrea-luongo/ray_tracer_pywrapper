@@ -8,9 +8,10 @@
 #include <WindowsNumerics.h>
 #include <vector>
 #include "MyFloat3.h"
+#include "MyDouble3.h"
 namespace num = Windows::Foundation::Numerics;
 
-extern "C" RAYTRACERDLL_API inline constexpr float gamma(int n);
+extern "C" RAYTRACERDLL_API inline constexpr float gamma_error(int n);
 
 class Plane
 {

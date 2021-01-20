@@ -152,6 +152,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\sources\BVH.H" />
+    <ClInclude Include="..\..\sources\MyDouble3.h" />
     <ClInclude Include="..\..\sources\MyFloat3.h" />
     <ClInclude Include="..\..\sources\structs.h" />
     <ClInclude Include="framework.h" />
@@ -159,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\sources\BVH.cpp" />
+    <ClCompile Include="..\..\sources\MyDouble3.cpp" />
     <ClCompile Include="..\..\sources\MyFloat3.cpp" />
     <ClCompile Include="..\..\sources\structs.cpp" />
     <ClCompile Include="dllmain.cpp" />

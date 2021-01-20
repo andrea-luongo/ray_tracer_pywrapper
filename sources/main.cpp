@@ -4,7 +4,7 @@
 #include <BVH.h>
 //#include <vector>
 #include <time.h>
-
+#include <ppl.h>
 namespace py = pybind11;
 
 class PyBindPlane
@@ -228,22 +228,40 @@ public:
         //clock_t tStart = clock();
         std::vector<PyBindRay> rays(origins.size());
         std::vector<PyBindRayInfo> infos(origins.size());
-        for (int idx = 0; idx < origins.size(); idx++)
-        {
-            float3 origin(origins[idx].at(0), origins[idx].at(1), origins[idx].at(2));
-            float3 direction(directions[idx].at(0), directions[idx].at(1), directions[idx].at(2));
-            rays[idx].ray->SetOrigin(origin);
-            rays[idx].ray->SetDirection(direction);
-            rays[idx].SetMax(max);
-            rays[idx].SetMin(min);
 
-        }
+        //
+        //for (int idx = 0; idx < origins.size(); idx++)
+        //{
+        //    float3 origin(origins[idx].at(0), origins[idx].at(1), origins[idx].at(2));
+        //    float3 direction(directions[idx].at(0), directions[idx].at(1), directions[idx].at(2));
+        //    rays[idx].ray->SetOrigin(origin);
+        //    rays[idx].ray->SetDirection(direction);
+        //    rays[idx].SetMax(max);
+        //    rays[idx].SetMin(min);
+
+        //}
+        ////printf("(c++) Multiray construction: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+        ////tStart = clock();
+        //for (int idx = 0; idx < origins.size(); idx++)
+        //{
+        //    bvh->all_intersects(*rays[idx].ray, *infos[idx].rayInfo);
+        //}
+        ////printf("(c++) Multiray intesection time: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+        concurrency::parallel_for(size_t(0), origins.size(), [&](size_t idx)
+            {
+                float3 origin(origins[idx].at(0), origins[idx].at(1), origins[idx].at(2));
+                float3 direction(directions[idx].at(0), directions[idx].at(1), directions[idx].at(2));
+                rays[idx].ray->SetOrigin(origin);
+                rays[idx].ray->SetDirection(direction);
+                rays[idx].SetMax(max);
+                rays[idx].SetMin(min);
+            });
         //printf("(c++) Multiray construction: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         //tStart = clock();
-        for (int idx = 0; idx < origins.size(); idx++)
-        {
+        concurrency::parallel_for(size_t(0), origins.size(), [&](size_t idx)
+            {
             bvh->all_intersects(*rays[idx].ray, *infos[idx].rayInfo);
-        }
+            });
         //printf("(c++) Multiray intesection time: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         return py::make_tuple(rays, infos);
     };
@@ -267,6 +285,11 @@ public:
         bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
         return result;
     }
+    std::vector<py::array_t<float>> PlaneAllIntersectsHits(PyBindPlane& plane, PyBindPlaneInfo& info)
+    {
+        bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
+        return info.GetHits();
+    }
 };
 PYBIND11_MODULE(rayTracerPyWrapper, m) {
     m.doc() = R"pbdoc(
@@ -281,6 +304,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     bvh.def("MultiRayIntersect", &PyBindBVH::MultiRayIntersect);
     bvh.def("MultiRayAllIntersects", &PyBindBVH::MultiRayAllIntersects);
     bvh.def("PlaneAllIntersects", &PyBindBVH::PlaneAllIntersects);
+    bvh.def("PlaneAllIntersectsHits", &PyBindBVH::PlaneAllIntersectsHits);
     py::enum_ <SplitMethod> (bvh, "SplitMethod")
         .value("SAH", SplitMethod::SAH)
         .value("HLBVH", SplitMethod::HLBVH)

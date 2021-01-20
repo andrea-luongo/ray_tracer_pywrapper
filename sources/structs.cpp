@@ -2,7 +2,7 @@
 
 const static float machine_epsilon = std::numeric_limits<float>::epsilon() * 0.5;
 
-inline constexpr float gamma(int n)
+inline constexpr float gamma_error(int n)
 {
 	return (n * machine_epsilon) / (1 - n * machine_epsilon);
 }
@@ -142,7 +142,7 @@ bool BBox::Intersect(const Ray& ray, float* hit_t0, float* hit_t1) const
 		//update parameteric interval from slab intersection t values
 		if (tNear > tFar) std::swap(tNear, tFar);
 		//update tFar to ensure robust ray-bounds intersection
-		tFar *= 1 + 2 * gamma(3);
+		tFar *= 1 + 2 * gamma_error(3);
 		t0 = tNear > t0 ? tNear : t0;
 		t0 = tFar < t1 ? tFar : t1;
 		if (t0 > t1) return false;
@@ -160,15 +160,15 @@ bool BBox::AnyIntersect(const Ray& ray, const float3& invDir, const int dirIsNeg
 	float tMax = (bounds[1 - dirIsNeg[0]].x - ray_origin.x) * invDir.x;
 	float tyMin = (bounds[dirIsNeg[1]].y - ray_origin.y) * invDir.y;
 	float tyMax = (bounds[1 - dirIsNeg[1]].y - ray_origin.y) * invDir.y;
-	tMax *= 1 + 2 * gamma(3);
-	tyMax *= 1 + 2 * gamma(3);
+	tMax *= 1 + 2 * gamma_error(3);
+	tyMax *= 1 + 2 * gamma_error(3);
 	if (tMin > tyMax || tyMin > tMax)
 		return false;
 	if (tyMin > tMin) tMin = tyMin;
 	if (tyMax < tMax) tMax = tyMax;
 	float tzMin = (bounds[dirIsNeg[2]].z - ray_origin.z) * invDir.z;
 	float tzMax = (bounds[1 - dirIsNeg[2]].z - ray_origin.z) * invDir.z;
-	tzMax *= 1 + 2 * gamma(3);
+	tzMax *= 1 + 2 * gamma_error(3);
 	if (tMin > tzMax || tzMin > tMax)
 		return false;
 	if (tzMin > tMin) tMin = tzMin;
@@ -319,15 +319,15 @@ void Triangle::ComputeBBox()
 }
 
 bool Triangle::Intersect(Ray& ray, RayIntersectionInfo& info) {
-	float3 ray_origin = ray.GetOrigin();
-	float3 ray_direction = ray.GetDirection();
-	float3 e0 = v1 - v0;
-	float3 e1 = v0 - v2;
-	float3 n = float3::cross(e1, e0);
-	float3 e2 = 1.0 / float3::dot(n, ray_direction) * (v0 - ray_origin);
-	float3 i = float3::cross(ray_direction, e2);
-	float beta = float3::dot(i, e1);
-	float gamma = float3::dot(i, e0);
+	double3 ray_origin = ray.GetOrigin();
+	double3 ray_direction = ray.GetDirection();
+	double3 e0 = v1 - v0;
+	double3 e1 = v0 - v2;
+	double3 n = double3::cross(e1, e0);
+	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
+	double3 i = double3::cross(ray_direction, e2);
+	double beta = double3::dot(i, e1);
+	double gamma = double3::dot(i, e0);
 	float t = float3::dot(n, e2);
 	if (ray.GetMax() > t && t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
 	{
@@ -340,15 +340,15 @@ bool Triangle::Intersect(Ray& ray, RayIntersectionInfo& info) {
 }
 
 bool Triangle::AnyIntersect(Ray& ray) {
-	float3 ray_origin = ray.GetOrigin();
-	float3 ray_direction = ray.GetDirection();
-	float3 e0 = v1 - v0;
-	float3 e1 = v0 - v2;
-	float3 n = float3::cross(e1, e0);
-	float3 e2 = 1.0 / float3::dot(n, ray_direction) * (v0 - ray_origin);
-	float3 i = float3::cross(ray_direction, e2);
-	float beta = float3::dot(i, e1);
-	float gamma = float3::dot(i, e0);
+	double3 ray_origin = ray.GetOrigin();
+	double3 ray_direction = ray.GetDirection();
+	double3 e0 = v1 - v0;
+	double3 e1 = v0 - v2;
+	double3 n = double3::cross(e1, e0);
+	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
+	double3 i = double3::cross(ray_direction, e2);
+	double beta = double3::dot(i, e1);
+	double gamma = double3::dot(i, e0);
 	float t = float3::dot(n, e2);
 	if (ray.GetMax() > t && t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
 	{
@@ -358,15 +358,15 @@ bool Triangle::AnyIntersect(Ray& ray) {
 }
 
 bool Triangle::AllIntersect(Ray& ray, RayIntersectionInfo& info) {
-	float3 ray_origin = ray.GetOrigin();
-	float3 ray_direction = ray.GetDirection();
-	float3 e0 = v1 - v0;
-	float3 e1 = v0 - v2;
-	float3 n = float3::cross(e1, e0);
-	float3 e2 = 1.0 / float3::dot(n, ray_direction) * (v0 - ray_origin);
-	float3 i = float3::cross(ray_direction, e2);
-	float beta = float3::dot(i, e1);
-	float gamma = float3::dot(i, e0);
+	double3 ray_origin = ray.GetOrigin();
+	double3 ray_direction = ray.GetDirection();
+	double3 e0 = v1 - v0;
+	double3 e1 = v0 - v2;
+	double3 n = double3::cross(e1, e0);
+	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
+	double3 i = double3::cross(ray_direction, e2);
+	double beta = double3::dot(i, e1);
+	double gamma = double3::dot(i, e0);
 	float t = float3::dot(n, e2);
 	if (ray.GetMax() > t && t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
 	{

@@ -1,4 +1,5 @@
 #include "MyFloat3.h"
+#include "MyDouble3.h"
 
 float3::float3()
 {
@@ -20,6 +21,20 @@ float3::float3(float x, float y, float z)
 	this->y = y;
 	this->z = z;
 };
+
+float3::float3(const float3& d)
+{
+	this->x = d.x;
+	this->y = d.y;
+	this->z = d.z;
+};
+
+float3::float3(double3 d)
+{
+	this->x = d.x;
+	this->y = d.y;
+	this->z = d.z;
+}
 
 float float3::operator[](int i) {
 	if (i == 0)

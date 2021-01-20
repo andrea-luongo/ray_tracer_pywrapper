@@ -7,6 +7,7 @@
 #include <time.h>
 #include <fstream>
 #include <sstream>
+#include <ppl.h>
 
 bool load_obj(const char* filename, std::vector<float3> &out_vertices, float3 &b_min, float3 &b_max)
 {
@@ -135,7 +136,7 @@ int main() {
 	is_cube = false;
 	tStart = clock();
 	std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
-	filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
+	//filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
 	float3 b_min, b_max;
 	std::vector<float3> vertices;
 	load_obj(filename.c_str(), vertices, b_min, b_max);
@@ -159,6 +160,25 @@ int main() {
 	BVH* bvh = new BVH(primitives, SplitMethod::EqualCounts);
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	/////////////////////////////
+
+	//// PARALLEL FOR TEST
+	tStart = clock();
+	int sum = 0;
+	concurrency::parallel_for(size_t(0), primitives.size(), [&](size_t idx)
+		{
+			sum += idx;
+		});
+	std::cout << sum << std::endl;
+	printf("Parallel Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	tStart = clock();
+	int sum2 = 0;
+	for (int idx = 0; idx < primitives.size(); idx++)
+		{
+			sum2 += idx;
+		}
+	std::cout << sum2 << std::endl;
+	printf("Sequential Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	////////////////////
 
 	////////////////RAY TRACING
 	int number_of_rays = 10000;
