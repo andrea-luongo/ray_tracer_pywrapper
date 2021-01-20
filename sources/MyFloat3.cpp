@@ -29,7 +29,7 @@ float3::float3(const float3& d)
 	this->z = d.z;
 };
 
-float3::float3(double3 d)
+float3::float3(const double3& d)
 {
 	this->x = d.x;
 	this->y = d.y;
@@ -146,7 +146,7 @@ float3 operator-(const float3& a, float c)
 
 float3 operator-(float c, const float3& a)
 {
-	float3 result = { a.x - c, a.y - c, a.z - c };
+	float3 result = { c - a.x, c - a.y, c - a.z };
 	return result;
 }
 

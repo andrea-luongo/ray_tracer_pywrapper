@@ -6,8 +6,8 @@
 #define RAYTRACERDLL_API __declspec(dllimport)
 #endif
 #endif
-#ifndef MyFloat_H
-#define MyFloat_H
+#ifndef MyFloat3_H
+#define MyFloat3_H
 #include <iostream>
 
 class double3;
@@ -20,7 +20,7 @@ public:
 	RAYTRACERDLL_API float3();
 	RAYTRACERDLL_API float3(float x);
 	RAYTRACERDLL_API float3(float x, float y, float z);
-	RAYTRACERDLL_API float3(double3 d);
+	RAYTRACERDLL_API float3(const double3& d);
 	RAYTRACERDLL_API float3(const float3&);
 	RAYTRACERDLL_API float operator[](int i);
 	RAYTRACERDLL_API float operator[](int i) const;
