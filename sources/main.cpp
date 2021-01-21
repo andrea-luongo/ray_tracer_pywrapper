@@ -225,28 +225,8 @@ public:
 
     py::tuple MultiRayAllIntersects(std::vector<py::array_t<float>> origins, std::vector<py::array_t<float>> directions, float min, float max)
     {
-        //clock_t tStart = clock();
         std::vector<PyBindRay> rays(origins.size());
         std::vector<PyBindRayInfo> infos(origins.size());
-
-        //
-        //for (int idx = 0; idx < origins.size(); idx++)
-        //{
-        //    float3 origin(origins[idx].at(0), origins[idx].at(1), origins[idx].at(2));
-        //    float3 direction(directions[idx].at(0), directions[idx].at(1), directions[idx].at(2));
-        //    rays[idx].ray->SetOrigin(origin);
-        //    rays[idx].ray->SetDirection(direction);
-        //    rays[idx].SetMax(max);
-        //    rays[idx].SetMin(min);
-
-        //}
-        ////printf("(c++) Multiray construction: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        ////tStart = clock();
-        //for (int idx = 0; idx < origins.size(); idx++)
-        //{
-        //    bvh->all_intersects(*rays[idx].ray, *infos[idx].rayInfo);
-        //}
-        ////printf("(c++) Multiray intesection time: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         concurrency::parallel_for(size_t(0), origins.size(), [&](size_t idx)
             {
                 float3 origin(origins[idx].at(0), origins[idx].at(1), origins[idx].at(2));
@@ -256,14 +236,60 @@ public:
                 rays[idx].SetMax(max);
                 rays[idx].SetMin(min);
             });
-        //printf("(c++) Multiray construction: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        //tStart = clock();
         concurrency::parallel_for(size_t(0), origins.size(), [&](size_t idx)
             {
             bvh->all_intersects(*rays[idx].ray, *infos[idx].rayInfo);
             });
-        //printf("(c++) Multiray intesection time: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         return py::make_tuple(rays, infos);
+    };
+
+    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersectsHits(std::vector<py::array_t<float>> origins, std::vector<py::array_t<float>> directions, float min, float max)
+    {
+        std::vector<PyBindRay> rays(origins.size());
+        std::vector<PyBindRayInfo> infos(origins.size());
+        concurrency::parallel_for(size_t(0), origins.size(), [&](size_t idx)
+            {
+                float3 origin(origins[idx].at(0), origins[idx].at(1), origins[idx].at(2));
+                float3 direction(directions[idx].at(0), directions[idx].at(1), directions[idx].at(2));
+                rays[idx].ray->SetOrigin(origin);
+                rays[idx].ray->SetDirection(direction);
+                rays[idx].SetMax(max);
+                rays[idx].SetMin(min);
+            });
+        concurrency::parallel_for(size_t(0), origins.size(), [&](size_t idx)
+            {
+                bvh->all_intersects(*rays[idx].ray, *infos[idx].rayInfo);
+            });
+        std::vector<std::vector<py::array_t<float>>> hit_points(origins.size());
+        try {
+            for(int ray_idx = 0; ray_idx < origins.size(); ray_idx++)
+                {
+                    std::vector<float> t_hits = infos[ray_idx].GetHits();
+                    for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
+                    {
+                        float3 hit_point = rays[ray_idx].ray->GetOrigin() + t_hits[hit_idx] * rays[ray_idx].ray->GetDirection();
+                        auto tmp = py::array(py::buffer_info(
+                            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
+                            sizeof(float),     /* Size of one item */
+                            py::format_descriptor<float>::value, /* Buffer format */
+                            1,          /* How many dimensions? */
+                            { 3 },  /* Number of elements for each dimension */
+                            { sizeof(float) }  /* Strides for each dimension */
+                        ));
+                        auto buf = tmp.request();
+                        float* ptr = (float*)buf.ptr;
+                        ptr[0] = hit_point.x;
+                        ptr[1] = hit_point.y;
+                        ptr[2] = hit_point.z;
+                        hit_points[ray_idx].push_back(tmp);
+                    }
+                }
+        }
+        catch(...)
+        {
+            std::cout << "MEGA EXCEPTION" << std::endl;
+        }
+        return hit_points;
     };
 
     bool Intersect(PyBindRay& ray, PyBindRayInfo& info) 
@@ -303,6 +329,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     bvh.def("AllIntersects", &PyBindBVH::AllIntersects);
     bvh.def("MultiRayIntersect", &PyBindBVH::MultiRayIntersect);
     bvh.def("MultiRayAllIntersects", &PyBindBVH::MultiRayAllIntersects);
+    bvh.def("MultiRayAllIntersectsHits", &PyBindBVH::MultiRayAllIntersectsHits);
     bvh.def("PlaneAllIntersects", &PyBindBVH::PlaneAllIntersects);
     bvh.def("PlaneAllIntersectsHits", &PyBindBVH::PlaneAllIntersectsHits);
     py::enum_ <SplitMethod> (bvh, "SplitMethod")
