@@ -33,7 +33,7 @@ float4::float4(const float4& d)
 	this->z = d.z;
 	this->w = d.w;
 };
-float4::float4(const float3& d)
+float4::float4(float3 d)
 {
 	this->x = d.x;
 	this->y = d.y;
@@ -41,7 +41,7 @@ float4::float4(const float3& d)
 	this->w = 1.0f;
 };
 
-float4::float4(const double3& d)
+float4::float4(double3 d)
 {
 	this->x = d.x;
 	this->y = d.y;
@@ -96,6 +96,11 @@ float4 float4::normalize(const float4& a)
 float float4::dot(const float4& a, const float4& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+float float4::dot(const float4& b) const
+{
+	return x * b.x + y * b.y + z * b.z + w * b.w;
 }
 
 float4 float4::abs(const float4& a)

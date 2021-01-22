@@ -3,6 +3,7 @@
 //#include "../../sources/MyFloat32.h"
 //#include "../../sources/structs2.h"
 #include <BVH.h>
+#include <MyMatrix4x4.h>
 #include <random>
 #include <time.h>
 #include <fstream>
@@ -58,7 +59,7 @@ bool load_obj(const char* filename, std::vector<float3> &out_vertices, float3 &b
 		}
 		file.close();
 	}
-	float3 bbox_center = 0.5 * (b_max + b_min);
+	float3 bbox_center = 0.5f * (b_max + b_min);
 	b_max = b_max - bbox_center;
 	b_min = b_min - bbox_center;
 	for (unsigned int i = 0; i < vertexIndices.size(); i++) {
@@ -113,12 +114,16 @@ int main() {
 	clock_t tStart;
 	bool is_cube = false;
 	float height, width, depth;
+	float4 f4{ 3, 3, 4, 5 };
+	float3 f3(f4);
+	std::cout << f4 << std::endl;
+	std::cout << f3 << std::endl;
 	////////////////////// CUBE 
-	//width = 5;
-	//depth = 5;
-	//height = 5;
-	//is_cube = true;
-	//primitives = build_box(width);
+	width = 5;
+	depth = 5;
+	height = 5;
+	is_cube = true;
+	primitives = build_box(width);
 	///////////////////////
 
 	//////////////////////RANDOM PRIMITIVES
@@ -132,26 +137,26 @@ int main() {
 	/////////////////////////////////////////////////////////
 
 	/////////////// LOAD OBJ
-	std::cout << "LOAD GEOMETRY" << std::endl;
-	is_cube = false;
-	tStart = clock();
-	std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
+	//std::cout << "LOAD GEOMETRY" << std::endl;
+	//is_cube = false;
+	//tStart = clock();
+	//std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
 	//filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
-	float3 b_min, b_max;
-	std::vector<float3> vertices;
-	load_obj(filename.c_str(), vertices, b_min, b_max);
-	width = b_max.x - b_min.x;
-	height = b_max.y - b_min.y;
-	depth = b_max.z - b_min.z;
-	for (int i = 0; i < (int)(vertices.size() / 3); i++)
-	{
-		float3 p0 = vertices[i * 3];
-		float3 p1 = vertices[i * 3 +1 ];
-		float3 p2 = vertices[i * 3 + 2];
-		std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
-		primitives.push_back(primitive);
-	}
-	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//float3 b_min, b_max;
+	//std::vector<float3> vertices;
+	//load_obj(filename.c_str(), vertices, b_min, b_max);
+	//width = b_max.x - b_min.x;
+	//height = b_max.y - b_min.y;
+	//depth = b_max.z - b_min.z;
+	//for (int i = 0; i < (int)(vertices.size() / 3); i++)
+	//{
+	//	float3 p0 = vertices[i * 3];
+	//	float3 p1 = vertices[i * 3 +1 ];
+	//	float3 p2 = vertices[i * 3 + 2];
+	//	std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
+	//	primitives.push_back(primitive);
+	//}
+	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	//////////////////////////////////
 
 	/////////////////////BUILD BVH

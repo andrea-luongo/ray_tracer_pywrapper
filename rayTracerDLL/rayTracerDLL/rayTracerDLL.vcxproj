@@ -155,6 +155,7 @@
     <ClInclude Include="..\..\sources\MyDouble3.h" />
     <ClInclude Include="..\..\sources\MyFloat3.h" />
     <ClInclude Include="..\..\sources\MyFloat4.h" />
+    <ClInclude Include="..\..\sources\MyMatrix4x4.h" />
     <ClInclude Include="..\..\sources\structs.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="..\..\sources\MyDouble3.cpp" />
     <ClCompile Include="..\..\sources\MyFloat3.cpp" />
     <ClCompile Include="..\..\sources\MyFloat4.cpp" />
+    <ClCompile Include="..\..\sources\MyMatrix4x4.cpp" />
     <ClCompile Include="..\..\sources\structs.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="pch.cpp">

@@ -29,7 +29,7 @@ double3::double3(const double3& d)
 	this->z = d.z;
 };
 
-double3::double3(const float3& d)
+double3::double3(float3 d)
 {
 	this->x = d.x;
 	this->y = d.y;
@@ -78,6 +78,11 @@ double3 double3::normalize(const double3& a)
 double double3::dot(const double3& a, const double3& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+float double3::dot(const double3& b) const
+{
+	return x * b.x + y * b.y + z * b.z;
 }
 
 double3 double3::cross(const double3& a, const double3& b)

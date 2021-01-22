@@ -20,7 +20,7 @@ public:
 	RAYTRACERDLL_API double3();
 	RAYTRACERDLL_API double3(double x);
 	RAYTRACERDLL_API double3(double x, double y, double z);
-	RAYTRACERDLL_API double3(const float3& d);
+	RAYTRACERDLL_API double3(float3 d);
 	RAYTRACERDLL_API double3(const double3 &d);
 	RAYTRACERDLL_API double operator[](int i);
 	RAYTRACERDLL_API double operator[](int i) const;
@@ -29,6 +29,7 @@ public:
 	RAYTRACERDLL_API static double length(const double3& a);
 	RAYTRACERDLL_API static double3 normalize(const double3& a);
 	RAYTRACERDLL_API static double dot(const double3& a, const double3& b);
+	RAYTRACERDLL_API float dot(const double3& b) const;
 	RAYTRACERDLL_API static double3 cross(const double3& a, const double3& b);
 	RAYTRACERDLL_API static double3 abs(const double3& a);
 	RAYTRACERDLL_API double min();

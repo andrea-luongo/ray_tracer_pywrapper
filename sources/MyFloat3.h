@@ -11,6 +11,7 @@
 #include <iostream>
 
 class double3;
+class float4;
 
 class float3 {
 public:
@@ -20,7 +21,8 @@ public:
 	RAYTRACERDLL_API float3();
 	RAYTRACERDLL_API float3(float x);
 	RAYTRACERDLL_API float3(float x, float y, float z);
-	RAYTRACERDLL_API float3(const double3& d);
+	RAYTRACERDLL_API float3(float4 d);
+	RAYTRACERDLL_API float3(double3 d);
 	RAYTRACERDLL_API float3(const float3&);
 	RAYTRACERDLL_API float operator[](int i);
 	RAYTRACERDLL_API float operator[](int i) const;
@@ -29,6 +31,7 @@ public:
 	RAYTRACERDLL_API static float length(const float3& a);
 	RAYTRACERDLL_API static float3 normalize(const float3& a);
 	RAYTRACERDLL_API static float dot(const float3& a, const float3& b);
+	RAYTRACERDLL_API float dot(const float3& b) const;
 	RAYTRACERDLL_API static float3 cross(const float3& a, const float3& b);
 	RAYTRACERDLL_API static float3 abs(const float3& a);
 	RAYTRACERDLL_API float min();

@@ -1,4 +1,5 @@
 #include "MyFloat3.h"
+#include "MyFloat4.h"
 #include "MyDouble3.h"
 
 float3::float3()
@@ -29,7 +30,14 @@ float3::float3(const float3& d)
 	this->z = d.z;
 };
 
-float3::float3(const double3& d)
+float3::float3(double3 d)
+{
+	this->x = d.x;
+	this->y = d.y;
+	this->z = d.z;
+}
+
+float3::float3(float4 d)
 {
 	this->x = d.x;
 	this->y = d.y;
@@ -78,6 +86,11 @@ float3 float3::normalize(const float3& a)
 float float3::dot(const float3& a, const float3& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+float float3::dot(const float3& b) const
+{
+	return x * b.x + y * b.y + z * b.z;
 }
 
 float3 float3::cross(const float3& a, const float3& b)

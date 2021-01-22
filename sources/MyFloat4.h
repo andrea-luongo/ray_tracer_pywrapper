@@ -22,8 +22,8 @@ public:
 	RAYTRACERDLL_API float4();
 	RAYTRACERDLL_API float4(float x);
 	RAYTRACERDLL_API float4(float x, float y, float z, float w);
-	RAYTRACERDLL_API float4(const double3& d);
-	RAYTRACERDLL_API float4(const float3& d);
+	RAYTRACERDLL_API float4(double3 d);
+	RAYTRACERDLL_API float4(float3 d);
 	RAYTRACERDLL_API float4(const float4&);
 	RAYTRACERDLL_API float operator[](int i);
 	RAYTRACERDLL_API float operator[](int i) const;
@@ -32,6 +32,7 @@ public:
 	RAYTRACERDLL_API static float length(const float4& a);
 	RAYTRACERDLL_API static float4 normalize(const float4& a);
 	RAYTRACERDLL_API static float dot(const float4& a, const float4& b);
+	RAYTRACERDLL_API float dot(const float4& b) const;
 	RAYTRACERDLL_API static float4 abs(const float4& a);
 	RAYTRACERDLL_API float min();
 	RAYTRACERDLL_API static float4 min(const float4& a, const float4& b);
