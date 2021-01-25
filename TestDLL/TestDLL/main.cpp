@@ -114,10 +114,16 @@ int main() {
 	clock_t tStart;
 	bool is_cube = false;
 	float height, width, depth;
-	float4 f4{ 3, 3, 4, 5 };
-	float3 f3(f4);
-	std::cout << f4 << std::endl;
-	std::cout << f3 << std::endl;
+	
+	float4 r0(1, 2, 3, 4);
+	float4 r1(5, 6, 7, 8);
+	float4 r2(9, 10, 11, 12);
+	float4 r3(13, 14, 15, 16);
+	Matrix4x4 m(r0, r1, r2, r3);
+	std::cout << m << std::endl;
+	std::cout << m.Transpose() << std::endl;
+
+
 	////////////////////// CUBE 
 	width = 5;
 	depth = 5;

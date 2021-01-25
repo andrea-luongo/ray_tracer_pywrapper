@@ -50,11 +50,10 @@ float4 Matrix4x4::GetColumn(int c) const
 	return result;
 };
 
-//Matrix4x4 Matrix4x4::Transpose() const
-//{
-//	//float4 result(m_elements[c], m_elements[c + 4], m_elements[c + 8], m_elements[c + 12]);
-//	//return result;
-//};
+Matrix4x4 Matrix4x4::Transpose() const
+{
+	return Matrix4x4(GetColumn(0), GetColumn(1), GetColumn(2), GetColumn(3));
+};
 
 float Matrix4x4::operator[](int i) {
 	return m_elements[i];

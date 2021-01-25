@@ -7,6 +7,32 @@
 #include <ppl.h>
 namespace py = pybind11;
 
+inline Matrix4x4 reinterpret_matrix(py::array_t<float>& pd)
+{
+    py::buffer_info pd_buf = pd.request();
+    float* pd_ptr = (float*)pd_buf.ptr;
+    std::array<float, 16> el = { pd_ptr[0], pd_ptr[4], pd_ptr[8], pd_ptr[12], pd_ptr[1], pd_ptr[5], pd_ptr[9], pd_ptr[13], pd_ptr[2], pd_ptr[6], pd_ptr[10], pd_ptr[14], pd_ptr[3], pd_ptr[7], pd_ptr[11], pd_ptr[15] };
+    return Matrix4x4(el);
+}
+
+inline py::array_t<float> reinterpret_float3(float3 f)
+{
+    auto tmp = py::array(py::buffer_info(
+        nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
+        sizeof(float),     /* Size of one item */
+        py::format_descriptor<float>::value, /* Buffer format */
+        1,          /* How many dimensions? */
+        { 3 },  /* Number of elements for each dimension */
+        { sizeof(float) }  /* Strides for each dimension */
+    ));
+    auto buf = tmp.request();
+    float* ptr = (float*)buf.ptr;
+    ptr[0] = f.x;
+    ptr[1] = f.y;
+    ptr[2] = f.z;
+    return tmp;
+}
+
 class PyBindPlane
 {
 public:
@@ -24,37 +50,11 @@ public:
     }
     py::array_t<float> GetX() const {
         float3 x = plane->GetX();
-        auto result = py::array(py::buffer_info(
-            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
-            sizeof(float),     /* Size of one item */
-            py::format_descriptor<float>::value, /* Buffer format */
-            1,          /* How many dimensions? */
-            { 3 },  /* Number of elements for each dimension */
-            { sizeof(float) }  /* Strides for each dimension */
-        ));
-        auto buf = result.request();
-        float* ptr = (float*)buf.ptr;
-        ptr[0] = x.x;
-        ptr[1] = x.y;
-        ptr[2] = x.z;
-        return result;
+        return reinterpret_float3(x);
     };
     py::array_t<float> GetNormal() const {
         float3 n = plane->GetNormal();
-        auto result = py::array(py::buffer_info(
-            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
-            sizeof(float),     /* Size of one item */
-            py::format_descriptor<float>::value, /* Buffer format */
-            1,          /* How many dimensions? */
-            { 3 },  /* Number of elements for each dimension */
-            { sizeof(float) }  /* Strides for each dimension */
-        ));
-        auto buf = result.request();
-        float* ptr = (float*)buf.ptr;
-        ptr[0] = n.x;
-        ptr[1] = n.y;
-        ptr[2] = n.z;
-        return result;
+        return reinterpret_float3(n);
     };
 };
 
@@ -74,20 +74,7 @@ public:
         for (int i = 0; i < planeInfo->GetHitsSize(); i++)
         {
             float3 value = hits[i];
-            auto tmp = py::array(py::buffer_info(
-                nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
-                sizeof(float),     /* Size of one item */
-                py::format_descriptor<float>::value, /* Buffer format */
-                1,          /* How many dimensions? */
-                { 3 },  /* Number of elements for each dimension */
-                { sizeof(float) }  /* Strides for each dimension */
-            ));
-            auto buf = tmp.request();
-            float* ptr = (float*)buf.ptr;
-            ptr[0] = value.x;
-            ptr[1] = value.y;
-            ptr[2] = value.z;
-            result.push_back(tmp);
+            result.push_back(reinterpret_float3(value));
         }
         return result;
     };
@@ -97,7 +84,6 @@ public:
         planeInfo->AddHit(x0);
     };
     int GetHitsSize() { return planeInfo->GetHitsSize(); };
-
 };
 
 class PyBindRay {
@@ -120,37 +106,11 @@ public:
 
     py::array_t<float> GetDirection() const { 
         float3 d = ray->GetDirection();
-        auto result = py::array(py::buffer_info(
-            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
-            sizeof(float),     /* Size of one item */
-            py::format_descriptor<float>::value, /* Buffer format */
-            1,          /* How many dimensions? */
-            { 3 },  /* Number of elements for each dimension */
-            { sizeof(float) }  /* Strides for each dimension */
-        ));
-        auto buf = result.request();
-        float * ptr = (float*)buf.ptr;
-        ptr[0] = d.x;
-        ptr[1] = d.y;
-        ptr[2] = d.z;
-        return result;
+        return reinterpret_float3(d);
     };
     py::array_t<float> GetOrigin() const { 
         float3 o = ray->GetOrigin();
-        auto result = py::array(py::buffer_info(
-            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
-            sizeof(float),     /* Size of one item */
-            py::format_descriptor<float>::value, /* Buffer format */
-            1,          /* How many dimensions? */
-            { 3 },  /* Number of elements for each dimension */
-            { sizeof(float) }  /* Strides for each dimension */
-        ));
-        auto buf = result.request();
-        float* ptr = (float*)buf.ptr;
-        ptr[0] = o.x;
-        ptr[1] = o.y;
-        ptr[2] = o.z;
-        return result;
+        return reinterpret_float3(o);
     };
     float GetMin() const { return ray->GetMin(); };
     float GetMax() const { return ray->GetMax(); };
@@ -200,7 +160,6 @@ public:
 
     py::tuple MultiRayIntersect(std::vector<py::array_t<float>> origins, std::vector<py::array_t<float>> directions, float min, float max)
     {
-        //clock_t tStart = clock();
         std::vector<PyBindRay> rays(origins.size());
         std::vector<PyBindRayInfo> infos(origins.size());
         for (int idx = 0; idx < origins.size(); idx++)
@@ -213,13 +172,10 @@ public:
             rays[idx].SetMin(min);
             
         }
-        //printf("(c++) Multiray construction: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-        //tStart = clock();
         for (int idx = 0; idx < origins.size(); idx++)
         {
             bvh->intersect(*rays[idx].ray, *infos[idx].rayInfo);
         }
-        //printf("(c++) Multiray intesection time: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
         return py::make_tuple(rays, infos);
     };
 
@@ -243,10 +199,12 @@ public:
         return py::make_tuple(rays, infos);
     };
 
-    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersectsHits(std::vector<py::array_t<float>> origins, std::vector<py::array_t<float>> directions, float min, float max)
+    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersectsHits(std::vector<py::array_t<float>> origins, std::vector<py::array_t<float>> directions)
     {
         std::vector<PyBindRay> rays(origins.size());
         std::vector<PyBindRayInfo> infos(origins.size());
+        float min = 0;
+        float max = std::numeric_limits<float>::infinity();
         concurrency::parallel_for(size_t(0), origins.size(), [&](size_t idx)
             {
                 float3 origin(origins[idx].at(0), origins[idx].at(1), origins[idx].at(2));
@@ -268,56 +226,31 @@ public:
                     for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
                     {
                         float3 hit_point = rays[ray_idx].ray->GetOrigin() + t_hits[hit_idx] * rays[ray_idx].ray->GetDirection();
-                        auto tmp = py::array(py::buffer_info(
-                            nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
-                            sizeof(float),     /* Size of one item */
-                            py::format_descriptor<float>::value, /* Buffer format */
-                            1,          /* How many dimensions? */
-                            { 3 },  /* Number of elements for each dimension */
-                            { sizeof(float) }  /* Strides for each dimension */
-                        ));
-                        auto buf = tmp.request();
-                        float* ptr = (float*)buf.ptr;
-                        ptr[0] = hit_point.x;
-                        ptr[1] = hit_point.y;
-                        ptr[2] = hit_point.z;
-                        hit_points[ray_idx].push_back(tmp);
+                        hit_points[ray_idx].push_back(reinterpret_float3(hit_point));
                     }
                 }
         }
         catch(...)
         {
-            std::cout << "MEGA EXCEPTION" << std::endl;
+            std::cout << "Ray Intersection Exception" << std::endl;
         }
         return hit_points;
     };
 
-    std::vector<std::vector<py::array_t<float>>> SuperMultiRayAllIntersectsHits(py::array_t<float>& origin, py::array_t<float>& direction, float min, float max, int number_of_rays, py::array_t<float>& bbox_center, float ray_offset, py::array_t<float>& rotation_matrix, py::array_t<float>& inverse_matrix)
+    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersectsTransformHits(py::array_t<float>& origin, py::array_t<float>& direction, int number_of_rays, py::array_t<float>& bbox_center, float ray_offset, py::array_t<float>& rotation_matrix, py::array_t<float>& inverse_matrix)
     {
         std::vector<PyBindRay> rays(number_of_rays);
         std::vector<PyBindRayInfo> infos(number_of_rays);
         float3 o(origin.at(0), origin.at(1), origin.at(2));
         float3 ray_d(direction.at(0), direction.at(1), direction.at(2));
         float3 b_center(bbox_center.at(0), bbox_center.at(1), bbox_center.at(2));
-        py::buffer_info rot_buf = rotation_matrix.request();
-        py::buffer_info inv_buf = inverse_matrix.request();
-        float* rot_ptr = (float*)rot_buf.ptr;
-        float* inv_ptr = (float*)inv_buf.ptr;
-        std::array<float, 16> rot_el = {rot_ptr[0], rot_ptr[4], rot_ptr[8], rot_ptr[12], rot_ptr[1], rot_ptr[5], rot_ptr[9], rot_ptr[13], rot_ptr[2], rot_ptr[6], rot_ptr[10], rot_ptr[14], rot_ptr[3], rot_ptr[7], rot_ptr[11], rot_ptr[15]};
-        std::array<float, 16> inv_el = {inv_ptr[0], inv_ptr[4], inv_ptr[8], inv_ptr[12], inv_ptr[1], inv_ptr[5], inv_ptr[9], inv_ptr[13], inv_ptr[2], inv_ptr[6], inv_ptr[10], inv_ptr[14], inv_ptr[3], inv_ptr[7], inv_ptr[11], inv_ptr[15]};
-        Matrix4x4 rot_matrix(rot_el);
-        Matrix4x4 inv_matrix(inv_el);
-        //float3 ray_d = inv_matrix * (rot_matrix * d);
+        Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
+        Matrix4x4 inv_matrix = reinterpret_matrix(inverse_matrix);
+        float min = 0;
+        float max = std::numeric_limits<float>::infinity();
         concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
             {
-                //float4 ray_o(o.x + ray_offset * idx, o.y, o.z, 1.0f);
                 float3 ray_o = inv_matrix * (rot_matrix * float4(o.x + ray_offset * idx, o.y, o.z, 1.0f) + float4(b_center.x, 0, b_center.z, 0));
-    /*            if (idx == 0) {
-                    std::cout << ray_o << std::endl;
-                    std::cout << ray_d << std::endl;
-                    std::cout << inv_matrix << std::endl;
-                    std::cout << rot_matrix << std::endl;
-                }*/
                 rays[idx].ray->SetOrigin(ray_o);
                 rays[idx].ray->SetDirection(ray_d);
                 rays[idx].SetMax(max);
@@ -335,26 +268,13 @@ public:
                 for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
                 {
                     float3 hit_point = rays[ray_idx].ray->GetOrigin() + t_hits[hit_idx] * rays[ray_idx].ray->GetDirection();
-                    auto tmp = py::array(py::buffer_info(
-                        nullptr,            /* Pointer to data (nullptr -> ask NumPy to allocate!) */
-                        sizeof(float),     /* Size of one item */
-                        py::format_descriptor<float>::value, /* Buffer format */
-                        1,          /* How many dimensions? */
-                        { 3 },  /* Number of elements for each dimension */
-                        { sizeof(float) }  /* Strides for each dimension */
-                    ));
-                    auto buf = tmp.request();
-                    float* ptr = (float*)buf.ptr;
-                    ptr[0] = hit_point.x;
-                    ptr[1] = hit_point.y;
-                    ptr[2] = hit_point.z;
-                    hit_points[ray_idx].push_back(tmp);
+                    hit_points[ray_idx].push_back(reinterpret_float3(hit_point));
                 }
             }
         }
         catch (...)
         {
-            std::cout << "MEGA EXCEPTION" << std::endl;
+            std::cout << "Ray Intersection Exception" << std::endl;
         }
         return hit_points;
     };
@@ -397,7 +317,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     bvh.def("MultiRayIntersect", &PyBindBVH::MultiRayIntersect);
     bvh.def("MultiRayAllIntersects", &PyBindBVH::MultiRayAllIntersects);
     bvh.def("MultiRayAllIntersectsHits", &PyBindBVH::MultiRayAllIntersectsHits);
-    bvh.def("SuperMultiRayAllIntersectsHits", &PyBindBVH::SuperMultiRayAllIntersectsHits);
+    bvh.def("MultiRayAllIntersectsTransformHits", &PyBindBVH::MultiRayAllIntersectsTransformHits);
     bvh.def("PlaneAllIntersects", &PyBindBVH::PlaneAllIntersects);
     bvh.def("PlaneAllIntersectsHits", &PyBindBVH::PlaneAllIntersectsHits);
     py::enum_ <SplitMethod> (bvh, "SplitMethod")
