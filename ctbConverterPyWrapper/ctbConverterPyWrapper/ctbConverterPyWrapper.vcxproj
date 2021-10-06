@@ -112,6 +112,9 @@
     <PreBuildEvent>
       <Command>xcopy /y /d "$(SolutionDir)..\rayTracerDLL\x64\Release\*.dll" "$(OutDir)"</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(SolutionDir)x64\Debug\*" "C:\Users\aluo\Documents\Repositories\3DOpenSource_development\external_libraries\ctbConverterPyWrapper\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -150,6 +153,9 @@
     <PreBuildEvent>
       <Command>xcopy /y /d "$(SolutionDir)..\rayTracerDLL\x64\Release\*.dll" "$(OutDir)"</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(SolutionDir)x64\Release\*" "C:\Users\aluo\Documents\Repositories\3DOpenSource_development\external_libraries\ctbConverterPyWrapper\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\sources\ctb_main.cpp" />

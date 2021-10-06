@@ -1,6 +1,0 @@
-﻿  0 File(s) copied
-  ctb_main.cpp
-C:\Users\aluo\Documents\Repositories\ray_tracer_pywrapper\sources\structs.h(39,37): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\aluo\Documents\Repositories\ray_tracer_pywrapper\sources\structs.h(89,37): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-     Creating library C:\Users\aluo\Documents\Repositories\ray_tracer_pywrapper\ctbConverterPyWrapper\x64\Debug\ctbConverterPyWrapper.lib and object C:\Users\aluo\Documents\Repositories\ray_tracer_pywrapper\ctbConverterPyWrapper\x64\Debug\ctbConverterPyWrapper.exp
-  ctbConverterPyWrapper.vcxproj -> C:\Users\aluo\Documents\Repositories\ray_tracer_pywrapper\ctbConverterPyWrapper\x64\Debug\ctbConverterPyWrapper.pyd
