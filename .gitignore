@@ -12,3 +12,7 @@ TestDLL/TestDLL/Debug/**
 TestDLL/TestDLL/x64/**
 TestDLL/Debug/x64/**
 TestDLL/x64/**
+ctbConverterPyWrapper/.vs/**
+ctbConverterPyWrapper/ctbConverterPyWrapper/Debug/**
+ctbConverterPyWrapper/ctbConverterPyWrapper/x64/**
+ctbConverterPyWrapper/ctbConverterPyWrapper/x64/Debug/**
