@@ -49,34 +49,51 @@ void add_rep(uint8_t gray7, uint32_t stride, uint32_t& bits_on, std::vector<uint
 }
 
 
-py::array_t<int32_t> RGBA(py::array_t<int32_t>& pic)
+//py::array_t<int32_t> RGBA(py::array_t<int32_t>& pic)
+py::tuple RGBA(py::array_t<int32_t>& pic, bool compute_gray)
 {
     py::buffer_info buf1 = pic.request();
     py::array_t<int32_t> result = py::array_t<int32_t>(buf1.size);
 
     py::buffer_info buf2 = result.request();
     int32_t* ptr1 = (int32_t*)buf1.ptr,
-        * ptr2 = (int32_t*)buf2.ptr;
+        * ptr2 = (int32_t*)buf2.ptr;    
     int X = buf1.shape[0];
     int Y = buf1.shape[1];
     int Z = buf1.shape[2];
+
+    py::array_t<uint8_t> gray_result;
+    py::buffer_info buf3;
+    uint8_t* ptr3 = nullptr;
+
+    if (compute_gray) {
+        gray_result = py::array_t<uint8_t>(X*Y);
+        buf3 = gray_result.request();
+        ptr3 = (uint8_t*)buf3.ptr;
+
+    }
+
     for (size_t idx = 0; idx < X; idx++) {
         for (size_t idy = 0; idy < Y; idy++) {
             for (size_t idz = 0; idz < Z; idz++) {
                 ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
             }
+            if(compute_gray)
+                ptr3[idx * Y + idy] = uint16_t(ptr2[idx * Y * Z + idy * Z + 0] | ptr2[idx * Y * Z + idy * Z + 1] | ptr2[idx * Y * Z + idy * Z + 2]) >> uint16_t(9);
         }
     }
     // reshape array to match input shape
     result.resize({ X,Y,Z });
+    if (compute_gray)
+        gray_result.resize({ X, Y });
 
-    return result;
+    //return result;
+    return py::make_tuple(result, gray_result);
     
 }
 
 
 py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
-//py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
 {
     uint8_t color(0xff);
     uint32_t stride(0);
@@ -97,7 +114,6 @@ py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
         }
     }
     add_rep(color, stride, bits_on, rle);
-    //return py::make_tuple(rle , bits_on);
     return py::make_tuple(py::array_t<uint8_t>(rle.size(), rle.data()), bits_on);
 }
 
