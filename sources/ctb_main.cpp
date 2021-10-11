@@ -49,56 +49,49 @@ void add_rep(uint8_t gray7, uint32_t stride, uint32_t& bits_on, std::vector<uint
 }
 
 
-//py::array_t<int32_t> RGBA(py::array_t<int32_t>& pic)
-py::tuple RGBA(py::array_t<int32_t>& pic, bool compute_gray)
-{
-    py::buffer_info buf1 = pic.request();
-    py::array_t<int32_t> result = py::array_t<int32_t>(buf1.size);
-
-    py::buffer_info buf2 = result.request();
-    int32_t* ptr1 = (int32_t*)buf1.ptr,
-        * ptr2 = (int32_t*)buf2.ptr;    
-    int X = buf1.shape[0];
-    int Y = buf1.shape[1];
-    int Z = buf1.shape[2];
-
-    py::array_t<uint8_t> gray_result;
-    py::buffer_info buf3;
-    uint8_t* ptr3 = nullptr;
-
-    if (compute_gray) {
-        gray_result = py::array_t<uint8_t>(X*Y);
-        buf3 = gray_result.request();
-        ptr3 = (uint8_t*)buf3.ptr;
-
-    }
-
-    for (size_t idx = 0; idx < X; idx++) {
-        for (size_t idy = 0; idy < Y; idy++) {
-            for (size_t idz = 0; idz < Z; idz++) {
-                ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
-            }
-            if(compute_gray)
-                ptr3[idx * Y + idy] = uint16_t(ptr2[idx * Y * Z + idy * Z + 0] | ptr2[idx * Y * Z + idy * Z + 1] | ptr2[idx * Y * Z + idy * Z + 2]) >> uint16_t(9);
-        }
-    }
-    // reshape array to match input shape
-    result.resize({ X,Y,Z });
-    if (compute_gray)
-        gray_result.resize({ X, Y });
-
-    //return result;
-    return py::make_tuple(result, gray_result);
-    
-}
-
-
 py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
+//py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array, py::array_t<uint32_t> pic_size, py::array_t<uint32_t> max_size)
 {
     uint8_t color(0xff);
     uint32_t stride(0);
     std::vector<uint8_t> rle;
     uint32_t bits_on(0);
+
+    ////Step 1: add top black rows to rle
+    //uint32_t top_black_stride = floor(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5 );
+    //uint8_t black_color(0);
+    //add_rep(black_color, top_black_stride, bits_on, rle);
+    ////Step 2: for each row add black edges plus image row
+    //uint32_t left_black_stride = floor((max_size.at(1)  - pic_size.at(1)) * 0.5);
+    //uint32_t rigth_black_stride = ceil((max_size.at(1) - pic_size.at(1)) * 0.5);
+    //for (int row = 0; row < pic_size.at(0); row++)
+    //{
+    //    add_rep(black_color, left_black_stride, bits_on, rle);
+    //    for (int col = 0; col < pic_size.at(1); col++)
+    //    {
+    //        uint8_t gray7 = grey_array.at(col + row * pic_size.at(1));
+    //        if (gray7 == color)
+    //        {
+    //            stride += uint8_t(1);
+    //        }
+    //        else
+    //        {
+    //            add_rep(color, stride, bits_on, rle);
+    //            color = gray7;
+    //            stride = 1;
+    //        }
+    //        add_rep(color, stride, bits_on, rle);
+    //        color = 0xff;
+    //        stride = 0;
+    //    }
+
+    //    add_rep(black_color, rigth_black_stride, bits_on, rle);
+    //}
+    ////Step 3: add bottom black rows to rle
+    //uint32_t bottom_black_stride = ceil(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
+    //add_rep(black_color, bottom_black_stride, bits_on, rle);
+
+
     for (int idx = 0; idx < grey_array.size(); idx++)
     {
         uint8_t gray7 = grey_array.at(idx);
@@ -114,7 +107,54 @@ py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
         }
     }
     add_rep(color, stride, bits_on, rle);
+
+
     return py::make_tuple(py::array_t<uint8_t>(rle.size(), rle.data()), bits_on);
+}
+
+
+
+//py::array_t<int32_t> RGBA(py::array_t<int32_t>& pic)
+py::tuple RGBA(py::array_t<int32_t>& pic, bool compute_gray)
+{
+    py::buffer_info buf1 = pic.request();
+    py::array_t<int32_t> result = py::array_t<int32_t>(buf1.size);
+
+    py::buffer_info buf2 = result.request();
+    int32_t* ptr1 = (int32_t*)buf1.ptr,
+        * ptr2 = (int32_t*)buf2.ptr;
+    int X = buf1.shape[0];
+    int Y = buf1.shape[1];
+    int Z = buf1.shape[2];
+
+    py::array_t<uint8_t> gray_result;
+    py::buffer_info buf3;
+    uint8_t* ptr3 = nullptr;
+
+    if (compute_gray) {
+        gray_result = py::array_t<uint8_t>(X * Y);
+        buf3 = gray_result.request();
+        ptr3 = (uint8_t*)buf3.ptr;
+
+    }
+
+    for (size_t idx = 0; idx < X; idx++) {
+        for (size_t idy = 0; idy < Y; idy++) {
+            for (size_t idz = 0; idz < Z; idz++) {
+                ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
+            }
+            if (compute_gray)
+                ptr3[idx * Y + idy] = uint16_t(ptr2[idx * Y * Z + idy * Z + 0] | ptr2[idx * Y * Z + idy * Z + 1] | ptr2[idx * Y * Z + idy * Z + 2]) >> uint16_t(9);
+        }
+    }
+    // reshape array to match input shape
+    result.resize({ X,Y,Z });
+    if (compute_gray)
+        gray_result.resize({ X, Y });
+
+    //return result;
+    return py::make_tuple(result, gray_result);
+
 }
 
 
