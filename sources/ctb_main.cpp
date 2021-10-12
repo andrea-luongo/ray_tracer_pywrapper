@@ -49,48 +49,121 @@ void add_rep(uint8_t gray7, uint32_t stride, uint32_t& bits_on, std::vector<uint
 }
 
 
-py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
-//py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array, py::array_t<uint32_t> pic_size, py::array_t<uint32_t> max_size)
+py::tuple rle_encode_graymap_fast(py::array_t<uint8_t>& grey_array, py::array_t<uint32_t> pic_size, py::array_t<uint32_t> max_size)
 {
     uint8_t color(0xff);
     uint32_t stride(0);
     std::vector<uint8_t> rle;
     uint32_t bits_on(0);
 
-    ////Step 1: add top black rows to rle
-    //uint32_t top_black_stride = floor(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5 );
-    //uint8_t black_color(0);
-    //add_rep(black_color, top_black_stride, bits_on, rle);
-    ////Step 2: for each row add black edges plus image row
-    //uint32_t left_black_stride = floor((max_size.at(1)  - pic_size.at(1)) * 0.5);
-    //uint32_t rigth_black_stride = ceil((max_size.at(1) - pic_size.at(1)) * 0.5);
-    //for (int row = 0; row < pic_size.at(0); row++)
-    //{
-    //    add_rep(black_color, left_black_stride, bits_on, rle);
-    //    for (int col = 0; col < pic_size.at(1); col++)
-    //    {
-    //        uint8_t gray7 = grey_array.at(col + row * pic_size.at(1));
-    //        if (gray7 == color)
-    //        {
-    //            stride += uint8_t(1);
-    //        }
-    //        else
-    //        {
-    //            add_rep(color, stride, bits_on, rle);
-    //            color = gray7;
-    //            stride = 1;
-    //        }
-    //        add_rep(color, stride, bits_on, rle);
-    //        color = 0xff;
-    //        stride = 0;
-    //    }
+    uint8_t black_color(0);
+    //Step 1: add top black rows to rle
+    uint32_t top_black_stride = floor(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5 );
+    add_rep(black_color, top_black_stride, bits_on, rle);
+    //Step 2: for each row add black edges plus image row
+    uint32_t left_black_stride = floor((max_size.at(1)  - pic_size.at(1)) * 0.5);
+    uint32_t rigth_black_stride = ceil((max_size.at(1) - pic_size.at(1)) * 0.5);
+    for (int row = 0; row < pic_size.at(0); row++)
+    {
+        add_rep(black_color, left_black_stride, bits_on, rle);
+        for (int col = 0; col < pic_size.at(1); col++)
+        {
+            uint8_t gray7 = grey_array.at(col + row * pic_size.at(1));
+            if (gray7 == color)
+            {
+                stride += uint8_t(1);
+            }
+            else
+            {
+                add_rep(color, stride, bits_on, rle);
+                color = gray7;
+                stride = 1;
+            }
+            add_rep(color, stride, bits_on, rle);
+            color = 0xff;
+            stride = 0;
+        }
 
-    //    add_rep(black_color, rigth_black_stride, bits_on, rle);
-    //}
-    ////Step 3: add bottom black rows to rle
-    //uint32_t bottom_black_stride = ceil(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
-    //add_rep(black_color, bottom_black_stride, bits_on, rle);
+        add_rep(black_color, rigth_black_stride, bits_on, rle);
+    }
+    //Step 3: add bottom black rows to rle
+    uint32_t bottom_black_stride = ceil(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
+    add_rep(black_color, bottom_black_stride, bits_on, rle);
 
+    return py::make_tuple(py::array_t<uint8_t>(rle.size(), rle.data()), bits_on);
+}
+
+
+py::tuple rle_encode_graymap_super_fast(py::array_t<uint8_t>& grey_array, py::array_t<uint32_t> pic_size, py::array_t<uint32_t> max_size)
+{
+    uint8_t color(0xff);
+    uint32_t stride(0);
+    std::vector<uint8_t> rle;
+    uint32_t bits_on(0);
+
+    uint8_t black_color(0);
+
+    uint32_t top_black_stride = floor(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
+    uint32_t left_black_stride = floor((max_size.at(1) - pic_size.at(1)) * 0.5);
+    uint32_t rigth_black_stride = ceil((max_size.at(1) - pic_size.at(1)) * 0.5);
+    uint32_t bottom_black_stride = ceil(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
+
+    color = black_color;
+    stride = top_black_stride;
+    for (int row = 0; row < pic_size.at(0); row++)
+    {
+        if (color == black_color) {
+            stride += left_black_stride;
+        }
+        else {
+            add_rep(color, stride, bits_on, rle);
+            color = black_color;
+            stride = left_black_stride;
+        }
+        for (int col = 0; col < pic_size.at(1); col++)
+        {
+            uint8_t gray7 = grey_array.at(col + row * pic_size.at(1));
+            if (gray7 == color)
+            {
+                stride += uint8_t(1);
+            }
+            else
+            {
+                add_rep(color, stride, bits_on, rle);
+                color = gray7;
+                stride = 1;
+            }
+        }
+        if (color == black_color) {
+            stride += rigth_black_stride;
+        }
+        else {
+            add_rep(color, stride, bits_on, rle);
+            color = black_color;
+            stride = rigth_black_stride;
+        }
+    }
+    //Step 3: add bottom black rows to rle
+    if (color == black_color) {
+        stride += bottom_black_stride;
+    }
+    else {
+        add_rep(color, stride, bits_on, rle);
+        color = black_color;
+        stride = bottom_black_stride;
+    }
+    add_rep(color, stride, bits_on, rle);
+
+    return py::make_tuple(py::array_t<uint8_t>(rle.size(), rle.data()), bits_on);
+}
+
+
+py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
+{
+    uint8_t color(0xff);
+    uint32_t stride(0);
+    std::vector<uint8_t> rle;
+    uint32_t bits_on(0);
 
     for (int idx = 0; idx < grey_array.size(); idx++)
     {
@@ -163,6 +236,8 @@ PYBIND11_MODULE(ctbConverterPyWrapper, m) {
         Pybind wrapper for .ctb conversion
     )pbdoc";
     m.def("rle_encode_graymap", &rle_encode_graymap);
+    m.def("rle_encode_graymap_fast", &rle_encode_graymap_fast);
+    m.def("rle_encode_graymap_super_fast", &rle_encode_graymap_super_fast);
     m.def("RGBA", &RGBA);
   
     
