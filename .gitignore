@@ -16,3 +16,6 @@ ctbConverterPyWrapper/.vs/**
 ctbConverterPyWrapper/ctbConverterPyWrapper/Debug/**
 ctbConverterPyWrapper/ctbConverterPyWrapper/x64/**
 ctbConverterPyWrapper/ctbConverterPyWrapper/x64/Debug/**
+ctbConverterPyWrapper/crc64PyWrapper/Debug/**
+ctbConverterPyWrapper/crc64PyWrapper/x64/**
+ctbConverterPyWrapper/crc64PyWrapper/x64/Debug/**
