@@ -212,13 +212,21 @@ py::tuple RGBA(py::array_t<int32_t>& pic, bool compute_gray)
     }
 
     for (size_t idx = 0; idx < X; idx++) {
-        for (size_t idy = 0; idy < Y; idy++) {
-            for (size_t idz = 0; idz < Z; idz++) {
-                ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
-            }
-            if (compute_gray)
-                ptr3[idx * Y + idy] = uint16_t(ptr2[idx * Y * Z + idy * Z + 0] | ptr2[idx * Y * Z + idy * Z + 1] | ptr2[idx * Y * Z + idy * Z + 2]) >> uint16_t(9);
-        }
+        concurrency::parallel_for(0, Y, [&](int idy)
+            {
+                for (size_t idz = 0; idz < Z; idz++) {
+                    ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
+                }
+                if (compute_gray)
+                    ptr3[idx * Y + idy] = uint16_t(ptr2[idx * Y * Z + idy * Z + 0] | ptr2[idx * Y * Z + idy * Z + 1] | ptr2[idx * Y * Z + idy * Z + 2]) >> uint16_t(9);
+            });
+        //for (size_t idy = 0; idy < Y; idy++) {
+        //    for (size_t idz = 0; idz < Z; idz++) {
+        //        ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
+        //    }
+        //    if (compute_gray)
+        //        ptr3[idx * Y + idy] = uint16_t(ptr2[idx * Y * Z + idy * Z + 0] | ptr2[idx * Y * Z + idy * Z + 1] | ptr2[idx * Y * Z + idy * Z + 2]) >> uint16_t(9);
+        //}
     }
     // reshape array to match input shape
     result.resize({ X,Y,Z });
