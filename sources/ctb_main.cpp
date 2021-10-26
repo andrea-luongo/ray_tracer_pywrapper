@@ -103,10 +103,10 @@ py::tuple rle_encode_graymap_super_fast(py::array_t<uint8_t>& grey_array, py::ar
 
     uint8_t black_color(0);
 
-    uint32_t top_black_stride = floor(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
+    uint32_t top_black_stride = max_size.at(1) * floor((max_size.at(0) - pic_size.at(0)) * 0.5);
     uint32_t left_black_stride = floor((max_size.at(1) - pic_size.at(1)) * 0.5);
     uint32_t rigth_black_stride = ceil((max_size.at(1) - pic_size.at(1)) * 0.5);
-    uint32_t bottom_black_stride = ceil(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
+    uint32_t bottom_black_stride = max_size.at(1) * ceil((max_size.at(0) - pic_size.at(0)) * 0.5);
 
     color = black_color;
     stride = top_black_stride;
