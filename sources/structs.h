@@ -133,6 +133,22 @@ public:
 	RAYTRACERDLL_API virtual bool PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info) = 0;
 };
 
+
+class Segment : public Primitive
+{
+public:
+	float3 v0;
+	float3 v1;
+public:
+	RAYTRACERDLL_API Segment(const float3& p0, const float3& p1);
+	RAYTRACERDLL_API void ComputeBBox();
+	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
+	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API bool PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info);
+};
+
+
 class Sphere : public Primitive
 {
 public:

@@ -7,6 +7,11 @@ inline constexpr float gamma_error(int n)
 	return (n * machine_epsilon) / (1 - n * machine_epsilon);
 }
 
+template <typename T> constexpr int sign(T x)
+{
+	return (T(0) < x) - (x < T(0));
+}
+
 Plane::Plane() 
 { 
 	x_0 = float3(0); 
@@ -203,6 +208,81 @@ bool BBox::PlaneAnyIntersect(const Plane& plane) const
 	return false;
 }
 
+
+Segment::Segment(const float3& p0, const float3& p1) { v0 = p0; v1= p1; ComputeBBox(); }
+
+void Segment::ComputeBBox()
+{
+	bbox = BBox(float3::min(v0, v1), float3::max(v0,v1));
+	return;
+}
+
+bool Segment::Intersect(Ray& ray, RayIntersectionInfo& info)
+{
+	float3 s = v1 - v0;
+	float3 e = v0 - ray.GetOrigin();
+	float3 cross_dir_s = float3::cross(ray.GetDirection(), s);
+	float3 cross_e_dir = float3::cross(e, ray.GetDirection());
+	float x = float3::length(cross_dir_s);
+	float t = float3::length(float3::cross(e, s)) / x;
+	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
+	if (ray.GetMax() > t && t > ray.GetMin() && u >= 0.0f)
+	{
+		ray.SetMax(t);
+		float3 n = float3::cross(float3::cross(ray.GetDirection(), s), s);
+		info.SetNormal(float3::normalize(n));
+		info.AddClosestHit(t);
+		return true;
+	}
+	return false;
+}
+
+bool Segment::AnyIntersect(Ray& ray)
+{
+	float3 s = v1 - v0;
+	float3 e = v0 - ray.GetOrigin();
+	float3 cross_dir_s = float3::cross(ray.GetDirection(), s);
+	float3 cross_e_dir = float3::cross(e, ray.GetDirection());
+	float x = float3::length(cross_dir_s);
+	float t = float3::length(float3::cross(e, s)) / x;
+	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
+	if (ray.GetMax() > t && t > ray.GetMin() && u >= 0.0f)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool Segment::AllIntersect(Ray& ray, RayIntersectionInfo& info)
+{
+	float3 s = v1 - v0;
+	float3 e = v0 - ray.GetOrigin();
+	float3 cross_dir_s = float3::cross(ray.GetDirection(), s);
+	float3 cross_e_dir = float3::cross(e, ray.GetDirection());
+	float x = float3::length(cross_dir_s);
+	float t = float3::length(float3::cross(e, s)) / x;
+	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
+	if (ray.GetMax() > t && t > ray.GetMin() && u >= 0.0f)
+	{
+		info.AddHit(t);
+		return true;
+	}
+	return false;
+}
+
+bool Segment::PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info)
+{
+	bool hit = false;
+	float3 p0;
+	bool intersects = plane.PlaneSegmentIntersection(v0, v1, p0);
+	if (intersects)
+	{
+		info.AddHit(p0);
+		hit = true;
+
+	}
+	return hit;
+}
 
 Sphere::Sphere(const float r, const float3& c) { radius = r; center = c; ComputeBBox(); }
 		
