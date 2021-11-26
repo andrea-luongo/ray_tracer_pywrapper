@@ -99,7 +99,9 @@ public:
 	RAYTRACERDLL_API BBox(const float3& p);
 	RAYTRACERDLL_API BBox(const float3& p0, const float3& p1);
 	RAYTRACERDLL_API float3 GetpMax();
+	RAYTRACERDLL_API float3 GetpMax() const;
 	RAYTRACERDLL_API float3 GetpMin();
+	RAYTRACERDLL_API float3 GetpMin() const;
 	RAYTRACERDLL_API const float3& operator[](const int i) const;
 	RAYTRACERDLL_API float3& operator[](const int i);
 	RAYTRACERDLL_API float3 Corner(int corner) const;

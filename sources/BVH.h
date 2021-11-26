@@ -71,6 +71,7 @@ public:
 	RAYTRACERDLL_API bool any_intersect(Ray& ray);
 	RAYTRACERDLL_API bool all_intersects(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool plane_all_intersects(Plane& plane, PlaneIntersectionInfo& info);
+	RAYTRACERDLL_API BBox getBVHBBox() { return nodes[0].bounds; };
 protected:
 	//BVHBuildNode* HLBVHBuild(const std::vector<BVHPrimitiveInfo>& primitiveInfo, int* totalNodes, std::vector<std::shared_ptr<Primitive>>& orderedPrims);
 	BVHBuildNode* recursiveBuild(std::vector<BVHPrimitiveInfo>& primitiveInfo, int start, int end, int* totalNodes, std::vector<std::shared_ptr<Primitive>>& orderedPrims);
