@@ -32,12 +32,37 @@ public:
 	std::shared_ptr<Contour> contour;
 	std::vector<std::shared_ptr<ContourNode>> children;
 	std::shared_ptr<ContourNode> parent;
+	int depth = 0;
 public:
 	ContourNode() { contour = nullptr; parent = nullptr; };
 	ContourNode(std::shared_ptr<Contour> c) { contour = c; parent = nullptr; };
-	ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p) { contour = c; parent = p; };
-	void SetChildren(std::vector<std::shared_ptr<ContourNode>> c) { children = c; };
-	void AddChild(std::shared_ptr<ContourNode> c) { children.push_back(c); };
+	ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p) { contour = c; p->AddChild(std::shared_ptr<ContourNode>(this)); };
+	void SetChildren(std::vector<std::shared_ptr<ContourNode>> c) 
+	{ 
+		children = c;
+		for (std::shared_ptr<ContourNode> n : children) 
+		{
+			n->parent = std::shared_ptr<ContourNode>(this);
+			n->depth = depth + 1;
+		}
+	};
+	void AddChild(std::shared_ptr<ContourNode> c) 
+	{ 
+		children.push_back(c);
+		c->parent = std::shared_ptr<ContourNode>(this);
+		c->depth = depth + 1; 
+	};
+	
+	std::vector<std::shared_ptr<Contour>> GetChildrenContours() 
+	{
+		std::vector<std::shared_ptr<Contour>> children_contour(children.size());
+		for (int idx = 0; idx < children.size(); idx++)
+		{
+			children_contour[idx] = children[idx]->contour;
+		}
+		return children_contour;
+	};
+
 	std::vector<std::shared_ptr<ContourNode>> GetDescendants() 
 	{ 
 		std::vector<std::shared_ptr<ContourNode>> descendants;
@@ -50,6 +75,7 @@ public:
 		}
 		return descendants;
 	};
+
 	std::vector<std::shared_ptr<ContourNode>> GetAncestors()
 	{
 		std::vector<std::shared_ptr<ContourNode>> ancestors;
@@ -72,8 +98,8 @@ public:
 	std::vector<std::shared_ptr<Contour>> contours;
 	ContourNode* tree_root;
 	BVH* root_bvh;
-	BVH* tree_global_bvsh;
-	BVH* tree_individual_bvhs;
+	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
+	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;
 
 private:
 	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);

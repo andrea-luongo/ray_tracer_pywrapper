@@ -126,7 +126,7 @@ void ContourTree::BuildTree()
 	for (int i_idx = 0; i_idx < contour_nodes.size() - 1; i_idx++)
 	{
 		float closest_hit = std::numeric_limits<float>::max();
-		std::shared_ptr<ContourNode> possible_parent;
+		std::shared_ptr<ContourNode> possible_parent = nullptr;
 		std::vector<std::shared_ptr<ContourNode>> possible_children;
 		std::shared_ptr<ContourNode> i_node = contour_nodes[i_idx];
 		for (int j_idx = 0; j_idx < contour_nodes.size() - 1; j_idx++)
@@ -181,17 +181,53 @@ void ContourTree::CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<
 	}
 }
 
+//build a global root bvh
 void ContourTree::BuildRootBVH()
 {
-
+	std::vector<std::shared_ptr<Contour>> root_children_contours = tree_root->GetChildrenContours();
+	root_bvh = new BVH({ root_children_contours.begin(), root_children_contours.end() }, SplitMethod::EqualCounts, 255);
 }
 
+//build a tree for each set of external-internal contours
 void ContourTree::BuildTreeIndividualBVH()
 {
+	for (std::shared_ptr<ContourNode> c : tree_root->children)
+	{
+		std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
+		nodes.push_back(c);
+		std::vector<std::shared_ptr<BVH>> node_bvhs;
 
+		for (int idx = 0; idx < nodes.size(); idx++)
+		{
+			if (nodes[idx]->depth % 2 == 1)
+			{
+				std::vector<std::shared_ptr<Contour>> contours = nodes[idx]->GetChildrenContours();
+				contours.push_back(nodes[idx]->contour);
+				BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+				node_bvhs.push_back(std::shared_ptr<BVH>(bvh));
+			}
+			
+		}
+
+		tree_individual_bvhs.push_back(node_bvhs);
+	}
 }
 
+
+//build a bvh for each tree_root children
 void ContourTree::BuildTreeGlobalBVH()
 {
-
+	for (std::shared_ptr<ContourNode> c : tree_root->children) 
+	{
+		std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
+		nodes.push_back(c);
+		std::vector<std::shared_ptr<Contour>> contours(nodes.size());
+		for (int idx = 0; idx < nodes.size(); idx++)
+		{
+			contours[idx] = nodes[idx]->contour;
+		}
+		//std::shared_ptr<BVH> a = std::make_shared<BVH>({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+		BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+		tree_global_bvsh.push_back(std::shared_ptr<BVH>(bvh));
+	}
 }
