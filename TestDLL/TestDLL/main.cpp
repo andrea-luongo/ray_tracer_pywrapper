@@ -3,6 +3,7 @@
 //#include "../../sources/MyFloat32.h"
 //#include "../../sources/structs2.h"
 #include <BVH.h>
+#include <Contour.h>
 #include <MyMatrix4x4.h>
 #include <random>
 #include <time.h>
@@ -108,142 +109,224 @@ std::vector<std::shared_ptr<Primitive>> build_box(float l)
 }
 
 
+//int main() {
+//	// TESTING BVH CONSTRUCTION AND INTERSECTION
+//	std::vector<std::shared_ptr<Primitive>> primitives;
+//	clock_t tStart;
+//	bool is_cube = false;
+//	float height, width, depth;
+//	
+//	float4 r0(1, 2, 3, 4);
+//	float4 r1(5, 6, 7, 8);
+//	float4 r2(9, 10, 11, 12);
+//	float4 r3(13, 14, 15, 16);
+//	Matrix4x4 m(r0, r1, r2, r3);
+//	std::cout << m << std::endl;
+//	std::cout << m.Transpose() << std::endl;
+//
+//
+//	////////////////////// CUBE 
+//	width = 5;
+//	depth = 5;
+//	height = 5;
+//	is_cube = true;
+//	primitives = build_box(width);
+//	///////////////////////
+//
+//	//////////////////////RANDOM PRIMITIVES
+//	//generate "number_of_primitives" random triangles and store them in a vector
+//	//srand((unsigned)time(NULL));
+//	//int number_of_primitives = 65000;
+//	//std::cout << "Generating " << number_of_primitives << " random primitives" << std::endl;
+//	//tStart = clock();
+//	//std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
+//	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+//	/////////////////////////////////////////////////////////
+//
+//	/////////////// LOAD OBJ
+//	//std::cout << "LOAD GEOMETRY" << std::endl;
+//	//is_cube = false;
+//	//tStart = clock();
+//	//std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
+//	//filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
+//	//float3 b_min, b_max;
+//	//std::vector<float3> vertices;
+//	//load_obj(filename.c_str(), vertices, b_min, b_max);
+//	//width = b_max.x - b_min.x;
+//	//height = b_max.y - b_min.y;
+//	//depth = b_max.z - b_min.z;
+//	//for (int i = 0; i < (int)(vertices.size() / 3); i++)
+//	//{
+//	//	float3 p0 = vertices[i * 3];
+//	//	float3 p1 = vertices[i * 3 +1 ];
+//	//	float3 p2 = vertices[i * 3 + 2];
+//	//	std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
+//	//	primitives.push_back(primitive);
+//	//}
+//	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+//	//////////////////////////////////
+//
+//	/////////////////////BUILD BVH
+//	std::cout << "Building BVH" << std::endl;
+//	tStart = clock();
+//	BVH* bvh = new BVH(primitives, SplitMethod::EqualCounts);
+//	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+//	/////////////////////////////
+//
+//	//// PARALLEL FOR TEST
+//	tStart = clock();
+//	int sum = 0;
+//	concurrency::parallel_for(size_t(0), primitives.size(), [&](size_t idx)
+//		{
+//			sum += idx;
+//		});
+//	std::cout << sum << std::endl;
+//	printf("Parallel Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+//	tStart = clock();
+//	int sum2 = 0;
+//	for (int idx = 0; idx < primitives.size(); idx++)
+//		{
+//			sum2 += idx;
+//		}
+//	std::cout << sum2 << std::endl;
+//	printf("Sequential Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+//	////////////////////
+//
+//	////////////////RAY TRACING
+//	int number_of_rays = 10000;
+//	int number_of_layers = 10;
+//	float w_offset, h_offset;
+//	float x_start, y_start;
+//	if (is_cube)
+//	{
+//		w_offset = 2 * width / number_of_rays;
+//		h_offset = 2 * height / number_of_layers;
+//		x_start = -width;
+//		y_start = -height;
+//	}
+//	else
+//	{
+//		w_offset = width / number_of_rays;
+//		h_offset = height / number_of_layers;
+//		x_start = -0.5*width;
+//		y_start = -0.5*height;
+//	}
+//	std::cout << "Testing ray intersection" << std::endl;
+//	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
+//	{
+//		tStart = clock();
+//		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++) {
+//			float3 o(x_start + ray_idx * w_offset, y_start + l_idx*h_offset, depth);
+//			float3 d(0, 0, -1);
+//			Ray ray(o, d, 0, 100000, 0, 0);
+//			RayIntersectionInfo rinfo;
+//			bvh->all_intersects(ray, rinfo);
+//		}
+//		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+//	}
+//	///////////////////////////////
+//
+//
+//	////////////// PLANE TRACING
+//	std::cout << "Testing Plane intersection" << std::endl;
+//	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
+//	{
+//		tStart = clock();
+//		float3 x0(0.0, y_start + h_offset * l_idx, 0.0);
+//		float3 n(0, 1, 0);
+//		Plane plane(x0, n);
+//		PlaneIntersectionInfo pinfo;
+//		bvh->plane_all_intersects(plane, pinfo);
+//		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+//		std::vector<float3> *hits = pinfo.GetHits();
+//		//for (int i = 0; i < hits->size(); i++)
+//		//{
+//		//	std::cout << (*hits)[i] << std::endl;
+//		//}
+//	}
+//	//////////////////
+//	return 0;
+//}
+
+
 int main() {
 	// TESTING BVH CONSTRUCTION AND INTERSECTION
-	std::vector<std::shared_ptr<Primitive>> primitives;
+	std::vector<float> points_a = { 3.0902, 2.5, - 5 ,0.0095 ,2.5, - 5,0.0095, 2.5, - 5, - 3.0902, 2.5, - 5,- 3.0902, 2.5, - 5, - 3.0902, 2.5, 0.0153,- 3.0902, 2.5, 0.0153 ,- 3.0902, 2.5, 5,
+			- 3.0902, 2.5, 5, - 0.0095, 2.5, 5, - 0.0095, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 5 };
+
+	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
+	for (int i = 0; i < (int)(points_a.size() / 6); i++)
+	{
+		float3 p0(points_a[i * 6], points_a[i * 6 + 1], points_a[i * 6 + 2]);
+		float3 p1(points_a[i * 6 + 3], points_a[i * 6 + 4], points_a[i * 6 + 5]);
+		//std::shared_ptr<Primitive> primitive = std::shared_ptr<Segment>(new Segment(p0, p1));
+		std::cout << p0 << ' ' << p1 << std::endl;
+		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+		//primitives.push_back(primitive);
+	}
+
+
+	std::vector<float> points_b(points_a.size());
+	for (int i = 0; i < points_b.size(); i++)
+	{
+		float p = points_a[i];
+		if (i % 3 != 1)
+			p *= 0.5f;
+		points_b[i] = p;
+	}
+	std::vector<std::shared_ptr<Segment>> primitives_b((int)(points_b.size() / 6));
+	for (int i = 0; i < (int)(points_b.size() / 6); i++)
+	{
+		float3 p0(points_b[i * 6], points_b[i * 6 + 1], points_b[i * 6 + 2]);
+		float3 p1(points_b[i * 6 + 3], points_b[i * 6 + 4], points_b[i * 6 + 5]);
+		//std::shared_ptr<Primitive> primitive = std::shared_ptr<Segment>(new Segment(p0, p1));
+		std::cout << p0 << ' ' << p1 << std::endl;
+		primitives_b[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+		//primitives.push_back(primitive);
+	}
+
 	clock_t tStart;
-	bool is_cube = false;
-	float height, width, depth;
 	
-	float4 r0(1, 2, 3, 4);
-	float4 r1(5, 6, 7, 8);
-	float4 r2(9, 10, 11, 12);
-	float4 r3(13, 14, 15, 16);
-	Matrix4x4 m(r0, r1, r2, r3);
-	std::cout << m << std::endl;
-	std::cout << m.Transpose() << std::endl;
 
-
-	////////////////////// CUBE 
-	width = 5;
-	depth = 5;
-	height = 5;
-	is_cube = true;
-	primitives = build_box(width);
-	///////////////////////
-
-	//////////////////////RANDOM PRIMITIVES
-	//generate "number_of_primitives" random triangles and store them in a vector
-	//srand((unsigned)time(NULL));
-	//int number_of_primitives = 65000;
-	//std::cout << "Generating " << number_of_primitives << " random primitives" << std::endl;
-	//tStart = clock();
-	//std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
-	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	/////////////////////////////////////////////////////////
-
-	/////////////// LOAD OBJ
-	//std::cout << "LOAD GEOMETRY" << std::endl;
-	//is_cube = false;
-	//tStart = clock();
-	//std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
-	//filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
-	//float3 b_min, b_max;
-	//std::vector<float3> vertices;
-	//load_obj(filename.c_str(), vertices, b_min, b_max);
-	//width = b_max.x - b_min.x;
-	//height = b_max.y - b_min.y;
-	//depth = b_max.z - b_min.z;
-	//for (int i = 0; i < (int)(vertices.size() / 3); i++)
-	//{
-	//	float3 p0 = vertices[i * 3];
-	//	float3 p1 = vertices[i * 3 +1 ];
-	//	float3 p2 = vertices[i * 3 + 2];
-	//	std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
-	//	primitives.push_back(primitive);
-	//}
-	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	//////////////////////////////////
-
-	/////////////////////BUILD BVH
-	std::cout << "Building BVH" << std::endl;
+	/////////////////////BUILD Contour
+	std::cout << "Building Contour" << std::endl;
 	tStart = clock();
-	BVH* bvh = new BVH(primitives, SplitMethod::EqualCounts);
+	std::shared_ptr<Contour> contour_a(new Contour(primitives_a));
+	std::shared_ptr<Contour> contour_b(new Contour(primitives_b));
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	/////////////////////////////
 
-	//// PARALLEL FOR TEST
+	/////////////////////BUILD ContourTree
+
+	std::cout << "Building Tree Contour" << std::endl;
 	tStart = clock();
-	int sum = 0;
-	concurrency::parallel_for(size_t(0), primitives.size(), [&](size_t idx)
+	ContourTree contour_tree({contour_a, contour_b});
+	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+
+	int number_of_rays = 10;
+	BBox bbox = contour_a->GetBBox();
+	float3 pmin = bbox.GetpMin();
+	float3 pmax = bbox.GetpMax();
+	float width = pmax[0] - pmin[0];
+	float3 origin_0(pmin[0], pmin[1], pmin[2] + 10.0);
+	float3 direction(0.0, 0.0, -1.0);
+	for (int idx = 0; idx < number_of_rays; idx++)
+	{
+		float3 origin = origin_0 + float3(width / number_of_rays * idx ,0.0, 0.0);
+		Ray ray(origin, direction, 0, 1000, 0, 0);
+		RayIntersectionInfo info;
+		for (std::vector<std::shared_ptr<BVH>> branch : contour_tree.tree_individual_bvhs)
 		{
-			sum += idx;
-		});
-	std::cout << sum << std::endl;
-	printf("Parallel Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	tStart = clock();
-	int sum2 = 0;
-	for (int idx = 0; idx < primitives.size(); idx++)
-		{
-			sum2 += idx;
+			for (std::shared_ptr<BVH> bvh : branch)
+			{
+				bvh->all_intersects(ray, info);
+				std::cout << (info.GetHits()) << std::endl;
+
+			}
+
 		}
-	std::cout << sum2 << std::endl;
-	printf("Sequential Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	////////////////////
 
-	////////////////RAY TRACING
-	int number_of_rays = 10000;
-	int number_of_layers = 10;
-	float w_offset, h_offset;
-	float x_start, y_start;
-	if (is_cube)
-	{
-		w_offset = 2 * width / number_of_rays;
-		h_offset = 2 * height / number_of_layers;
-		x_start = -width;
-		y_start = -height;
 	}
-	else
-	{
-		w_offset = width / number_of_rays;
-		h_offset = height / number_of_layers;
-		x_start = -0.5*width;
-		y_start = -0.5*height;
-	}
-	std::cout << "Testing ray intersection" << std::endl;
-	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
-	{
-		tStart = clock();
-		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++) {
-			float3 o(x_start + ray_idx * w_offset, y_start + l_idx*h_offset, depth);
-			float3 d(0, 0, -1);
-			Ray ray(o, d, 0, 100000, 0, 0);
-			RayIntersectionInfo rinfo;
-			bvh->all_intersects(ray, rinfo);
-		}
-		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	}
-	///////////////////////////////
 
 
-	////////////// PLANE TRACING
-	std::cout << "Testing Plane intersection" << std::endl;
-	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
-	{
-		tStart = clock();
-		float3 x0(0.0, y_start + h_offset * l_idx, 0.0);
-		float3 n(0, 1, 0);
-		Plane plane(x0, n);
-		PlaneIntersectionInfo pinfo;
-		bvh->plane_all_intersects(plane, pinfo);
-		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-		std::vector<float3> *hits = pinfo.GetHits();
-		//for (int i = 0; i < hits->size(); i++)
-		//{
-		//	std::cout << (*hits)[i] << std::endl;
-		//}
-	}
-	//////////////////
 	return 0;
 }
-

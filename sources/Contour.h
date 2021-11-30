@@ -15,6 +15,7 @@ public:
 	BVH* bvh;
 	bool is_valid = true;
 public:
+	RAYTRACERDLL_API Contour() { is_valid = false; };
 	RAYTRACERDLL_API Contour(const std::vector<std::shared_ptr<Segment>>& p);
 	RAYTRACERDLL_API void ComputeBBox();
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
@@ -35,7 +36,11 @@ public:
 	int depth = 0;
 public:
 	ContourNode() { contour = nullptr; parent = nullptr; };
-	ContourNode(std::shared_ptr<Contour> c) { contour = c; parent = nullptr; };
+	ContourNode(std::shared_ptr<Contour> c) 
+	{ 
+		contour = c; 
+		parent = nullptr; 
+	};
 	ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p) { contour = c; p->AddChild(std::shared_ptr<ContourNode>(this)); };
 	void SetChildren(std::vector<std::shared_ptr<ContourNode>> c) 
 	{ 
@@ -101,8 +106,9 @@ public:
 	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
 	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;
 
-private:
+public:
 	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
+private:
 	RAYTRACERDLL_API void BuildTree();
 	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);
 	RAYTRACERDLL_API void CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p);

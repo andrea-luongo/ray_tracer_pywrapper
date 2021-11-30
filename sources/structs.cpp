@@ -270,7 +270,7 @@ bool Segment::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 	return false;
 }
 
-bool Segment::PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info)
+bool Segment::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info)
 {
 	bool hit = false;
 	float3 p0;
@@ -376,7 +376,7 @@ bool Sphere::AllIntersect(Ray& ray, RayIntersectionInfo& info) {
 }
 
 
-bool Sphere::PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info)
+bool Sphere::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info)
 {
 	return false;
 }
@@ -456,7 +456,7 @@ bool Triangle::AllIntersect(Ray& ray, RayIntersectionInfo& info) {
 	return false;
 }
 
-bool Triangle::PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info) {
+bool Triangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
 	bool hit = false;
 	float3 p0, p1, p2;
 	bool intersects = plane.PlaneSegmentIntersection(v0, v1, p0);

@@ -1,9 +1,9 @@
 #include "Contour.h"
 
 
-Contour::Contour(const std::vector<std::shared_ptr<Segment>>& p)
+
+Contour::Contour(const std::vector<std::shared_ptr<Segment>>& p) : segments(p)
 {
-	segments = p;
 	bvh = new BVH({segments.begin(), segments.end()}, SplitMethod::EqualCounts, 255);
 	ComputeBBox();
 	if (segments.size() < 3) {
@@ -112,6 +112,12 @@ ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 {
 	contours = c;
 	tree_root = new ContourNode(nullptr);
+	std::cout << "building tree" << std::endl;
+	BuildTree();
+	std::cout << "building global bvh" << std::endl;
+	BuildTreeGlobalBVH();
+	std::cout << "building individual bvhs" << std::endl;
+	BuildTreeIndividualBVH();
 
 }
 

@@ -132,7 +132,7 @@ public:
 	RAYTRACERDLL_API virtual bool Intersect(Ray& ray, RayIntersectionInfo& info) = 0;
 	RAYTRACERDLL_API virtual bool AnyIntersect(Ray& ray) = 0;
 	RAYTRACERDLL_API virtual bool AllIntersect(Ray& ray, RayIntersectionInfo& info) = 0;
-	RAYTRACERDLL_API virtual bool PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info) = 0;
+	RAYTRACERDLL_API virtual bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) = 0;
 };
 
 
@@ -147,7 +147,7 @@ public:
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACERDLL_API bool PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info);
+	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
 };
 
 
@@ -162,7 +162,7 @@ public:
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACERDLL_API bool PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info);
+	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
 };
 
 
@@ -178,5 +178,5 @@ public:
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACERDLL_API bool PlaneIntersect(const Plane& plane, PlaneIntersectionInfo& info);
+	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
 };

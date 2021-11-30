@@ -2,10 +2,13 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #include <BVH.h>
+#include <Contour.h>
 //#include <vector>
 #include <time.h>
 #include <ppl.h>
 namespace py = pybind11;
+
+enum class PrimitiveType { SEGMENT, SPHERE, TRIANGLE, CONTOUR };
 
 inline Matrix4x4 reinterpret_matrix(py::array_t<float>& pd)
 {
@@ -134,23 +137,94 @@ public:
     int GetHitsSize() { return rayInfo->GetHitsSize(); };
 };
 
+class PyContour{
+
+public:
+    Contour* contour= nullptr;
+public:
+
+    PyContour(std::vector<float>& vertices)
+    {
+        try {
+            std::cout << vertices.size() << std::endl;
+            std::vector<std::shared_ptr<Segment>> primitives((int)(vertices.size() / 6));
+            for (int i = 0; i < (int)(vertices.size() / 6); i++)
+            {
+                float3 p0(vertices[i * 6], vertices[i * 6 + 1], vertices[i * 6 + 2]);
+                float3 p1(vertices[i * 6 + 3], vertices[i * 6 + 4], vertices[i * 6 + 5]);
+                //std::shared_ptr<Primitive> primitive = std::shared_ptr<Segment>(new Segment(p0, p1));
+                std::cout << p0 << ' ' << p1 << std::endl;
+                primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+            }
+            std::cout << "segments created" << std::endl;
+            contour = new Contour(primitives);
+        }
+        catch (const std::exception & exc)
+        {
+            std::cerr << "exception" << std::endl;
+            //std::cout << vertices.size() << std::endl;
+            //for (int i = 0; i < vertices.size(); i++)
+            //{
+            //    /*float3 p0(vertices[i * 6], vertices[i * 6 + 1], vertices[i * 6 + 2]);
+            //    float3 p1(vertices[i * 6 + 3], vertices[i * 6 + 4], vertices[i * 6 + 5]);
+            //}
+            // catch anything thrown within try block that derives from std::exception
+        }
+    };
+
+    ~PyContour() {
+        //delete bvh;
+    }
+
+};
+
+class PyContourTree {
+
+public:
+    ContourTree* contour_tree = nullptr;
+public:
+
+    PyContourTree(std::vector<PyContour>& py_contours)
+    {
+        std::vector<std::shared_ptr<Contour>> contours(py_contours.size());
+        for (int i = 0; i < contours.size(); i++)
+        {
+            contours[i] = std::shared_ptr<Contour>(py_contours[i].contour);
+        }
+        contour_tree = new ContourTree(contours);
+    };
+
+    ~PyContourTree() {
+        //delete bvh;
+    }
+
+};
+
 class PyBindBVH {
 
 private:
     BVH* bvh = nullptr;
 public:
     //PyBindBVH() { };
-    PyBindBVH(std::vector<float>& vertices, SplitMethod splitMethod, int maxPrimsInNode=255)
+    PyBindBVH(std::vector<float>& vertices, SplitMethod splitMethod, int maxPrimsInNode=255, PrimitiveType primitive_type=PrimitiveType::TRIANGLE)
     {
         std::vector<std::shared_ptr<Primitive>> primitives;
-        for (int i = 0; i < (int)(vertices.size() / 9); i++)
+        if (primitive_type == PrimitiveType::TRIANGLE)
         {
-            float3 p0(vertices[i*9], vertices[i*9+1], vertices[i*9+2]);
-            float3 p1(vertices[i*9+3], vertices[i*9+4], vertices[i*9+5]);
-            float3 p2(vertices[i*9+6], vertices[i*9+7], vertices[i*9+8]);
-            std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
-            primitives.push_back(primitive);
+            for (int i = 0; i < (int)(vertices.size() / 9); i++)
+            {
+                float3 p0(vertices[i*9], vertices[i*9+1], vertices[i*9+2]);
+                float3 p1(vertices[i*9+3], vertices[i*9+4], vertices[i*9+5]);
+                float3 p2(vertices[i*9+6], vertices[i*9+7], vertices[i*9+8]);
+                std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
+                primitives.push_back(primitive);
+            }
         }
+        else if (primitive_type == PrimitiveType::SEGMENT)
+        {
+
+        }
+
         bvh = new BVH(primitives, splitMethod, maxPrimsInNode);
     }
 
@@ -308,6 +382,12 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     m.doc() = R"pbdoc(
         Pybind wrapper for BVH build and traversal
     )pbdoc";
+    py::enum_ <PrimitiveType>(m, "PrimitiveType")
+        .value("SEGMENT", PrimitiveType::SEGMENT)
+        .value("SPHERE", PrimitiveType::SPHERE)
+        .value("TRIANGLE", PrimitiveType::TRIANGLE)
+        .value("CONTOUR", PrimitiveType::CONTOUR)
+        .export_values();
     py::class_<PyBindBVH> bvh(m, "PyBindBVH");
     //bvh.def(py::init());// , SplitMethod > ());
     bvh.def(py::init < std::vector<float>&, SplitMethod, int> ());
@@ -326,6 +406,15 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
         .value("Middle", SplitMethod::Middle)
         .value("EqualCounts", SplitMethod::EqualCounts)
         .export_values();
+
+
+    py::class_<PyContour> contour(m, "PyContour");
+    contour.def(py::init<std::vector<float>&>());
+
+    py::class_<PyContourTree> contourtree(m, "PyContourTree");
+    contourtree.def(py::init<std::vector<PyContour>&>());
+
+
     py::class_<PyBindRay> ray(m, "PyBindRay");
     ray.def(py::init<py::array_t<float>, py::array_t<float>, float, float, int, int>());
     ray.def(py::init<>());
