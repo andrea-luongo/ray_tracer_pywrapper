@@ -459,24 +459,46 @@ bool Triangle::AllIntersect(Ray& ray, RayIntersectionInfo& info) {
 bool Triangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
 	bool hit = false;
 	float3 p0, p1, p2;
+	std::vector<float3> t_hits;
 	bool intersects = plane.PlaneSegmentIntersection(v0, v1, p0);
 	if (intersects)
 	{
-		info.AddHit(p0);
+		t_hits.push_back(p0);
 		hit = true;
 
 	}
 	intersects = plane.PlaneSegmentIntersection(v1, v2, p1);
 	if (intersects)
 	{
-		info.AddHit(p1);
+		t_hits.push_back(p1);
 		hit = true;
 	}
 	intersects = plane.PlaneSegmentIntersection(v2, v0, p2);
 	if (intersects)
 	{
-		info.AddHit(p2);
+		t_hits.push_back(p2);
 		hit = true;
 	}
+	if (hit)
+	{
+		float3 dir = t_hits[1] - t_hits[0];
+		double3 e0 = v1 - v0;
+		double3 e1 = v0 - v2;
+		double3 n = double3::cross(e1, e0);
+		float s = sign(float3::dot(float3::cross(n, dir), plane.GetNormal()));
+		if (s < 0) 
+		{
+			info.AddHit(t_hits[1]);
+			info.AddHit(t_hits[0]);
+		}
+		else
+		{
+			info.AddHit(t_hits[0]);
+			info.AddHit(t_hits[1]);
+		}
+	
+	}
+
+	//sign(float3::dot(cross_dir_s, cross_e_dir));
 	return hit;
 }

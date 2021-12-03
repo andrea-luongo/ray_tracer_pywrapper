@@ -14,9 +14,10 @@ public:
 	std::vector<std::shared_ptr<Segment>> segments;
 	BVH* bvh;
 	bool is_valid = true;
+	float3 contour_normal;
 public:
 	RAYTRACERDLL_API Contour() { is_valid = false; };
-	RAYTRACERDLL_API Contour(const std::vector<std::shared_ptr<Segment>>& p);
+	RAYTRACERDLL_API Contour(const std::vector<std::shared_ptr<Segment>>& p, const float3 n);
 	RAYTRACERDLL_API void ComputeBBox();
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
@@ -25,6 +26,7 @@ public:
 	RAYTRACERDLL_API bool IsContained(Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API bool Contains(Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API static int EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b, float& t_hit);
+	RAYTRACERDLL_API Contour OffsetContour(float offset);
 };
 
 struct ContourNode

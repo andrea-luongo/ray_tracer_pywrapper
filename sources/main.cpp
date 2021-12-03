@@ -143,8 +143,9 @@ public:
     Contour* contour= nullptr;
 public:
 
-    PyContour(std::vector<float>& vertices)
+    PyContour(std::vector<float>& vertices, py::array_t<float> n)
     {
+        float3 normal(n.at(0), n.at(1), n.at(2));
         try {
             std::cout << vertices.size() << std::endl;
             std::vector<std::shared_ptr<Segment>> primitives((int)(vertices.size() / 6));
@@ -157,7 +158,7 @@ public:
                 primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
             }
             std::cout << "segments created" << std::endl;
-            contour = new Contour(primitives);
+            contour = new Contour(primitives, normal);
         }
         catch (const std::exception & exc)
         {
@@ -409,7 +410,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
 
 
     py::class_<PyContour> contour(m, "PyContour");
-    contour.def(py::init<std::vector<float>&>());
+    contour.def(py::init<std::vector<float>&, py::array_t<float>>());
 
     py::class_<PyContourTree> contourtree(m, "PyContourTree");
     contourtree.def(py::init<std::vector<PyContour>&>());
