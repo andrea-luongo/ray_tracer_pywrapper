@@ -15,7 +15,7 @@ public:
 	BVH* bvh;
 	bool is_valid = true;
 public:
-	RAYTRACERDLL_API Contour() { is_valid = false; };
+	RAYTRACERDLL_API Contour();
 	RAYTRACERDLL_API Contour(const std::vector<std::shared_ptr<Segment>>& p);
 	RAYTRACERDLL_API void ComputeBBox();
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
@@ -35,73 +35,22 @@ public:
 	std::shared_ptr<ContourNode> parent;
 	int depth = 0;
 public:
-	ContourNode() { contour = nullptr; parent = nullptr; };
-	ContourNode(std::shared_ptr<Contour> c) 
-	{ 
-		contour = c; 
-		parent = nullptr; 
-	};
-	ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p) { contour = c; p->AddChild(std::shared_ptr<ContourNode>(this)); };
-	void SetChildren(std::vector<std::shared_ptr<ContourNode>> c) 
-	{ 
-		children = c;
-		for (std::shared_ptr<ContourNode> n : children) 
-		{
-			n->parent = std::shared_ptr<ContourNode>(this);
-			n->depth = depth + 1;
-		}
-	};
-	void AddChild(std::shared_ptr<ContourNode> c) 
-	{ 
-		children.push_back(c);
-		c->parent = std::shared_ptr<ContourNode>(this);
-		c->depth = depth + 1; 
-	};
-	
-	std::vector<std::shared_ptr<Contour>> GetChildrenContours() 
-	{
-		std::vector<std::shared_ptr<Contour>> children_contour(children.size());
-		for (int idx = 0; idx < children.size(); idx++)
-		{
-			children_contour[idx] = children[idx]->contour;
-		}
-		return children_contour;
-	};
-
-	std::vector<std::shared_ptr<ContourNode>> GetDescendants() 
-	{ 
-		std::vector<std::shared_ptr<ContourNode>> descendants;
-
-		descendants.insert(descendants.end(), children.begin(), children.end());
-		for (int idx = 0; idx < children.size(); idx++)
-		{
-			std::vector<std::shared_ptr<ContourNode>> c_descend = children[idx]->GetDescendants();
-			descendants.insert(descendants.end(), c_descend.begin(), c_descend.end());
-		}
-		return descendants;
-	};
-
-	std::vector<std::shared_ptr<ContourNode>> GetAncestors()
-	{
-		std::vector<std::shared_ptr<ContourNode>> ancestors;
-		if (parent != nullptr)
-		{
-			ancestors.push_back(parent);
-			std::vector<std::shared_ptr<ContourNode>> p_ancestors = parent->GetAncestors();
-			ancestors.insert(ancestors.end(), p_ancestors.begin(), p_ancestors.end());
-		}
-	
-		return ancestors;
-	};
-
-
+	ContourNode();
+	ContourNode(std::shared_ptr<Contour> c);
+	ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p);
+	void SetChildren(std::vector<std::shared_ptr<ContourNode>> c);
+	void SetParent(std::shared_ptr<ContourNode> p);
+	void AddChild(std::shared_ptr<ContourNode> c);
+	std::vector<std::shared_ptr<Contour>> GetChildrenContours();
+	std::vector<std::shared_ptr<ContourNode>> GetDescendants();
+	std::vector<std::shared_ptr<ContourNode>> GetAncestors();
 };
 
 class ContourTree
 {
 public:
 	std::vector<std::shared_ptr<Contour>> contours;
-	ContourNode* tree_root;
+	std::shared_ptr<ContourNode> tree_root;
 	BVH* root_bvh;
 	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
 	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;

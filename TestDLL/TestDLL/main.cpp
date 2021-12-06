@@ -295,11 +295,22 @@ int main() {
 	std::shared_ptr<Contour> contour_b(new Contour(primitives_b));
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
-	/////////////////////BUILD ContourTree
 
+	/////////////TEST CONTOURS INCLUSION
+	float t_hit;
+	bool result = contour_a->IsContained(*contour_b, t_hit);
+	std::cout << result << ' ' << t_hit << std::endl;
+	result = contour_a->Contains(*contour_b, t_hit);
+	std::cout << result << ' ' << t_hit << std::endl;
+
+	int r = Contour::EvaluateContoursRelationship(*contour_a, *contour_b, t_hit);
+	std::cout << r << ' ' << t_hit << std::endl;
+
+
+	/////////////////////BUILD ContourTree
 	std::cout << "Building Tree Contour" << std::endl;
 	tStart = clock();
-	ContourTree contour_tree({contour_a, contour_b});
+	ContourTree contour_tree({ contour_a, contour_b });
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	int number_of_rays = 10;
