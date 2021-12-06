@@ -42,6 +42,8 @@ public:
 	ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p);
 	void SetChildren(std::vector<std::shared_ptr<ContourNode>> c);
 	void SetParent(std::shared_ptr<ContourNode> p);
+	void RemoveParent();
+	void RemoveChild(std::shared_ptr<ContourNode> c);
 	void AddChild(std::shared_ptr<ContourNode> c);
 	std::vector<std::shared_ptr<Contour>> GetChildrenContours();
 	std::vector<std::shared_ptr<ContourNode>> GetDescendants();

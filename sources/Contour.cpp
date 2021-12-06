@@ -111,6 +111,12 @@ int Contour::EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b
 		return 0;
 
 }
+
+Contour Contour::OffsetContour(float offset)
+{
+	return Contour();
+}
+
 ///////////////////////////////////////////////////////////////////////
 
 ///////IMPLEMENTING CONTOURNODE CLASS
@@ -140,29 +146,37 @@ void ContourNode::SetChildren(std::vector<std::shared_ptr<ContourNode>> c)
 	}
 };
 
+void ContourNode::RemoveParent()
+{
+	parent = nullptr;
+	depth = 0;
+}
+
 void ContourNode::SetParent(std::shared_ptr<ContourNode> p)
 {
 	if (parent != nullptr)
 	{
-		int elem_idx = -1;
-		for (int idx = 0; idx < parent->children.size(); idx++) {
-			if (parent->children[idx] == std::shared_ptr<ContourNode>(this))
-				elem_idx = idx;
-		}
-		if (elem_idx > -1)
-		{
-			parent->children.erase(parent->children.begin() + elem_idx);
-		}
-		
+		parent->RemoveChild(p);
 	}
-	parent = p;
+	p->AddChild(std::shared_ptr<ContourNode>(this));
 }
 
 void ContourNode::AddChild(std::shared_ptr<ContourNode> c)
 {
 	children.push_back(c);
-	c->SetParent(std::shared_ptr<ContourNode>(this));
+	//c->SetParent(std::shared_ptr<ContourNode>(this));
+	c->parent = std::shared_ptr<ContourNode>(this);
 	c->depth = depth + 1;
+};
+
+void ContourNode::RemoveChild(std::shared_ptr<ContourNode> c)
+{
+	std::vector<std::shared_ptr<ContourNode>> tmp;
+	for (int idx = 0; idx < children.size(); idx++) {
+		if (children[idx] != c)
+			tmp.push_back(children[idx]);
+	}
+	c->RemoveParent();
 };
 
 std::vector<std::shared_ptr<Contour>> ContourNode::GetChildrenContours()

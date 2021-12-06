@@ -289,10 +289,11 @@ int main() {
 	
 
 	/////////////////////BUILD Contour
+	float3 n(0.0, 1.0, 0.0);
 	std::cout << "Building Contour" << std::endl;
 	tStart = clock();
-	std::shared_ptr<Contour> contour_a(new Contour(primitives_a));
-	std::shared_ptr<Contour> contour_b(new Contour(primitives_b));
+	std::shared_ptr<Contour> contour_a(new Contour(primitives_a, n));
+	std::shared_ptr<Contour> contour_b(new Contour(primitives_b, n));
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 
