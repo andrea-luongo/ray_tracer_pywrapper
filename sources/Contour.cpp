@@ -8,7 +8,7 @@ Contour::Contour()
 	bbox = BBox();
 }
 
-Contour::Contour(const std::vector<std::shared_ptr<Segment>>& p) : segments(p)
+Contour::Contour(const std::vector<std::shared_ptr<Segment>>& p, const float3 n) : segments(p), contour_normal(n)
 {
 	bvh = new BVH({segments.begin(), segments.end()}, SplitMethod::EqualCounts, 255);
 	ComputeBBox();
