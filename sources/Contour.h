@@ -29,18 +29,20 @@ public:
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
 };
 
-struct ContourNode
+class ContourNode
 {
 public:
 	std::shared_ptr<Contour> contour;
 	std::vector<std::shared_ptr<ContourNode>> children;
 	std::shared_ptr<ContourNode> parent;
+	ContourNode* pp;
 	int depth = 0;
 public:
 	ContourNode();
+	//~ContourNode();
 	ContourNode(std::shared_ptr<Contour> c);
 	ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p);
-	void SetChildren(std::vector<std::shared_ptr<ContourNode>> c);
+	//void SetChildren(std::vector<std::shared_ptr<ContourNode>> c);
 	void SetParent(std::shared_ptr<ContourNode> p);
 	void RemoveParent();
 	void RemoveChild(std::shared_ptr<ContourNode> c);

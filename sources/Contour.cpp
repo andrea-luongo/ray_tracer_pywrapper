@@ -124,6 +124,10 @@ ContourNode::ContourNode()
 { 
 };
 
+//ContourNode::~ContourNode()
+//{
+//}
+
 ContourNode::ContourNode(std::shared_ptr<Contour> c)
 {
 	contour = c;
@@ -136,18 +140,22 @@ ContourNode::ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode
 	p->AddChild(std::shared_ptr<ContourNode>(this));
 };
 
-void ContourNode::SetChildren(std::vector<std::shared_ptr<ContourNode>> c)
-{
-	children = c;
-	for (std::shared_ptr<ContourNode> n : children)
-	{
-		n->parent = std::shared_ptr<ContourNode>(this);
-		n->depth = depth + 1;
-	}
-};
+//void ContourNode::SetChildren(std::vector<std::shared_ptr<ContourNode>> c)
+//{
+//	children = c;
+//	for (std::shared_ptr<ContourNode> n : children)
+//	{
+//		n->parent = std::shared_ptr<ContourNode>(this);
+//		n->depth = depth + 1;
+//	}
+//};
 
 void ContourNode::RemoveParent()
 {
+	if (parent != nullptr)
+	{
+		parent->RemoveChild(std::shared_ptr<ContourNode>(this));
+	}
 	parent = nullptr;
 	depth = 0;
 }
@@ -165,6 +173,10 @@ void ContourNode::AddChild(std::shared_ptr<ContourNode> c)
 {
 	children.push_back(c);
 	//c->SetParent(std::shared_ptr<ContourNode>(this));
+	if (c->parent != nullptr)
+	{
+		c->parent->RemoveChild(c);
+	}
 	c->parent = std::shared_ptr<ContourNode>(this);
 	c->depth = depth + 1;
 };
@@ -176,7 +188,9 @@ void ContourNode::RemoveChild(std::shared_ptr<ContourNode> c)
 		if (children[idx] != c)
 			tmp.push_back(children[idx]);
 	}
-	c->RemoveParent();
+	children = tmp;
+	//c->parent = nullptr;
+	//c->depth = 0;
 };
 
 std::vector<std::shared_ptr<Contour>> ContourNode::GetChildrenContours()

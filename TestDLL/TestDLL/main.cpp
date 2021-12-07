@@ -1,7 +1,4 @@
 #include <iostream>
-//#include "../../sources/BVH2.h"
-//#include "../../sources/MyFloat32.h"
-//#include "../../sources/structs2.h"
 #include <BVH.h>
 #include <Contour.h>
 #include <MyMatrix4x4.h>
@@ -259,10 +256,8 @@ int main() {
 	{
 		float3 p0(points_a[i * 6], points_a[i * 6 + 1], points_a[i * 6 + 2]);
 		float3 p1(points_a[i * 6 + 3], points_a[i * 6 + 4], points_a[i * 6 + 5]);
-		//std::shared_ptr<Primitive> primitive = std::shared_ptr<Segment>(new Segment(p0, p1));
 		std::cout << p0 << ' ' << p1 << std::endl;
 		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
-		//primitives.push_back(primitive);
 	}
 
 
@@ -279,10 +274,8 @@ int main() {
 	{
 		float3 p0(points_b[i * 6], points_b[i * 6 + 1], points_b[i * 6 + 2]);
 		float3 p1(points_b[i * 6 + 3], points_b[i * 6 + 4], points_b[i * 6 + 5]);
-		//std::shared_ptr<Primitive> primitive = std::shared_ptr<Segment>(new Segment(p0, p1));
 		std::cout << p0 << ' ' << p1 << std::endl;
 		primitives_b[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
-		//primitives.push_back(primitive);
 	}
 
 	clock_t tStart;
@@ -306,6 +299,13 @@ int main() {
 
 	int r = Contour::EvaluateContoursRelationship(*contour_a, *contour_b, t_hit);
 	std::cout << r << ' ' << t_hit << std::endl;
+
+
+	/////////////////ContourNode TEST
+	//std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>();
+	ContourNode cn_a(contour_a);
+	//ContourNode cn_b(contour_b, tree_root);
+
 
 
 	/////////////////////BUILD ContourTree
