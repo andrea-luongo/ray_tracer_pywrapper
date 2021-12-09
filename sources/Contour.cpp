@@ -124,20 +124,28 @@ ContourNode::ContourNode()
 { 
 };
 
-//ContourNode::~ContourNode()
-//{
-//}
+ContourNode::~ContourNode()
+{
+	children.clear();
+}
 
 ContourNode::ContourNode(std::shared_ptr<Contour> c)
 {
 	contour = c;
-	parent = std::shared_ptr<ContourNode>(this);
+	parent = nullptr;
 };
 
 ContourNode::ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p)
 {
 	contour = c;
-	p->AddChild(std::shared_ptr<ContourNode>(this));
+	p->AddChild(*this);
+};
+
+ContourNode::ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p, int i)
+{
+	contour = c;
+	p->AddChild(*this);
+	id = i;
 };
 
 //void ContourNode::SetChildren(std::vector<std::shared_ptr<ContourNode>> c)
@@ -149,92 +157,109 @@ ContourNode::ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode
 //		n->depth = depth + 1;
 //	}
 //};
+//
+//void ContourNode::RemoveParent()
+//{
+//	if (parent != nullptr)
+//	{
+//		parent->RemoveChild(*this);
+//	}
+//	parent = nullptr;
+//	depth = 0;
+//}
+//
+//void ContourNode::SetParent(std::shared_ptr<ContourNode> p)
+//{
+//
+//	if (parent != nullptr)
+//	{
+//		parent->RemoveChild(p);
+//	}
+//	p->AddChild(std::shared_ptr<ContourNode>(this));
+//}
 
-void ContourNode::RemoveParent()
+void ContourNode::AddChild(ContourNode& c)
 {
-	if (parent != nullptr)
+	if (c.parent != nullptr)
 	{
-		parent->RemoveChild(std::shared_ptr<ContourNode>(this));
+		c.parent->RemoveChild(c);
 	}
-	parent = nullptr;
-	depth = 0;
-}
-
-void ContourNode::SetParent(std::shared_ptr<ContourNode> p)
-{
-	if (parent != nullptr)
-	{
-		parent->RemoveChild(p);
-	}
-	p->AddChild(std::shared_ptr<ContourNode>(this));
-}
-
-void ContourNode::AddChild(std::shared_ptr<ContourNode> c)
-{
 	children.push_back(c);
-	//c->SetParent(std::shared_ptr<ContourNode>(this));
-	if (c->parent != nullptr)
-	{
-		c->parent->RemoveChild(c);
-	}
-	c->parent = std::shared_ptr<ContourNode>(this);
-	c->depth = depth + 1;
+	c.parent = std::shared_ptr<ContourNode>(this);
+	c.depth = depth + 1;
+	//c.UpdateChildrenDepth();
 };
-
-void ContourNode::RemoveChild(std::shared_ptr<ContourNode> c)
+//
+void ContourNode::RemoveChild(ContourNode& c)
 {
-	std::vector<std::shared_ptr<ContourNode>> tmp;
-	for (int idx = 0; idx < children.size(); idx++) {
-		if (children[idx] != c)
-			tmp.push_back(children[idx]);
-	}
-	children = tmp;
+	//std::vector<ContourNode> tmp;
+
+	children.erase(std::remove(children.begin(), children.end(), c), children.end());
+
+	//for (int idx = 0; idx < children.size(); idx++) {
+	//	if (children[idx] != c)
+	//		tmp.push_back(children[idx]);
+	//}
+	//children = tmp;
+	c.parent = nullptr;
+	c.depth = 0;
+	//c.UpdateChildrenDepth();
 	//c->parent = nullptr;
 	//c->depth = 0;
 };
 
-std::vector<std::shared_ptr<Contour>> ContourNode::GetChildrenContours()
+void ContourNode::UpdateChildrenDepth()
 {
-	std::vector<std::shared_ptr<Contour>> children_contour(children.size());
-	for (int idx = 0; idx < children.size(); idx++)
-	{
-		children_contour[idx] = children[idx]->contour;
+	for (int idx = 0; idx < children.size(); idx++) {
+		children[idx].depth = depth + 1;
+		children[idx].UpdateChildrenDepth();
 	}
-	return children_contour;
 };
 
-std::vector<std::shared_ptr<ContourNode>> ContourNode::GetDescendants()
-{
-	std::vector<std::shared_ptr<ContourNode>> descendants;
 
-	descendants.insert(descendants.end(), children.begin(), children.end());
-	for (int idx = 0; idx < children.size(); idx++)
-	{
-		std::vector<std::shared_ptr<ContourNode>> c_descend = children[idx]->GetDescendants();
-		descendants.insert(descendants.end(), c_descend.begin(), c_descend.end());
-	}
-	return descendants;
-};
 
-std::vector<std::shared_ptr<ContourNode>> ContourNode::GetAncestors()
-{
-	std::vector<std::shared_ptr<ContourNode>> ancestors;
-	if (parent != nullptr)
-	{
-		ancestors.push_back(parent);
-		std::vector<std::shared_ptr<ContourNode>> p_ancestors = parent->GetAncestors();
-		ancestors.insert(ancestors.end(), p_ancestors.begin(), p_ancestors.end());
-	}
-
-	return ancestors;
-};
+//std::vector<Contour> ContourNode::GetChildrenContours()
+//{
+//	std::vector<Contour> children_contour(children.size());
+//	for (int idx = 0; idx < children.size(); idx++)
+//	{
+//		children_contour[idx] = children[idx].contour;
+//	}
+//	return children_contour;
+//};
+//
+//std::vector<ContourNode> ContourNode::GetDescendants()
+//{
+//	std::vector<ContourNode> descendants;
+//
+//	descendants.insert(descendants.end(), children.begin(), children.end());
+//	for (int idx = 0; idx < children.size(); idx++)
+//	{
+//		std::vector<std::shared_ptr<ContourNode>> c_descend = children[idx]->GetDescendants();
+//		descendants.insert(descendants.end(), c_descend.begin(), c_descend.end());
+//	}
+//	return descendants;
+//};
+//
+//std::vector<std::shared_ptr<ContourNode>> ContourNode::GetAncestors()
+//{
+//	std::vector<std::shared_ptr<ContourNode>> ancestors;
+//	if (parent != nullptr)
+//	{
+//		ancestors.push_back(parent);
+//		std::vector<std::shared_ptr<ContourNode>> p_ancestors = parent->GetAncestors();
+//		ancestors.insert(ancestors.end(), p_ancestors.begin(), p_ancestors.end());
+//	}
+//
+//	return ancestors;
+//};
 //////////////////////////////////////////////////////////////////////////////
 
 ///////IMPLEMENTING CONTOURTREE CLASS
 ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 {
 	contours = c;
-	tree_root = std::make_shared<ContourNode>();
+	tree_root;
 	BuildTree();
 	BuildTreeGlobalBVH();
 	BuildTreeIndividualBVH();
@@ -242,10 +267,11 @@ ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 
 void ContourTree::BuildTree()
 {
-	std::vector<std::shared_ptr<ContourNode>> contour_nodes(contours.size());
+	std::vector<ContourNode> contour_nodes(contours.size());
 	for (int idx = 0; idx < contour_nodes.size(); idx++)
 	{
-		contour_nodes[idx] = std::make_shared<ContourNode>(contours[idx], tree_root);
+		contour_nodes[idx].SetNodeID(node_id++);
+		tree_root.AddChild(contour_nodes[idx]);
 	}
 
 	for (int i_idx = 0; i_idx < contour_nodes.size() - 1; i_idx++)
@@ -253,11 +279,11 @@ void ContourTree::BuildTree()
 		float closest_hit = std::numeric_limits<float>::max();
 		std::shared_ptr<ContourNode> possible_parent;
 		std::vector<std::shared_ptr<ContourNode>> possible_children;
-		std::shared_ptr<ContourNode> i_node = contour_nodes[i_idx];
+		std::shared_ptr<ContourNode> i_node = std::make_shared<ContourNode>(contour_nodes[i_idx]);
 		for (int j_idx = 0; j_idx < contour_nodes.size() - 1; j_idx++)
 		{
 			float t_hit;
-			std::shared_ptr<ContourNode> j_node = contour_nodes[j_idx];
+			std::shared_ptr<ContourNode> j_node = std::make_shared<ContourNode>(contour_nodes[j_idx]);
 			int result = Contour::EvaluateContoursRelationship(*i_node->contour, *j_node->contour, t_hit);
 			if (result == -1)
 			{

@@ -302,14 +302,15 @@ int main() {
 
 
 	/////////////////ContourNode TEST
-	//std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>();
-	ContourNode cn_a(contour_a);
+	std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>();
+	//ContourNode tree_root();
+	ContourNode cn_a(contour_a, tree_root);
 	//ContourNode cn_b(contour_b, tree_root);
-
+	int a = 1;
 
 
 	/////////////////////BUILD ContourTree
-	std::cout << "Building Tree Contour" << std::endl;
+	/*std::cout << "Building Tree Contour" << std::endl;
 	tStart = clock();
 	ContourTree contour_tree({ contour_a, contour_b });
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
@@ -337,7 +338,7 @@ int main() {
 
 		}
 
-	}
+	}*/
 
 
 	return 0;
