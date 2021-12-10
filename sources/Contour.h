@@ -64,23 +64,23 @@ public:
 	//RAYTRACERDLL_API void RemoveParent();
 };
 
-class ContourTree
-{
-public:
-	std::vector<std::shared_ptr<Contour>> contours;
-	ContourNode tree_root;
-	BVH* root_bvh;
-	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
-	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;
-	int node_id = 0;
-
-public:
-	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
-private:
-	RAYTRACERDLL_API void BuildTree();
-	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);
-	RAYTRACERDLL_API void CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p);
-	RAYTRACERDLL_API void BuildRootBVH();
-	RAYTRACERDLL_API void BuildTreeIndividualBVH();
-	RAYTRACERDLL_API void BuildTreeGlobalBVH();
-};
+//class ContourTree
+//{
+//public:
+//	std::vector<std::shared_ptr<Contour>> contours;
+//	ContourNode tree_root;
+//	BVH* root_bvh;
+//	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
+//	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;
+//	int node_id = 0;
+//
+//public:
+//	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
+//private:
+//	RAYTRACERDLL_API void BuildTree();
+//	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);
+//	RAYTRACERDLL_API void CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p);
+//	RAYTRACERDLL_API void BuildRootBVH();
+//	RAYTRACERDLL_API void BuildTreeIndividualBVH();
+//	RAYTRACERDLL_API void BuildTreeGlobalBVH();
+//};

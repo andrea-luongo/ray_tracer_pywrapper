@@ -305,6 +305,7 @@ int main() {
 	std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>();
 	//ContourNode tree_root();
 	ContourNode cn_a(contour_a, tree_root);
+	//ContourNode cn_a(contour_a);
 	//ContourNode cn_b(contour_b, tree_root);
 	int a = 1;
 
