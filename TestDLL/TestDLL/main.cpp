@@ -302,9 +302,10 @@ int main() {
 
 
 	/////////////////ContourNode TEST
-	std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>();
-	//ContourNode tree_root();
-	ContourNode cn_a(contour_a, tree_root);
+	//std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>();
+	ContourNode tree_root;
+	Contour tmp_a(primitives_a, n);
+	ContourNode cn_a(tmp_a, tree_root);
 	//ContourNode cn_a(contour_a);
 	//ContourNode cn_b(contour_b, tree_root);
 	int a = 1;

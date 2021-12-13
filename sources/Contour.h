@@ -29,33 +29,68 @@ public:
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
 };
 
+//class ContourNode
+//{
+//public:
+//	std::shared_ptr<Contour> contour = nullptr;
+//	std::vector<ContourNode> children;
+//	std::shared_ptr<ContourNode> parent = nullptr;
+//	int id = 0;
+//	int depth = 0;
+//public:
+//	RAYTRACERDLL_API ~ContourNode();
+//	RAYTRACERDLL_API ContourNode();
+//	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c);
+//	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p);
+//	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p, int i);
+//
+//	RAYTRACERDLL_API void SetNodeID(int i) { id = i; };
+//	RAYTRACERDLL_API void AddChild(ContourNode& c);
+//	RAYTRACERDLL_API void RemoveChild(ContourNode& c);
+//	RAYTRACERDLL_API void UpdateChildrenDepth();
+//	RAYTRACERDLL_API bool operator==(const ContourNode& other) {
+//		return id == other.id;
+//	};
+//	RAYTRACERDLL_API bool operator!=(const ContourNode& other) {
+//		return !(*this == other);
+//	};
+//	RAYTRACERDLL_API bool operator<(const ContourNode& other) {
+//		return id < other.id;
+//	};
+//
+//	/*RAYTRACERDLL_API std::vector<Contour> GetChildrenContours();
+//	RAYTRACERDLL_API std::vector<ContourNode> GetDescendants();
+//	RAYTRACERDLL_API std::vector<ContourNode> GetAncestors();*/
+//	//RAYTRACERDLL_API void RemoveParent();
+//};
+
 class ContourNode
 {
 public:
 	std::shared_ptr<Contour> contour = nullptr;
-	std::vector<ContourNode> children;
-	std::shared_ptr<ContourNode> parent = nullptr;
-	int id = 0;
+	std::vector< std::shared_ptr<ContourNode>> children;
+	std::weak_ptr<ContourNode> parent;
+	int node_id = 0;
 	int depth = 0;
 public:
 	RAYTRACERDLL_API ~ContourNode();
 	RAYTRACERDLL_API ContourNode();
-	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c);
-	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p);
-	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p, int i);
+	RAYTRACERDLL_API ContourNode(Contour& c);
+	RAYTRACERDLL_API ContourNode(Contour& c, ContourNode& p);
+	RAYTRACERDLL_API ContourNode(Contour& c, ContourNode& p, int id);
 
-	RAYTRACERDLL_API void SetNodeID(int i) { id = i; };
+	RAYTRACERDLL_API void SetNodeID(int id) { node_id = id; };
 	RAYTRACERDLL_API void AddChild(ContourNode& c);
 	RAYTRACERDLL_API void RemoveChild(ContourNode& c);
 	RAYTRACERDLL_API void UpdateChildrenDepth();
 	RAYTRACERDLL_API bool operator==(const ContourNode& other) {
-		return id == other.id;
+		return node_id == other.node_id;
 	};
 	RAYTRACERDLL_API bool operator!=(const ContourNode& other) {
 		return !(*this == other);
 	};
 	RAYTRACERDLL_API bool operator<(const ContourNode& other) {
-		return id < other.id;
+		return node_id < other.node_id;
 	};
 
 	/*RAYTRACERDLL_API std::vector<Contour> GetChildrenContours();
@@ -63,6 +98,9 @@ public:
 	RAYTRACERDLL_API std::vector<ContourNode> GetAncestors();*/
 	//RAYTRACERDLL_API void RemoveParent();
 };
+
+
+
 
 //class ContourTree
 //{
