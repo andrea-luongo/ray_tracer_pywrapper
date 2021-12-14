@@ -302,13 +302,41 @@ int main() {
 
 
 	/////////////////ContourNode TEST
-	//std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>();
-	ContourNode tree_root;
-	Contour tmp_a(primitives_a, n);
-	ContourNode cn_a(tmp_a, tree_root);
+	//auto lb = std::make_shared<TestPointer>();
+	//auto bb = std::make_shared<TestPointer>();
+
+	//bb->SetLittleBrother(lb);
+	//lb->SetBigBrother(bb);
+
+	std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>(1);
+	//ContourNode tree_root;
+	//Contour tmp_a(primitives_a, n);
+	std::shared_ptr<ContourNode> cn_a = std::make_shared<ContourNode>(contour_a, 2);
+	std::shared_ptr<ContourNode> cn_b = std::make_shared<ContourNode>(contour_b, 3);
+	tree_root->AddChild(cn_a);
+	tree_root->AddChild(cn_b);
+	cn_b->AddChild(cn_a);
+	std::cout << (*cn_b == *cn_a) << std::endl;
 	//ContourNode cn_a(contour_a);
 	//ContourNode cn_b(contour_b, tree_root);
+
+	auto a_ancestors = cn_a->GetAncestors();
+	auto root_descendants = tree_root->GetDescendants();
+
+	std::shared_ptr<ContourNode> entry_generator();
+
+	std::vector<std::shared_ptr<ContourNode>> test;
+	std::generate_n(std::back_inserter(test), 10, [] { return entry_generator(); });
+
+	int id = 4;
+	for (int idx = 0; idx < test.size(); idx++)
+	{
+		//test[idx];
+		test[idx]->SetNodeID(id++);
+		tree_root->AddChild(test[idx]);
+	}
 	int a = 1;
+
 
 
 	/////////////////////BUILD ContourTree
