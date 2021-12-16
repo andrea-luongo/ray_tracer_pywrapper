@@ -245,6 +245,11 @@ std::vector<std::shared_ptr<Primitive>> build_box(float l)
 //	return 0;
 //}
 
+std::shared_ptr<ContourNode> generate_node() 
+{
+	return std::make_shared<ContourNode>();
+};
+
 
 int main() {
 	// TESTING BVH CONSTRUCTION AND INTERSECTION
@@ -323,10 +328,16 @@ int main() {
 	auto a_ancestors = cn_a->GetAncestors();
 	auto root_descendants = tree_root->GetDescendants();
 
-	std::shared_ptr<ContourNode> entry_generator();
+
+
+
+	auto generate_node_test = []()
+	{
+		return std::make_shared<ContourNode>();
+	};
 
 	std::vector<std::shared_ptr<ContourNode>> test;
-	std::generate_n(std::back_inserter(test), 10, [] { return entry_generator(); });
+	std::generate_n(std::back_inserter(test), 10, generate_node_test);
 
 	int id = 4;
 	for (int idx = 0; idx < test.size(); idx++)
@@ -335,7 +346,7 @@ int main() {
 		test[idx]->SetNodeID(id++);
 		tree_root->AddChild(test[idx]);
 	}
-	int a = 1;
+	int a = 2;
 
 
 

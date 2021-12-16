@@ -212,53 +212,57 @@ std::vector<std::shared_ptr<ContourNode>> ContourNode::GetAncestors()
 
 
 ///////IMPLEMENTING CONTOURTREE CLASS
-//ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
-//{
-//	contours = c;
-//	tree_root = std::make_shared<ContourNode>(node_id_counter++);
-//	BuildTree();
-//	BuildTreeGlobalBVH();
-//	BuildTreeIndividualBVH();
-//}
+ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
+{
+	contours = c;
+	tree_root = std::make_shared<ContourNode>(node_id_counter++);
+	BuildTree();
+	BuildTreeGlobalBVH();
+	BuildTreeIndividualBVH();
+}
 
-//void ContourTree::BuildTree()
-//{
-//	std::vector<std::shared_ptr<ContourNode>> contour_nodes(contours.size());
-//	for (int idx = 0; idx < contour_nodes.size(); idx++)
-//	{
-//		contour_nodes[idx]->SetNodeID(node_id_counter++);
-//		tree_root->AddChild(contour_nodes[idx]);
-//	}
-//
-//	for (int i_idx = 0; i_idx < contour_nodes.size() - 1; i_idx++)
-//	{
-//		float closest_hit = std::numeric_limits<float>::max();
-//		std::shared_ptr<ContourNode> possible_parent;
-//		std::vector<std::shared_ptr<ContourNode>> possible_children;
-//		std::shared_ptr<ContourNode> i_node = std::make_shared<ContourNode>(contour_nodes[i_idx]);
-//		for (int j_idx = 0; j_idx < contour_nodes.size() - 1; j_idx++)
-//		{
-//			float t_hit;
-//			std::shared_ptr<ContourNode> j_node = std::make_shared<ContourNode>(contour_nodes[j_idx]);
-//			int result = Contour::EvaluateContoursRelationship(*i_node->contour, *j_node->contour, t_hit);
-//			if (result == -1)
-//			{
-//				if (t_hit < closest_hit)
-//				{
-//					possible_parent = j_node;
-//					closest_hit = t_hit;
-//				}
-//			}
-//			else if (result == 1)
-//			{
-//				possible_children.push_back(j_node);
-//			}
-//		}
-//		CheckParents(i_node, possible_parent);
-//		CheckChildren(i_node, possible_children);
-//	}
-//
-//}
+void ContourTree::BuildTree()
+{
+
+	auto generate_node = []() {return std::make_shared<ContourNode>(); };
+
+	std::vector<std::shared_ptr<ContourNode>> contour_nodes;
+	std::generate_n(std::back_inserter(contour_nodes), contours.size(), generate_node);
+	for (int idx = 0; idx < contour_nodes.size(); idx++)
+	{
+		contour_nodes[idx]->SetNodeID(node_id_counter++);
+		tree_root->AddChild(contour_nodes[idx]);
+	}
+
+	for (int i_idx = 0; i_idx < contour_nodes.size() - 1; i_idx++)
+	{
+		float closest_hit = std::numeric_limits<float>::max();
+		std::shared_ptr<ContourNode> possible_parent;
+		std::vector<std::shared_ptr<ContourNode>> possible_children;
+		std::shared_ptr<ContourNode> i_node = std::make_shared<ContourNode>(contour_nodes[i_idx]);
+		for (int j_idx = 0; j_idx < contour_nodes.size() - 1; j_idx++)
+		{
+			float t_hit;
+			std::shared_ptr<ContourNode> j_node = std::make_shared<ContourNode>(contour_nodes[j_idx]);
+			int result = Contour::EvaluateContoursRelationship(*i_node->contour, *j_node->contour, t_hit);
+			if (result == -1)
+			{
+				if (t_hit < closest_hit)
+				{
+					possible_parent = j_node;
+					closest_hit = t_hit;
+				}
+			}
+			else if (result == 1)
+			{
+				possible_children.push_back(j_node);
+			}
+		}
+		CheckParents(i_node, possible_parent);
+		CheckChildren(i_node, possible_children);
+	}
+
+}
 //
 //void ContourTree::CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children)
 //{
