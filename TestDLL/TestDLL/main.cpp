@@ -281,6 +281,39 @@ int main() {
 		primitives_b[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
 	}
 
+	std::vector<float> points_c(points_a.size());
+	for (int i = 0; i < points_c.size(); i++)
+	{
+		float p = points_a[i];
+		if (i % 3 != 1)
+			p = p*1.5f + 20;
+		points_c[i] = p;
+	}
+	std::vector<std::shared_ptr<Segment>> primitives_c((int)(points_c.size() / 6));
+	for (int i = 0; i < (int)(points_c.size() / 6); i++)
+	{
+		float3 p0(points_c[i * 6], points_c[i * 6 + 1], points_c[i * 6 + 2]);
+		float3 p1(points_c[i * 6 + 3], points_c[i * 6 + 4], points_c[i * 6 + 5]);
+		primitives_c[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+	}
+
+	std::vector<float> points_d(points_a.size());
+	for (int i = 0; i < points_d.size(); i++)
+	{
+		float p = points_a[i];
+		if (i % 3 != 1)
+			p = p*0.2f + 20;
+		points_d[i] = p;
+	}
+	std::vector<std::shared_ptr<Segment>> primitives_d((int)(points_d.size() / 6));
+	for (int i = 0; i < (int)(points_d.size() / 6); i++)
+	{
+		float3 p0(points_d[i * 6], points_d[i * 6 + 1], points_d[i * 6 + 2]);
+		float3 p1(points_d[i * 6 + 3], points_d[i * 6 + 4], points_d[i * 6 + 5]);
+		primitives_d[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+	}
+
+
 	clock_t tStart;
 	
 
@@ -290,19 +323,25 @@ int main() {
 	tStart = clock();
 	std::shared_ptr<Contour> contour_a(new Contour(primitives_a, n));
 	std::shared_ptr<Contour> contour_b(new Contour(primitives_b, n));
+	std::shared_ptr<Contour> contour_c(new Contour(primitives_c, n));
+	std::shared_ptr<Contour> contour_d(new Contour(primitives_d, n));
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 
 	/////////////TEST CONTOURS INCLUSION
 	float t_hit;
-	bool result = contour_a->IsContained(*contour_b, t_hit);
-	std::cout << result << ' ' << t_hit << std::endl;
-	result = contour_a->Contains(*contour_b, t_hit);
-	std::cout << result << ' ' << t_hit << std::endl;
-
 	int r = Contour::EvaluateContoursRelationship(*contour_a, *contour_b, t_hit);
 	std::cout << r << ' ' << t_hit << std::endl;
-
+	r = Contour::EvaluateContoursRelationship(*contour_a, *contour_c, t_hit);
+	std::cout << r << ' ' << t_hit << std::endl;
+	r = Contour::EvaluateContoursRelationship(*contour_a, *contour_d, t_hit);
+	std::cout << r << ' ' << t_hit << std::endl;
+	r = Contour::EvaluateContoursRelationship(*contour_b, *contour_c, t_hit);
+	std::cout << r << ' ' << t_hit << std::endl;
+	r = Contour::EvaluateContoursRelationship(*contour_b, *contour_d, t_hit);
+	std::cout << r << ' ' << t_hit << std::endl;
+	r = Contour::EvaluateContoursRelationship(*contour_c, *contour_d, t_hit);
+	std::cout << r << ' ' << t_hit << std::endl;
 
 	/////////////////ContourNode TEST
 	//auto lb = std::make_shared<TestPointer>();
@@ -311,73 +350,72 @@ int main() {
 	//bb->SetLittleBrother(lb);
 	//lb->SetBigBrother(bb);
 
-	std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>(1);
-	//ContourNode tree_root;
-	//Contour tmp_a(primitives_a, n);
-	std::shared_ptr<ContourNode> cn_a = std::make_shared<ContourNode>(contour_a, 2);
-	std::shared_ptr<ContourNode> cn_b = std::make_shared<ContourNode>(contour_b, 3);
-	tree_root->AddChild(cn_a);
-	tree_root->AddChild(cn_b);
-	cn_b->AddChild(cn_a);
-	std::cout << (*cn_b == *cn_a) << std::endl;
-	//ContourNode cn_a(contour_a);
-	//ContourNode cn_b(contour_b, tree_root);
+	//std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>(1);
+	//std::shared_ptr<ContourNode> cn_a = std::make_shared<ContourNode>(contour_a, 2);
+	//std::shared_ptr<ContourNode> cn_b = std::make_shared<ContourNode>(contour_b, 3);
+	//std::shared_ptr<ContourNode> cn_c = std::make_shared<ContourNode>(contour_c, 4);
+	//std::shared_ptr<ContourNode> cn_d = std::make_shared<ContourNode>(contour_d, 5);
+	//tree_root->AddChild(cn_a);
+	//tree_root->AddChild(cn_b);
+	//cn_b->AddChild(cn_a);
+	//std::cout << (*cn_b == *cn_a) << std::endl;
 
-	auto a_ancestors = cn_a->GetAncestors();
-	auto root_descendants = tree_root->GetDescendants();
+	//auto a_ancestors = cn_a->GetAncestors();
+	//auto root_descendants = tree_root->GetDescendants();
 
+	//auto generate_node_test = []()
+	//{
+	//	return std::make_shared<ContourNode>();
+	//};
 
+	//std::vector<std::shared_ptr<ContourNode>> test;
+	//std::generate_n(std::back_inserter(test), 10, generate_node_test);
 
-
-	auto generate_node_test = []()
-	{
-		return std::make_shared<ContourNode>();
-	};
-
-	std::vector<std::shared_ptr<ContourNode>> test;
-	std::generate_n(std::back_inserter(test), 10, generate_node_test);
-
-	int id = 4;
-	for (int idx = 0; idx < test.size(); idx++)
-	{
-		//test[idx];
-		test[idx]->SetNodeID(id++);
-		tree_root->AddChild(test[idx]);
-	}
-	int a = 2;
+	//int id = 4;
+	//for (int idx = 0; idx < test.size(); idx++)
+	//{
+	//	//test[idx];
+	//	test[idx]->SetNodeID(id++);
+	//	tree_root->AddChild(test[idx]);
+	//}
+	//int a = 2;
 
 
 
 	/////////////////////BUILD ContourTree
-	/*std::cout << "Building Tree Contour" << std::endl;
+	std::cout << "Building Tree Contour" << std::endl;
 	tStart = clock();
-	ContourTree contour_tree({ contour_a, contour_b });
+	ContourTree contour_tree({ contour_a, contour_b, contour_c, contour_d });
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
-	int number_of_rays = 10;
-	BBox bbox = contour_a->GetBBox();
-	float3 pmin = bbox.GetpMin();
-	float3 pmax = bbox.GetpMax();
-	float width = pmax[0] - pmin[0];
-	float3 origin_0(pmin[0], pmin[1], pmin[2] + 10.0);
-	float3 direction(0.0, 0.0, -1.0);
-	for (int idx = 0; idx < number_of_rays; idx++)
-	{
-		float3 origin = origin_0 + float3(width / number_of_rays * idx ,0.0, 0.0);
-		Ray ray(origin, direction, 0, 1000, 0, 0);
-		RayIntersectionInfo info;
-		for (std::vector<std::shared_ptr<BVH>> branch : contour_tree.tree_individual_bvhs)
-		{
-			for (std::shared_ptr<BVH> bvh : branch)
-			{
-				bvh->all_intersects(ray, info);
-				std::cout << (info.GetHits()) << std::endl;
+	std::shared_ptr<ContourNode> root = contour_tree.tree_root;
+	std::vector<std::shared_ptr<ContourNode>> child = root->GetChildren();
+	std::vector<std::shared_ptr<ContourNode>> desc = root->GetDescendants();
 
-			}
+	//int number_of_rays = 10;
+	//BBox bbox = contour_a->GetBBox();
+	//float3 pmin = bbox.GetpMin();
+	//float3 pmax = bbox.GetpMax();
+	//float width = pmax[0] - pmin[0];
+	//float3 origin_0(pmin[0], pmin[1], pmin[2] + 10.0);
+	//float3 direction(0.0, 0.0, -1.0);
+	//for (int idx = 0; idx < number_of_rays; idx++)
+	//{
+	//	float3 origin = origin_0 + float3(width / number_of_rays * idx ,0.0, 0.0);
+	//	Ray ray(origin, direction, 0, 1000, 0, 0);
+	//	RayIntersectionInfo info;
+	//	for (std::vector<std::shared_ptr<BVH>> branch : contour_tree.tree_individual_bvhs)
+	//	{
+	//		for (std::shared_ptr<BVH> bvh : branch)
+	//		{
+	//			bvh->all_intersects(ray, info);
+	//			std::cout << (info.GetHits()) << std::endl;
 
-		}
+	//		}
 
-	}*/
+	//	}
+
+	//}
 
 
 	return 0;

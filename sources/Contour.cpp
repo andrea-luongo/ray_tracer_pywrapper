@@ -207,6 +207,15 @@ std::vector<std::shared_ptr<ContourNode>> ContourNode::GetAncestors()
 
 	return ancestors;
 };
+
+std::vector<std::shared_ptr<ContourNode>> ContourNode::GetChildren()
+{
+	std::vector<std::shared_ptr<ContourNode>> children;
+
+	children.insert(children.end(), children_set.begin(), children_set.end());
+	
+	return children;
+};
 //////////////////////////////////////////////////////////////////////////////
 
 
@@ -226,11 +235,19 @@ void ContourTree::BuildTree()
 
 	auto generate_node = []() {return std::make_shared<ContourNode>(); };
 
+	//std::vector<std::shared_ptr<ContourNode>> contour_nodes;
+	//std::generate_n(std::back_inserter(contour_nodes), contours.size(), generate_node);
+	//for (int idx = 0; idx < contour_nodes.size(); idx++)
+	//{
+	//	contour_nodes[idx]->SetNodeID(node_id_counter++);
+	//	tree_root->AddChild(contour_nodes[idx]);
+	//}
+
 	std::vector<std::shared_ptr<ContourNode>> contour_nodes;
-	std::generate_n(std::back_inserter(contour_nodes), contours.size(), generate_node);
-	for (int idx = 0; idx < contour_nodes.size(); idx++)
+	for (int idx = 0; idx < contours.size(); idx++)
 	{
-		contour_nodes[idx]->SetNodeID(node_id_counter++);
+		contour_nodes.push_back(std::make_shared<ContourNode>(contours[idx], node_id_counter++));
+		//contour_nodes[idx]->SetNodeID(node_id_counter++);
 		tree_root->AddChild(contour_nodes[idx]);
 	}
 

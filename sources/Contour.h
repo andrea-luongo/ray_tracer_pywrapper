@@ -55,6 +55,7 @@ public:
 	RAYTRACERDLL_API std::vector<std::shared_ptr<Contour>> GetChildrenContours();
 	RAYTRACERDLL_API std::vector<std::shared_ptr<ContourNode>> GetDescendants();
 	RAYTRACERDLL_API std::vector<std::shared_ptr<ContourNode>> GetAncestors();
+	RAYTRACERDLL_API std::vector<std::shared_ptr<ContourNode>> GetChildren();
 
 	RAYTRACERDLL_API bool operator==(const ContourNode& other) {
 		return node_id == other.node_id;
