@@ -9,6 +9,7 @@
 #include <mutex>
 #include <set>
 
+
 class Contour : public Primitive
 {
 public:
@@ -30,46 +31,11 @@ public:
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
 };
 
-//class ContourNode
-//{
-//public:
-//	std::shared_ptr<Contour> contour = nullptr;
-//	std::vector<ContourNode> children;
-//	std::shared_ptr<ContourNode> parent = nullptr;
-//	int id = 0;
-//	int depth = 0;
-//public:
-//	RAYTRACERDLL_API ~ContourNode();
-//	RAYTRACERDLL_API ContourNode();
-//	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c);
-//	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p);
-//	RAYTRACERDLL_API ContourNode(std::shared_ptr<Contour> c, std::shared_ptr<ContourNode> p, int i);
-//
-//	RAYTRACERDLL_API void SetNodeID(int i) { id = i; };
-//	RAYTRACERDLL_API void AddChild(ContourNode& c);
-//	RAYTRACERDLL_API void RemoveChild(ContourNode& c);
-//	RAYTRACERDLL_API void UpdateChildrenDepth();
-//	RAYTRACERDLL_API bool operator==(const ContourNode& other) {
-//		return id == other.id;
-//	};
-//	RAYTRACERDLL_API bool operator!=(const ContourNode& other) {
-//		return !(*this == other);
-//	};
-//	RAYTRACERDLL_API bool operator<(const ContourNode& other) {
-//		return id < other.id;
-//	};
-//
-//	/*RAYTRACERDLL_API std::vector<Contour> GetChildrenContours();
-//	RAYTRACERDLL_API std::vector<ContourNode> GetDescendants();
-//	RAYTRACERDLL_API std::vector<ContourNode> GetAncestors();*/
-//	//RAYTRACERDLL_API void RemoveParent();
-//};
 
 class ContourNode : public std::enable_shared_from_this<ContourNode>
 {
 public:
 	std::shared_ptr<Contour> contour = nullptr;
-	//std::vector< std::shared_ptr<ContourNode>> children;
 	std::set<std::shared_ptr<ContourNode>> children_set;
 	std::weak_ptr<ContourNode> parent;
 	int node_id = 0;
@@ -85,6 +51,11 @@ public:
 	RAYTRACERDLL_API void AddChild(std::shared_ptr<ContourNode> c);
 	RAYTRACERDLL_API void RemoveChild(std::shared_ptr<ContourNode> c);
 	RAYTRACERDLL_API void UpdateChildrenDepth();
+
+	RAYTRACERDLL_API std::vector<std::shared_ptr<Contour>> GetChildrenContours();
+	RAYTRACERDLL_API std::vector<std::shared_ptr<ContourNode>> GetDescendants();
+	RAYTRACERDLL_API std::vector<std::shared_ptr<ContourNode>> GetAncestors();
+
 	RAYTRACERDLL_API bool operator==(const ContourNode& other) {
 		return node_id == other.node_id;
 	};
@@ -94,11 +65,30 @@ public:
 	RAYTRACERDLL_API bool operator<(const ContourNode& other) {
 		return node_id < other.node_id;
 	};
-
-	RAYTRACERDLL_API std::vector<std::shared_ptr<Contour>> GetChildrenContours();
-	RAYTRACERDLL_API std::vector<std::shared_ptr<ContourNode>> GetDescendants();
-	RAYTRACERDLL_API std::vector<std::shared_ptr<ContourNode>> GetAncestors();
 };
+
+
+class ContourTree
+{
+public:
+	std::vector<std::shared_ptr<Contour>> contours;
+	std::shared_ptr<ContourNode> tree_root;
+	BVH* root_bvh;
+	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
+	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;
+	int node_id_counter = 0;
+
+public:
+	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
+private:
+	RAYTRACERDLL_API void BuildTree();
+	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);
+	RAYTRACERDLL_API void CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p);
+	RAYTRACERDLL_API void BuildRootBVH();
+	RAYTRACERDLL_API void BuildTreeIndividualBVH();
+	RAYTRACERDLL_API void BuildTreeGlobalBVH();
+};
+
 
 class TestPointer
 {
@@ -124,26 +114,4 @@ public:
 		is_big_brother = true;
 		little_brother = lb;
 	};
-};
-
-
-class ContourTree
-{
-public:
-	std::vector<std::shared_ptr<Contour>> contours;
-	std::shared_ptr<ContourNode> tree_root;
-	BVH* root_bvh;
-	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
-	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;
-	int node_id_counter = 0;
-
-public:
-	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
-private:
-	RAYTRACERDLL_API void BuildTree();
-	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);
-	RAYTRACERDLL_API void CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p);
-	RAYTRACERDLL_API void BuildRootBVH();
-	RAYTRACERDLL_API void BuildTreeIndividualBVH();
-	RAYTRACERDLL_API void BuildTreeGlobalBVH();
 };

@@ -261,7 +261,6 @@ int main() {
 	{
 		float3 p0(points_a[i * 6], points_a[i * 6 + 1], points_a[i * 6 + 2]);
 		float3 p1(points_a[i * 6 + 3], points_a[i * 6 + 4], points_a[i * 6 + 5]);
-		std::cout << p0 << ' ' << p1 << std::endl;
 		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
 	}
 
@@ -279,7 +278,6 @@ int main() {
 	{
 		float3 p0(points_b[i * 6], points_b[i * 6 + 1], points_b[i * 6 + 2]);
 		float3 p1(points_b[i * 6 + 3], points_b[i * 6 + 4], points_b[i * 6 + 5]);
-		std::cout << p0 << ' ' << p1 << std::endl;
 		primitives_b[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
 	}
 

@@ -239,11 +239,11 @@ void ContourTree::BuildTree()
 		float closest_hit = std::numeric_limits<float>::max();
 		std::shared_ptr<ContourNode> possible_parent;
 		std::vector<std::shared_ptr<ContourNode>> possible_children;
-		std::shared_ptr<ContourNode> i_node = std::make_shared<ContourNode>(contour_nodes[i_idx]);
-		for (int j_idx = 0; j_idx < contour_nodes.size() - 1; j_idx++)
+		std::shared_ptr<ContourNode> i_node = contour_nodes[i_idx];
+		for (int j_idx = i_idx + 1; j_idx < contour_nodes.size(); j_idx++)
 		{
+			std::shared_ptr<ContourNode> j_node = contour_nodes[j_idx];
 			float t_hit;
-			std::shared_ptr<ContourNode> j_node = std::make_shared<ContourNode>(contour_nodes[j_idx]);
 			int result = Contour::EvaluateContoursRelationship(*i_node->contour, *j_node->contour, t_hit);
 			if (result == -1)
 			{
@@ -263,83 +263,83 @@ void ContourTree::BuildTree()
 	}
 
 }
-//
-//void ContourTree::CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children)
-//{
-//	if (children.size() == 0)
-//		return;
-//
-//	std::vector<std::shared_ptr<ContourNode>> descendants = n->GetDescendants();
-//	for (std::shared_ptr<ContourNode> c : children) {
-//		if (std::find(descendants.begin(), descendants.end(), c) == descendants.end())
-//		{
-//			c->SetParent(n);
-//		}
-//	}
-//
-//}
-//
-//void ContourTree::CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p)
-//{
-//	if (p == nullptr)
-//	{
-//		return;
-//	}
-//	std::vector<std::shared_ptr<ContourNode>> ancestors = n->GetAncestors();
-//	if (std::find(ancestors.begin(), ancestors.end(), p) == ancestors.end())
-//	{
-//		n->SetParent(p);
-//	}
-//}
-//
-////build a global root bvh
-//void ContourTree::BuildRootBVH()
-//{
-//	std::vector<std::shared_ptr<Contour>> root_children_contours = tree_root->GetChildrenContours();
-//	root_bvh = new BVH({ root_children_contours.begin(), root_children_contours.end() }, SplitMethod::EqualCounts, 255);
-//}
-//
-////build a tree for each set of external-internal contours
-//void ContourTree::BuildTreeIndividualBVH()
-//{
-//	for (std::shared_ptr<ContourNode> c : tree_root->children)
-//	{
-//		std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
-//		nodes.push_back(c);
-//		std::vector<std::shared_ptr<BVH>> node_bvhs;
-//
-//		for (int idx = 0; idx < nodes.size(); idx++)
-//		{
-//			if (nodes[idx]->depth % 2 == 1)
-//			{
-//				std::vector<std::shared_ptr<Contour>> contours = nodes[idx]->GetChildrenContours();
-//				contours.push_back(nodes[idx]->contour);
-//				BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
-//				node_bvhs.push_back(std::shared_ptr<BVH>(bvh));
-//			}
-//			
-//		}
-//
-//		tree_individual_bvhs.push_back(node_bvhs);
-//	}
-//}
+
+void ContourTree::CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children)
+{
+	if (children.size() == 0)
+		return;
+
+	std::vector<std::shared_ptr<ContourNode>> descendants = n->GetDescendants();
+	for (std::shared_ptr<ContourNode> c : children) {
+		if (std::find(descendants.begin(), descendants.end(), c) == descendants.end())
+		{
+			n->AddChild(c);
+		}
+	}
+
+}
+
+void ContourTree::CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p)
+{
+	if (p == nullptr)
+	{
+		return;
+	}
+	std::vector<std::shared_ptr<ContourNode>> ancestors = n->GetAncestors();
+	if (std::find(ancestors.begin(), ancestors.end(), p) == ancestors.end())
+	{
+		p->AddChild(n);
+	}
+}
+
+//build a global root bvh
+void ContourTree::BuildRootBVH()
+{
+	std::vector<std::shared_ptr<Contour>> root_children_contours = tree_root->GetChildrenContours();
+	root_bvh = new BVH({ root_children_contours.begin(), root_children_contours.end() }, SplitMethod::EqualCounts, 255);
+}
+
+//build a tree for each set of external-internal contours
+void ContourTree::BuildTreeIndividualBVH()
+{
+	for (std::shared_ptr<ContourNode> c : tree_root->children_set)
+	{
+		std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
+		nodes.push_back(c);
+		std::vector<std::shared_ptr<BVH>> node_bvhs;
+
+		for (int idx = 0; idx < nodes.size(); idx++)
+		{
+			if (nodes[idx]->depth % 2 == 1)
+			{
+				std::vector<std::shared_ptr<Contour>> contours = nodes[idx]->GetChildrenContours();
+				contours.push_back(nodes[idx]->contour);
+				BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+				node_bvhs.push_back(std::shared_ptr<BVH>(bvh));
+			}
+			
+		}
+
+		tree_individual_bvhs.push_back(node_bvhs);
+	}
+}
 //
 //
 ////build a bvh for each tree_root children
-//void ContourTree::BuildTreeGlobalBVH()
-//{
-//	for (std::shared_ptr<ContourNode> c : tree_root->children) 
-//	{
-//		std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
-//		nodes.push_back(c);
-//		std::vector<std::shared_ptr<Contour>> contours(nodes.size());
-//		for (int idx = 0; idx < nodes.size(); idx++)
-//		{
-//			contours[idx] = nodes[idx]->contour;
-//		}
-//		//std::shared_ptr<BVH> a = std::make_shared<BVH>({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
-//		BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
-//		tree_global_bvsh.push_back(std::shared_ptr<BVH>(bvh));
-//	}
-//}
+void ContourTree::BuildTreeGlobalBVH()
+{
+	for (std::shared_ptr<ContourNode> c : tree_root->children_set) 
+	{
+		std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
+		nodes.push_back(c);
+		std::vector<std::shared_ptr<Contour>> contours(nodes.size());
+		for (int idx = 0; idx < nodes.size(); idx++)
+		{
+			contours[idx] = nodes[idx]->contour;
+		}
+		//std::shared_ptr<BVH> a = std::make_shared<BVH>({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+		BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+		tree_global_bvsh.push_back(std::shared_ptr<BVH>(bvh));
+	}
+}
 /////////////////////////////////////////////////////////////////////////
