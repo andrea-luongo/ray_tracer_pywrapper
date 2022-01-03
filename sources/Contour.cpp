@@ -233,7 +233,7 @@ ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 void ContourTree::BuildTree()
 {
 
-	auto generate_node = []() {return std::make_shared<ContourNode>(); };
+	//auto generate_node = []() {return std::make_shared<ContourNode>(); };
 
 	//std::vector<std::shared_ptr<ContourNode>> contour_nodes;
 	//std::generate_n(std::back_inserter(contour_nodes), contours.size(), generate_node);

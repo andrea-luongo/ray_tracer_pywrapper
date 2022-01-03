@@ -253,8 +253,10 @@ std::shared_ptr<ContourNode> generate_node()
 
 int main() {
 	// TESTING BVH CONSTRUCTION AND INTERSECTION
-	std::vector<float> points_a = { 3.0902, 2.5, - 5 ,0.0095 ,2.5, - 5,0.0095, 2.5, - 5, - 3.0902, 2.5, - 5,- 3.0902, 2.5, - 5, - 3.0902, 2.5, 0.0153,- 3.0902, 2.5, 0.0153 ,- 3.0902, 2.5, 5,
-			- 3.0902, 2.5, 5, - 0.0095, 2.5, 5, - 0.0095, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 5 };
+	/*std::vector<float> points_a = { 3.0902, 2.5, - 5 ,0.0095 ,2.5, - 5,0.0095, 2.5, - 5, - 3.0902, 2.5, - 5,- 3.0902, 2.5, - 5, - 3.0902, 2.5, 0.0153,- 3.0902, 2.5, 0.0153 ,- 3.0902, 2.5, 5,
+			- 3.0902, 2.5, 5, - 0.0095, 2.5, 5, - 0.0095, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 5 };*/
+
+	std::vector<float> points_a = { 1, 0, 1 , 1, 0, -1, 1, 0, -1, -1, 0, -1, -1, 0, -1, -1, 0, 1, -1, 0, 1, 1, 0, 1};
 
 	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
 	for (int i = 0; i < (int)(points_a.size() / 6); i++)
@@ -392,31 +394,35 @@ int main() {
 	std::vector<std::shared_ptr<ContourNode>> child = root->GetChildren();
 	std::vector<std::shared_ptr<ContourNode>> desc = root->GetDescendants();
 
-	//int number_of_rays = 10;
-	//BBox bbox = contour_a->GetBBox();
-	//float3 pmin = bbox.GetpMin();
-	//float3 pmax = bbox.GetpMax();
-	//float width = pmax[0] - pmin[0];
-	//float3 origin_0(pmin[0], pmin[1], pmin[2] + 10.0);
-	//float3 direction(0.0, 0.0, -1.0);
-	//for (int idx = 0; idx < number_of_rays; idx++)
-	//{
-	//	float3 origin = origin_0 + float3(width / number_of_rays * idx ,0.0, 0.0);
-	//	Ray ray(origin, direction, 0, 1000, 0, 0);
-	//	RayIntersectionInfo info;
-	//	for (std::vector<std::shared_ptr<BVH>> branch : contour_tree.tree_individual_bvhs)
-	//	{
-	//		for (std::shared_ptr<BVH> bvh : branch)
-	//		{
-	//			bvh->all_intersects(ray, info);
-	//			std::cout << (info.GetHits()) << std::endl;
+	for (auto branch_bvhs : contour_tree.tree_individual_bvhs) 
+	{
+			for (auto bvh : branch_bvhs) 
+			{
+				int number_of_rays = 10;
+				BBox bbox = bvh->getBVHBBox();
+				float3 pmin = bbox.GetpMin();
+				float3 pmax = bbox.GetpMax();
+				float width = pmax[0] - pmin[0];
+				float3 origin_0(pmin[0], pmin[1], pmin[2] + 100.0);
+				float3 direction(0.0, 0.0, -1.0);
+				for (int idx = 0; idx < number_of_rays; idx++)
+				{
+					float3 origin = origin_0 + float3(width / number_of_rays * idx, 0.0, 0.0);
+					Ray ray(origin, direction, 0, 1000, 0, 0);
+					RayIntersectionInfo info;
+					bvh->all_intersects(ray, info);
+					auto hits = *info.GetHits();
+					int a = 1;
+					for (auto hit : hits)
+					{
+						std::cout << hit << std::endl;
 
-	//		}
-
-	//	}
-
-	//}
-
+					}
+					std::cout << "\n" << std::endl;
+				}
+				std::cout << "\n" << std::endl;
+			}
+	}
 
 	return 0;
 }
