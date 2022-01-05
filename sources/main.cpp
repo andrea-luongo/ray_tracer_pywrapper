@@ -325,25 +325,22 @@ public:
 
 class PyContour {
 public:
-    Contour* contour = nullptr;
+    std::shared_ptr<Contour> contour = nullptr;
 public:
 
     PyContour(std::vector<float>& vertices, py::array_t<float> n)
     {
         float3 normal(n.at(0), n.at(1), n.at(2));
         try {
-            std::cout << vertices.size() << std::endl;
             std::vector<std::shared_ptr<Segment>> primitives((int)(vertices.size() / 6));
             for (int i = 0; i < (int)(vertices.size() / 6); i++)
             {
                 float3 p0(vertices[i * 6], vertices[i * 6 + 1], vertices[i * 6 + 2]);
                 float3 p1(vertices[i * 6 + 3], vertices[i * 6 + 4], vertices[i * 6 + 5]);
-                //std::shared_ptr<Primitive> primitive = std::shared_ptr<Segment>(new Segment(p0, p1));
-                std::cout << p0 << ' ' << p1 << std::endl;
                 primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+                std::cout << primitives[i] << std::endl;
             }
-            std::cout << "segments created" << std::endl;
-            contour = new Contour(primitives, normal);
+            contour = std::make_shared<Contour>(primitives, normal);
         }
         catch (const std::exception& exc)
         {
@@ -351,66 +348,55 @@ public:
         }
     };
 
+    PyContour(Contour &c)
+    {
+        contour = std::make_shared<Contour>(c);
+    }
+
     ~PyContour() {
         //delete bvh;
     }
 
-    //std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersectsTransformHits(py::array_t<float>& origin, py::array_t<float>& direction, int number_of_rays, py::array_t<float>& bbox_center, float ray_offset, py::array_t<float>& rotation_matrix)
-    //{
-    //    std::vector<PyBindRay> rays(number_of_rays);
-    //    std::vector<PyBindRayInfo> infos(number_of_rays);
-    //    float3 o(origin.at(0), origin.at(1), origin.at(2));
-    //    float3 ray_d(direction.at(0), direction.at(1), direction.at(2));
-    //    float3 b_center(bbox_center.at(0), bbox_center.at(1), bbox_center.at(2));
-    //    Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
-    //    float min = 0;
-    //    float max = std::numeric_limits<float>::infinity();
-    //    concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
-    //        {
-    //            float3 ray_o = (rot_matrix * float4(o.x + ray_offset * idx, o.y, o.z, 1.0f) + float4(b_center.x, 0, b_center.z, 0));
-    //            rays[idx].ray->SetOrigin(ray_o);
-    //            rays[idx].ray->SetDirection(ray_d);
-    //            rays[idx].SetMax(max);
-    //            rays[idx].SetMin(min);
-    //        });
-    //    concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
-    //        {
-    //            contour->AllIntersect(*rays[idx].ray, *infos[idx].rayInfo);
-    //        });
-    //    std::vector<std::vector<py::array_t<float>>> hit_points(number_of_rays);
-    //    try {
-    //        for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)
-    //        {
-    //            std::vector<float> t_hits = infos[ray_idx].GetHits();
-    //            for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
-    //            {
-    //                float3 hit_point = rays[ray_idx].ray->GetOrigin() + t_hits[hit_idx] * rays[ray_idx].ray->GetDirection();
-    //                hit_points[ray_idx].push_back(reinterpret_float3(hit_point));
-    //            }
-    //        }
-    //    }
-    //    catch (...)
-    //    {
-    //        std::cout << "Ray Intersection Exception" << std::endl;
-    //    }
-    //    return hit_points;
-    //};
+    py::tuple IsContained(PyContour& contour_b)
+    {
+        float t_hit;
+        bool result = contour->IsContained(*contour_b.contour, t_hit);
+        return py::make_tuple(result, t_hit);
+    }
+
+    py::tuple Contains(PyContour& contour_b)
+    {
+        float t_hit;
+        bool result = contour->Contains(*contour_b.contour, t_hit);
+        return py::make_tuple(result, t_hit);
+    }
+    py::tuple EvaluateContoursRelationship(PyContour& contour_b)
+    {
+        float t_hit;
+        int result = Contour::EvaluateContoursRelationship(*contour, *contour_b.contour, t_hit);
+        return py::make_tuple(result, t_hit);
+    }
+
+    PyBindBVH GetBVH()
+    {
+        return PyBindBVH(std::shared_ptr<BVH>(contour->bvh));
+    }
 };
 
 class PyContourTree {
 
 public:
-    ContourTree* contour_tree = nullptr;
+    std::shared_ptr<ContourTree> contour_tree = nullptr;
 public:
 
     PyContourTree(std::vector<PyContour>& py_contours)
     {
-        std::vector<std::shared_ptr<Contour>> contours(py_contours.size());
-        for (int i = 0; i < contours.size(); i++)
+        std::vector<std::shared_ptr<Contour>> contours;
+        for (int i = 0; i < py_contours.size(); i++)
         {
-            contours[i] = std::shared_ptr<Contour>(py_contours[i].contour);
+            contours.push_back(py_contours[i].contour);
         }
-        contour_tree = new ContourTree(contours);
+        contour_tree = std::make_shared<ContourTree>(contours);
     };
 
     ~PyContourTree() {
@@ -429,6 +415,51 @@ public:
         }
         return pybvhs;
     }
+
+    bool AllIntersects()
+    {
+        bool result = false;
+        float3 direction(0.0, 0.0, -1.0);
+        float3 origin(0.0, 0.0, 10.0);
+        Ray ray(origin, direction, 0, 1000, 0, 0);
+        RayIntersectionInfo info;
+        //for (auto branch_bvhs : contour_tree->tree_individual_bvhs)
+        //{
+        //    for (auto bvh : branch_bvhs)
+        //    {
+        //        std::cout << bvh << std::endl;
+        //        result = bvh->all_intersects(ray, info);
+        //        //result = bvh->all_intersects(*ray.ray, *info.rayInfo);
+        //    }
+        //}
+
+
+
+        for (int i = 0; i < contour_tree->contours.size(); i++)
+        {
+       /*     float3 direction(0.0, 0.0, -1.0);
+            float3 origin(0.0, 0.0, 10.0);
+            Ray ray(origin, direction, 0, 1000, 0, 0);
+            RayIntersectionInfo info;
+            contour_tree->contours[i]->AllIntersect(ray, info);
+            auto hits = *info.GetHits();
+            for (auto hit : hits)
+            {*/
+            std::cout << contour_tree->contours[i]->contour_normal << std::endl;
+            for (int j = 0; j < contour_tree->contours[i]->segments.size(); j++)
+            {
+
+                std::cout << *(contour_tree->contours[i]->segments[j]) << std::endl;
+            }
+            std::cout << contour_tree->contours[i]->bvh << std::endl;
+            contour_tree->contours[i]->bvh->all_intersects(ray, info);
+            //}
+        }
+
+
+        return result;
+    }
+
 };
 
 
@@ -464,12 +495,17 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
         .export_values();
 
 
-  /*  py::class_<PyContour> contour(m, "PyContour");
+    py::class_<PyContour> contour(m, "PyContour");
     contour.def(py::init<std::vector<float>&, py::array_t<float>>());
+    contour.def("IsContained", &PyContour::IsContained);
+    contour.def("Contains", &PyContour::Contains);
+    contour.def("EvaluateContoursRelationship", &PyContour::EvaluateContoursRelationship);
+    contour.def("GetBVH", &PyContour::GetBVH);
 
     py::class_<PyContourTree> contourtree(m, "PyContourTree");
-    contourtree.def(py::init<std::vector<PyContour>&>());*/
-
+    contourtree.def(py::init<std::vector<PyContour>&>());
+    contourtree.def("GetTreeIndividualPyBVHs", &PyContourTree::GetTreeIndividualPyBVHs);
+    contourtree.def("AllIntersects", &PyContourTree::AllIntersects);
 
     py::class_<PyBindRay> ray(m, "PyBindRay");
     ray.def(py::init<py::array_t<float>, py::array_t<float>, float, float, int, int>());

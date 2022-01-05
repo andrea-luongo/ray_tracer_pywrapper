@@ -284,6 +284,13 @@ bool Segment::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info)
 	return hit;
 }
 
+std::ostream& operator<<(std::ostream& os, Segment const& s)
+{
+	os << "v0 " << s.v0 << " v1 " << s.v1;
+	return os;
+};
+
+
 Sphere::Sphere(const float r, const float3& c) { radius = r; center = c; ComputeBBox(); }
 		
 void Sphere::ComputeBBox()

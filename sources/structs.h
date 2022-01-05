@@ -149,6 +149,8 @@ public:
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
 };
+RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Segment const& s);
+
 
 
 class Sphere : public Primitive
