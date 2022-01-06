@@ -338,7 +338,7 @@ public:
                 float3 p0(vertices[i * 6], vertices[i * 6 + 1], vertices[i * 6 + 2]);
                 float3 p1(vertices[i * 6 + 3], vertices[i * 6 + 4], vertices[i * 6 + 5]);
                 primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
-                std::cout << primitives[i] << std::endl;
+                //std::cout << primitives[i] << std::endl;
             }
             contour = std::make_shared<Contour>(primitives, normal);
         }
@@ -422,7 +422,7 @@ public:
         float3 direction(0.0, 0.0, -1.0);
         float3 origin(0.0, 0.0, 10.0);
         Ray ray(origin, direction, 0, 1000, 0, 0);
-        RayIntersectionInfo info;
+        RayIntersectionInfo rinfo;
         //for (auto branch_bvhs : contour_tree->tree_individual_bvhs)
         //{
         //    for (auto bvh : branch_bvhs)
@@ -433,29 +433,41 @@ public:
         //    }
         //}
 
-
-
-        for (int i = 0; i < contour_tree->contours.size(); i++)
-        {
-       /*     float3 direction(0.0, 0.0, -1.0);
-            float3 origin(0.0, 0.0, 10.0);
-            Ray ray(origin, direction, 0, 1000, 0, 0);
-            RayIntersectionInfo info;
-            contour_tree->contours[i]->AllIntersect(ray, info);
-            auto hits = *info.GetHits();
-            for (auto hit : hits)
-            {*/
-            std::cout << contour_tree->contours[i]->contour_normal << std::endl;
-            for (int j = 0; j < contour_tree->contours[i]->segments.size(); j++)
+        try {
+            std::cout << "number of contours " << contour_tree->contours.size() << std::endl;
+            for (int i = 0; i < contour_tree->contours.size(); i++)
             {
+                /*     float3 direction(0.0, 0.0, -1.0);
+                     float3 origin(0.0, 0.0, 10.0);
+                     Ray ray(origin, direction, 0, 1000, 0, 0);
+                     RayIntersectionInfo info;
+                     contour_tree->contours[i]->AllIntersect(ray, info);
+                     auto hits = *info.GetHits();
+                     for (auto hit : hits)
+                     {*/
+ /*               std::cout << contour_tree->contours[i]->contour_normal << std::endl;
+                for (int j = 0; j < contour_tree->contours[i]->segments.size(); j++)
+                {
 
-                std::cout << *(contour_tree->contours[i]->segments[j]) << std::endl;
+                    std::cout << *(contour_tree->contours[i]->segments[j]) << std::endl;
+                }*/
+                for (int k = 0; k < 2; k++)
+                {
+                    BBox bb = contour_tree->contours[i]->bvh->getBVHBBox();
+                    std::cout << bb.GetpMax() << bb.GetpMin() << std::endl;
+                }
+                //bool res = contour_tree->contours[i]->bvh->any_intersect(ray);
+
+
+                //std::cout << res << std::endl;
+                //}
             }
-            std::cout << contour_tree->contours[i]->bvh << std::endl;
-            contour_tree->contours[i]->bvh->all_intersects(ray, info);
-            //}
         }
-
+        catch (...)
+        {
+            // catch anything thrown within try block that derives from std::exception
+            std::cout << "exception";
+        }
 
         return result;
     }

@@ -345,44 +345,6 @@ int main() {
 	r = Contour::EvaluateContoursRelationship(*contour_c, *contour_d, t_hit);
 	std::cout << r << ' ' << t_hit << std::endl;
 
-	/////////////////ContourNode TEST
-	//auto lb = std::make_shared<TestPointer>();
-	//auto bb = std::make_shared<TestPointer>();
-
-	//bb->SetLittleBrother(lb);
-	//lb->SetBigBrother(bb);
-
-	//std::shared_ptr<ContourNode> tree_root = std::make_shared<ContourNode>(1);
-	//std::shared_ptr<ContourNode> cn_a = std::make_shared<ContourNode>(contour_a, 2);
-	//std::shared_ptr<ContourNode> cn_b = std::make_shared<ContourNode>(contour_b, 3);
-	//std::shared_ptr<ContourNode> cn_c = std::make_shared<ContourNode>(contour_c, 4);
-	//std::shared_ptr<ContourNode> cn_d = std::make_shared<ContourNode>(contour_d, 5);
-	//tree_root->AddChild(cn_a);
-	//tree_root->AddChild(cn_b);
-	//cn_b->AddChild(cn_a);
-	//std::cout << (*cn_b == *cn_a) << std::endl;
-
-	//auto a_ancestors = cn_a->GetAncestors();
-	//auto root_descendants = tree_root->GetDescendants();
-
-	//auto generate_node_test = []()
-	//{
-	//	return std::make_shared<ContourNode>();
-	//};
-
-	//std::vector<std::shared_ptr<ContourNode>> test;
-	//std::generate_n(std::back_inserter(test), 10, generate_node_test);
-
-	//int id = 4;
-	//for (int idx = 0; idx < test.size(); idx++)
-	//{
-	//	//test[idx];
-	//	test[idx]->SetNodeID(id++);
-	//	tree_root->AddChild(test[idx]);
-	//}
-	//int a = 2;
-
-
 
 	/////////////////////BUILD ContourTree
 	std::cout << "Building Tree Contour" << std::endl;
@@ -415,13 +377,43 @@ int main() {
 					int a = 1;
 					for (auto hit : hits)
 					{
-						std::cout << hit << std::endl;
+						std::cout << origin + hit * direction << std::endl;
+					std::cout <<  hit  << std::endl;
 
 					}
-					std::cout << "\n" << std::endl;
+				std::cout << "\n" << std::endl;
 				}
 				std::cout << "\n" << std::endl;
 			}
+	}
+
+	std::cout << "contours" << std::endl;
+	for (auto c : contour_tree.contours)
+	{
+			int number_of_rays = 10;
+			BBox bbox = c->bvh->getBVHBBox();
+			float3 pmin = bbox.GetpMin();
+			float3 pmax = bbox.GetpMax();
+			float width = pmax[0] - pmin[0];
+			float3 origin_0(pmin[0], pmin[1], pmin[2] + 100.0);
+			float3 direction(0.0, 0.0, -1.0);
+			for (int idx = 0; idx < number_of_rays; idx++)
+			{
+				float3 origin = origin_0 + float3(width / number_of_rays * idx, 0.0, 0.0);
+				Ray ray(origin, direction, 0, 1000, 0, 0);
+				RayIntersectionInfo info;
+				c->AllIntersect(ray, info);
+				auto hits = *info.GetHits();
+				int a = 1;
+				for (auto hit : hits)
+				{
+					std::cout << origin + hit * direction << std::endl;
+					std::cout <<  hit  << std::endl;
+
+				}
+			std::cout << "\n" << std::endl;
+			}
+			std::cout << "\n" << std::endl;
 	}
 
 	return 0;
