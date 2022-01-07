@@ -81,6 +81,9 @@ public:
 
 public:
 	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
+	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
+	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
 private:
 	RAYTRACERDLL_API void BuildTree();
 	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);
@@ -88,6 +91,7 @@ private:
 	RAYTRACERDLL_API void BuildRootBVH();
 	RAYTRACERDLL_API void BuildTreeIndividualBVH();
 	RAYTRACERDLL_API void BuildTreeGlobalBVH();
+	RAYTRACERDLL_API BBox GetBBox();
 };
 
 

@@ -377,9 +377,34 @@ public:
         return py::make_tuple(result, t_hit);
     }
 
-    PyBindBVH GetBVH()
+    py::array_t<float> GetBBoxMin()
     {
-        return PyBindBVH(std::shared_ptr<BVH>(contour->bvh));
+        float3 x = contour->GetBBox().GetpMin();
+        return reinterpret_float3(x);
+    }
+    
+    py::array_t<float> GetBBoxMax()
+    {
+        float3 x = contour->GetBBox().GetpMax();
+        return reinterpret_float3(x);
+    }
+
+    bool Intersect(PyBindRay& ray, PyBindRayInfo& info)
+    {
+        bool result = contour->Intersect(*ray.ray, *info.rayInfo);
+        return result;
+    }
+
+    bool AnyIntersect(PyBindRay& ray)
+    {
+        bool result = contour->AnyIntersect(*ray.ray);
+        return result;
+    }
+
+    bool AllIntersects(PyBindRay& ray, PyBindRayInfo& info)
+    {
+        bool result = contour->AllIntersect(*ray.ray, *info.rayInfo);
+        return result;
     }
 };
 
@@ -416,65 +441,38 @@ public:
         return pybvhs;
     }
 
-    bool AllIntersects()
+    bool Intersect(PyBindRay& ray, PyBindRayInfo& info)
     {
-        bool result = false;
-        float3 direction(0.0, 0.0, -1.0);
-        float3 origin(0.0, 0.0, 10.0);
-        Ray ray(origin, direction, 0, 1000, 0, 0);
-        RayIntersectionInfo rinfo;
-        //for (auto branch_bvhs : contour_tree->tree_individual_bvhs)
-        //{
-        //    for (auto bvh : branch_bvhs)
-        //    {
-        //        std::cout << bvh << std::endl;
-        //        result = bvh->all_intersects(ray, info);
-        //        //result = bvh->all_intersects(*ray.ray, *info.rayInfo);
-        //    }
-        //}
-
-        try {
-            std::cout << "number of contours " << contour_tree->contours.size() << std::endl;
-            for (int i = 0; i < contour_tree->contours.size(); i++)
-            {
-                /*     float3 direction(0.0, 0.0, -1.0);
-                     float3 origin(0.0, 0.0, 10.0);
-                     Ray ray(origin, direction, 0, 1000, 0, 0);
-                     RayIntersectionInfo info;
-                     contour_tree->contours[i]->AllIntersect(ray, info);
-                     auto hits = *info.GetHits();
-                     for (auto hit : hits)
-                     {*/
- /*               std::cout << contour_tree->contours[i]->contour_normal << std::endl;
-                for (int j = 0; j < contour_tree->contours[i]->segments.size(); j++)
-                {
-
-                    std::cout << *(contour_tree->contours[i]->segments[j]) << std::endl;
-                }*/
-                for (int k = 0; k < 2; k++)
-                {
-                    BBox bb = contour_tree->contours[i]->bvh->getBVHBBox();
-                    std::cout << bb.GetpMax() << bb.GetpMin() << std::endl;
-                }
-                //bool res = contour_tree->contours[i]->bvh->any_intersect(ray);
-
-
-                //std::cout << res << std::endl;
-                //}
-            }
-        }
-        catch (...)
-        {
-            // catch anything thrown within try block that derives from std::exception
-            std::cout << "exception";
-        }
-
+        bool result = contour_tree->Intersect(*ray.ray, *info.rayInfo);
+        return result;
+    }
+    
+    bool AnyIntersect(PyBindRay& ray)
+    {
+        bool result = contour_tree->AnyIntersect(*ray.ray);
+        return result;
+    }
+    
+    bool AllIntersects(PyBindRay& ray, PyBindRayInfo& info)
+    {
+        bool result = contour_tree->AllIntersect(*ray.ray, *info.rayInfo);
         return result;
     }
 
+
+    py::array_t<float> GetBBoxMin()
+    {
+        float3 x = contour_tree->root_bvh->getBVHBBox().GetpMin();
+        return reinterpret_float3(x);
+    }
+
+    py::array_t<float> GetBBoxMax()
+    {
+        float3 x = contour_tree->root_bvh->getBVHBBox().GetpMax();
+        return reinterpret_float3(x);
+    }
+
 };
-
-
 
 
 PYBIND11_MODULE(rayTracerPyWrapper, m) {
@@ -512,12 +510,20 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contour.def("IsContained", &PyContour::IsContained);
     contour.def("Contains", &PyContour::Contains);
     contour.def("EvaluateContoursRelationship", &PyContour::EvaluateContoursRelationship);
-    contour.def("GetBVH", &PyContour::GetBVH);
+    contour.def("GetBBoxMin", &PyContour::GetBBoxMin);
+    contour.def("GetBBoxMax", &PyContour::GetBBoxMax);
+    contour.def("AllIntersects", &PyContour::AllIntersects);
+    contour.def("AnyIntersect", &PyContour::AnyIntersect);
+    contour.def("Intersect", &PyContour::Intersect);
 
     py::class_<PyContourTree> contourtree(m, "PyContourTree");
     contourtree.def(py::init<std::vector<PyContour>&>());
     contourtree.def("GetTreeIndividualPyBVHs", &PyContourTree::GetTreeIndividualPyBVHs);
     contourtree.def("AllIntersects", &PyContourTree::AllIntersects);
+    contourtree.def("AnyIntersect", &PyContourTree::AnyIntersect);
+    contourtree.def("Intersect", &PyContourTree::Intersect);
+    contourtree.def("GetBBoxMin", &PyContourTree::GetBBoxMin);
+    contourtree.def("GetBBoxMax", &PyContourTree::GetBBoxMax);
 
     py::class_<PyBindRay> ray(m, "PyBindRay");
     ray.def(py::init<py::array_t<float>, py::array_t<float>, float, float, int, int>());

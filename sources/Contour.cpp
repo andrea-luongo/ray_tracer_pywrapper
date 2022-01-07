@@ -359,4 +359,51 @@ void ContourTree::BuildTreeGlobalBVH()
 		tree_global_bvsh.push_back(std::shared_ptr<BVH>(bvh));
 	}
 }
+
+bool ContourTree::Intersect(Ray& ray, RayIntersectionInfo& info)
+{
+	bool result = false;
+	for (auto branch_bvhs : tree_individual_bvhs)
+	{
+		for (auto bvh : branch_bvhs)
+		{
+			result = bvh->intersect(ray, info);
+			//result = bvh->all_intersects(*ray.ray, *info.rayInfo);
+		}
+	}
+	return result;
+}
+
+bool ContourTree::AnyIntersect(Ray& ray)
+{
+	for (auto branch_bvhs : tree_individual_bvhs)
+	{
+		for (auto bvh : branch_bvhs)
+		{
+			if (bvh->any_intersect(ray))
+				return true;
+		}
+	}
+	return false;
+}
+
+bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
+{
+	bool result = false;
+	for (auto branch_bvhs : tree_individual_bvhs)
+	{
+		for (auto bvh : branch_bvhs)
+		{
+			result = bvh->all_intersects(ray, info);
+			//result = bvh->all_intersects(*ray.ray, *info.rayInfo);
+		}
+	}
+	return result;
+}
+
+BBox ContourTree::GetBBox()
+{
+	return root_bvh->getBVHBBox();
+
+}
 /////////////////////////////////////////////////////////////////////////

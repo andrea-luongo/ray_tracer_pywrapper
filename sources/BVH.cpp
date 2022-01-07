@@ -261,75 +261,55 @@ bool BVH::intersect(Ray& ray, RayIntersectionInfo& info)
 
 bool BVH::any_intersect(Ray& ray)
 {
-	try {
-		bool hit = false;
-		float3 invDir(float3(1) / ray.GetDirection());
-		int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
-		//follow ray through BVH nodes to find primitive intersections
-		int toVisitOffset = 0, currentNodeIndex = 0;
-		int nodesToVisit[100];
-		std::cout << "step 1 \n";
-		while (true)
+
+	bool hit = false;
+	float3 invDir(float3(1) / ray.GetDirection());
+	int dirIsNeg[3] = { invDir.x < 0, invDir.y < 0, invDir.z < 0 };
+	//follow ray through BVH nodes to find primitive intersections
+	int toVisitOffset = 0, currentNodeIndex = 0;
+	int nodesToVisit[100];
+	while (true)
+	{
+		const LinearBVHNode* node = &nodes[currentNodeIndex];
+		//check ray against BVH node
+		if (node->bounds.AnyIntersect(ray, invDir, dirIsNeg))
 		{
-			const LinearBVHNode* node = &nodes[currentNodeIndex];
-			//check ray against BVH node
-			if (node->bounds.AnyIntersect(ray, invDir, dirIsNeg))
+			if (node->nPrimitives > 0)
 			{
-				std::cout << "step 2 \n";
-				if (node->nPrimitives > 0)
+				//intersect ray with primitives in leaf bvh node
+				for (int i = 0; i < node->nPrimitives; ++i)
 				{
-					std::cout << "step 3 \n";
-
-
-					//intersect ray with primitives in leaf bvh node
-					for (int i = 0; i < node->nPrimitives; ++i)
-					{
-						std::cout << "step 4 \n";
-
-						if (primitives[node->primitivesOffset + i]->AnyIntersect(ray)) {
-
-							std::cout << "step 5 \n";
-							hit = true;
-							return hit;
-						}
-					}
-					if (toVisitOffset == 0) break;
-					currentNodeIndex = nodesToVisit[--toVisitOffset];
-				}
-				else
-				{
-					//put far bvh node on nodestovisit stack, advance to near node
-
-					std::cout << "step 6 \n";
-					if (dirIsNeg[node->axis])
-					{
-						nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
-						currentNodeIndex = node->secondChildOffset;
-					}
-					else
-					{
-						nodesToVisit[toVisitOffset++] = node->secondChildOffset;
-						currentNodeIndex = currentNodeIndex + 1;
+					if (primitives[node->primitivesOffset + i]->AnyIntersect(ray)) {
+						hit = true;
+						return hit;
 					}
 				}
-			}
-			else
-			{
-
-				std::cout << "step 7 \n";
 				if (toVisitOffset == 0) break;
 				currentNodeIndex = nodesToVisit[--toVisitOffset];
 			}
+			else
+			{
+				//put far bvh node on nodestovisit stack, advance to near node
+				if (dirIsNeg[node->axis])
+				{
+					nodesToVisit[toVisitOffset++] = currentNodeIndex + 1;
+					currentNodeIndex = node->secondChildOffset;
+				}
+				else
+				{
+					nodesToVisit[toVisitOffset++] = node->secondChildOffset;
+					currentNodeIndex = currentNodeIndex + 1;
+				}
+			}
 		}
+		else
+		{
+			if (toVisitOffset == 0) break;
+			currentNodeIndex = nodesToVisit[--toVisitOffset];
+		}
+	}
+	return hit;
 
-		std::cout << "step 5 \n";
-		std::cout << hit;
-		return hit;
-	}
-	catch (...)
-	{
-		std::cout << "exeptionasonsao" << std::endl;
-	}
 }
 
 bool BVH::all_intersects(Ray& ray, RayIntersectionInfo& info)
