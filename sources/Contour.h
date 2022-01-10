@@ -74,9 +74,10 @@ class ContourTree
 public:
 	std::vector<std::shared_ptr<Contour>> contours;
 	std::shared_ptr<ContourNode> tree_root;
+	BBox bbox;
 	BVH* root_bvh;
 	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
-	std::vector<std::vector<std::shared_ptr<BVH>>> tree_individual_bvhs;
+	std::vector<std::vector<std::shared_ptr<BVH>>> internal_bvhs;
 	int node_id_counter = 0;
 
 public:
@@ -84,39 +85,14 @@ public:
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API std::vector<std::vector<std::vector<float3>>> MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle, Matrix4x4& const rot_matrix);
+	RAYTRACERDLL_API BBox GetBBox();
 private:
 	RAYTRACERDLL_API void BuildTree();
 	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);
 	RAYTRACERDLL_API void CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<ContourNode>& p);
 	RAYTRACERDLL_API void BuildRootBVH();
-	RAYTRACERDLL_API void BuildTreeIndividualBVH();
+	RAYTRACERDLL_API void BuildInternalBVHs();
 	RAYTRACERDLL_API void BuildTreeGlobalBVH();
-	RAYTRACERDLL_API BBox GetBBox();
 };
 
-
-class TestPointer
-{
-public:
-	std::shared_ptr<TestPointer> little_brother;
-	std::weak_ptr<TestPointer> big_brother;
-	bool is_big_brother = true;
-
-public:
-	RAYTRACERDLL_API TestPointer() { };
-	RAYTRACERDLL_API ~TestPointer() {
-		big_brother.reset(); 
-	};
-	RAYTRACERDLL_API void SetBigBrother(std::shared_ptr<TestPointer> bb)
-	{
-		is_big_brother = false;
-		//bb->little_brother = std::shared_ptr<TestPointer>(this);
-		big_brother = bb;
-		
-	};
-	RAYTRACERDLL_API void SetLittleBrother(std::shared_ptr<TestPointer> lb)
-	{
-		is_big_brother = true;
-		little_brother = lb;
-	};
-};

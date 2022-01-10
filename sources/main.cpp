@@ -428,17 +428,29 @@ public:
         //delete bvh;
     }
 
-    std::vector<std::vector<PyBindBVH>> GetTreeIndividualPyBVHs()
+    std::vector<std::vector<PyBindBVH>> GetTreeInternalPyBVHs()
     {
-        std::vector<std::vector<PyBindBVH>> pybvhs(contour_tree->tree_individual_bvhs.size());
+        std::vector<std::vector<PyBindBVH>> pybvhs(contour_tree->internal_bvhs.size());
         for (int branch_idx = 0; branch_idx < pybvhs.size(); branch_idx++)
         {
-            for (auto bvh : contour_tree->tree_individual_bvhs[branch_idx])
+            for (auto bvh : contour_tree->internal_bvhs[branch_idx])
             {
                 pybvhs[branch_idx].push_back(PyBindBVH(bvh));
             }
         }
         return pybvhs;
+    }
+
+    py::array_t<float> GetBBoxMin()
+    {
+        float3 x = contour_tree->GetBBox().GetpMin();
+        return reinterpret_float3(x);
+    }
+
+    py::array_t<float> GetBBoxMax()
+    {
+        float3 x = contour_tree->GetBBox().GetpMax();
+        return reinterpret_float3(x);
     }
 
     bool Intersect(PyBindRay& ray, PyBindRayInfo& info)
@@ -459,18 +471,35 @@ public:
         return result;
     }
 
-
-    py::array_t<float> GetBBoxMin()
+    std::vector< std::vector<std::vector<py::array_t<float>>>> MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle, py::array_t<float>& rotation_matrix)
     {
-        float3 x = contour_tree->root_bvh->getBVHBBox().GetpMin();
-        return reinterpret_float3(x);
-    }
+        
+        Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
+        std::vector < std::vector<std::vector<float3>>> individual_hit_points = contour_tree->MultiRayIndividualBVHsAllIntersects(laser_width_microns, layer_thickness_microns, density, overlap, current_slice, height_offset, rot_angle, rot_matrix);
 
-    py::array_t<float> GetBBoxMax()
-    {
-        float3 x = contour_tree->root_bvh->getBVHBBox().GetpMax();
-        return reinterpret_float3(x);
-    }
+        std::vector <std::vector<std::vector<py::array_t<float>>>> reinterpreted_individual_hit_points(individual_hit_points.size());
+        try {
+            for (int bvh_idx = 0; bvh_idx < individual_hit_points.size(); bvh_idx++)
+            {
+                auto bvh_hits = individual_hit_points[bvh_idx];
+                std::vector<std::vector<py::array_t<float>>> hit_points(bvh_hits.size());
+                for (int ray_idx = 0; ray_idx < bvh_hits.size(); ray_idx++)
+                {
+                    std::vector<float3> ray_hits = bvh_hits[ray_idx];
+                    for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
+                    {  
+                        hit_points[ray_idx].push_back(reinterpret_float3(ray_hits[hit_idx]));
+                    }
+                }
+                reinterpreted_individual_hit_points[bvh_idx] = hit_points;
+            }
+        }
+        catch (...)
+        {
+            std::cout << "Ray Intersection Exception" << std::endl;
+        }
+        return reinterpreted_individual_hit_points;
+    };
 
 };
 
@@ -518,10 +547,11 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
 
     py::class_<PyContourTree> contourtree(m, "PyContourTree");
     contourtree.def(py::init<std::vector<PyContour>&>());
-    contourtree.def("GetTreeIndividualPyBVHs", &PyContourTree::GetTreeIndividualPyBVHs);
+    contourtree.def("GetTreeInternalPyBVHs", &PyContourTree::GetTreeInternalPyBVHs);
     contourtree.def("AllIntersects", &PyContourTree::AllIntersects);
     contourtree.def("AnyIntersect", &PyContourTree::AnyIntersect);
     contourtree.def("Intersect", &PyContourTree::Intersect);
+    contourtree.def("MultiRayIndividualBVHsAllIntersects", &PyContourTree::MultiRayIndividualBVHsAllIntersects);
     contourtree.def("GetBBoxMin", &PyContourTree::GetBBoxMin);
     contourtree.def("GetBBoxMax", &PyContourTree::GetBBoxMax);
 

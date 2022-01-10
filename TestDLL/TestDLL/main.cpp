@@ -356,65 +356,83 @@ int main() {
 	std::vector<std::shared_ptr<ContourNode>> child = root->GetChildren();
 	std::vector<std::shared_ptr<ContourNode>> desc = root->GetDescendants();
 
-	for (auto branch_bvhs : contour_tree.tree_individual_bvhs) 
+	//for (auto branch_bvhs : contour_tree.internal_bvhs) 
+	//{
+	//		for (auto bvh : branch_bvhs) 
+	//		{
+	//			int number_of_rays = 10;
+	//			BBox bbox = bvh->getBVHBBox();
+	//			float3 pmin = bbox.GetpMin();
+	//			float3 pmax = bbox.GetpMax();
+	//			float width = pmax[0] - pmin[0];
+	//			float3 origin_0(pmin[0], pmin[1], pmin[2] + 100.0);
+	//			float3 direction(0.0, 0.0, -1.0);
+	//			for (int idx = 0; idx < number_of_rays; idx++)
+	//			{
+	//				float3 origin = origin_0 + float3(width / number_of_rays * idx, 0.0, 0.0);
+	//				Ray ray(origin, direction, 0, 1000, 0, 0);
+	//				RayIntersectionInfo info;
+	//				bvh->all_intersects(ray, info);
+	//				auto hits = *info.GetHits();
+	//				int a = 1;
+	//				for (auto hit : hits)
+	//				{
+	//					std::cout << origin + hit * direction << std::endl;
+	//				std::cout <<  hit  << std::endl;
+
+	//				}
+	//			std::cout << "\n" << std::endl;
+	//			}
+	//			std::cout << "\n" << std::endl;
+	//		}
+	//}
+	//std::cout << "greg" << std::endl; 
+	//std::cout << "contours" << std::endl;
+	//for (auto c : contour_tree.contours)
+	//{
+	//		int number_of_rays = 10;
+	//		BBox bbox = c->GetBBox();
+	//		float3 pmin = bbox.GetpMin();
+	//		float3 pmax = bbox.GetpMax();
+	//		float width = pmax[0] - pmin[0];
+	//		float3 origin_0(pmin[0], pmin[1], pmin[2] + 100.0);
+	//		float3 direction(0.0, 0.0, -1.0);
+	//		for (int idx = 0; idx < number_of_rays; idx++)
+	//		{
+	//			float3 origin = origin_0 + float3(width / number_of_rays * idx, 0.0, 0.0);
+	//			Ray ray(origin, direction, 0, 1000, 0, 0);
+	//			RayIntersectionInfo info;
+	//			c->AllIntersect(ray, info);
+	//			auto hits = *info.GetHits();
+	//			int a = 1;
+	//			for (auto hit : hits)
+	//			{
+	//				std::cout << origin + hit * direction << std::endl;
+	//				std::cout <<  hit  << std::endl;
+
+	//			}
+	//		std::cout << "\n" << std::endl;
+	//		}
+	//		std::cout << "\n" << std::endl;
+	//}
+
+	Matrix4x4 rot;
+	auto result = contour_tree.MultiRayIndividualBVHsAllIntersects(100, 0, 1, 0, 0, 0, 0, rot);
+	for (int bvh_idx = 0; bvh_idx < result.size(); bvh_idx++)
 	{
-			for (auto bvh : branch_bvhs) 
+		auto bvh_hits = result[bvh_idx];
+		std::cout << "bvh: " << bvh_idx << "rays: " << bvh_hits.size() << std::endl;
+		for (int ray_idx = 0; ray_idx < bvh_hits.size(); ray_idx++)
+		{
+			std::cout << "ray: " << ray_idx << "hits " << bvh_hits[ray_idx].size() << std::endl;
+			std::vector<float3> ray_hits = bvh_hits[ray_idx];
+			for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
 			{
-				int number_of_rays = 10;
-				BBox bbox = bvh->getBVHBBox();
-				float3 pmin = bbox.GetpMin();
-				float3 pmax = bbox.GetpMax();
-				float width = pmax[0] - pmin[0];
-				float3 origin_0(pmin[0], pmin[1], pmin[2] + 100.0);
-				float3 direction(0.0, 0.0, -1.0);
-				for (int idx = 0; idx < number_of_rays; idx++)
-				{
-					float3 origin = origin_0 + float3(width / number_of_rays * idx, 0.0, 0.0);
-					Ray ray(origin, direction, 0, 1000, 0, 0);
-					RayIntersectionInfo info;
-					bvh->all_intersects(ray, info);
-					auto hits = *info.GetHits();
-					int a = 1;
-					for (auto hit : hits)
-					{
-						std::cout << origin + hit * direction << std::endl;
-					std::cout <<  hit  << std::endl;
-
-					}
-				std::cout << "\n" << std::endl;
-				}
-				std::cout << "\n" << std::endl;
+				std::cout << "hit: " << ray_hits[hit_idx] << std::endl;
+				
 			}
+		}
+		std::cout << std::endl;
 	}
-
-	std::cout << "contours" << std::endl;
-	for (auto c : contour_tree.contours)
-	{
-			int number_of_rays = 10;
-			BBox bbox = c->bvh->getBVHBBox();
-			float3 pmin = bbox.GetpMin();
-			float3 pmax = bbox.GetpMax();
-			float width = pmax[0] - pmin[0];
-			float3 origin_0(pmin[0], pmin[1], pmin[2] + 100.0);
-			float3 direction(0.0, 0.0, -1.0);
-			for (int idx = 0; idx < number_of_rays; idx++)
-			{
-				float3 origin = origin_0 + float3(width / number_of_rays * idx, 0.0, 0.0);
-				Ray ray(origin, direction, 0, 1000, 0, 0);
-				RayIntersectionInfo info;
-				c->AllIntersect(ray, info);
-				auto hits = *info.GetHits();
-				int a = 1;
-				for (auto hit : hits)
-				{
-					std::cout << origin + hit * direction << std::endl;
-					std::cout <<  hit  << std::endl;
-
-				}
-			std::cout << "\n" << std::endl;
-			}
-			std::cout << "\n" << std::endl;
-	}
-
 	return 0;
 }

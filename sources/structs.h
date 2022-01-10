@@ -50,6 +50,15 @@ private:
 	int depth;
 	int seed;
 public:
+	RAYTRACERDLL_API Ray()
+	{
+		origin = float3(0.0);
+		direction = float3(1.0);
+		t_min = 0;
+		t_max = std::numeric_limits<float>::infinity();
+		depth = 0;
+		seed = 0;
+	};
 	RAYTRACERDLL_API Ray(float3 o, float3 dir, float min, float max, int d, int s) 
 	{
 		origin = o;

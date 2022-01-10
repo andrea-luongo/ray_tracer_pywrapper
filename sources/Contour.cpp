@@ -1,5 +1,6 @@
 #include "Contour.h"
 #include <algorithm>
+#include <ppl.h>
 
 ///////IMPLEMENTING CONTOUR CLASS
 Contour::Contour() 
@@ -226,22 +227,13 @@ ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 	contours = c;
 	tree_root = std::make_shared<ContourNode>(node_id_counter++);
 	BuildTree();
-	BuildTreeGlobalBVH();
-	BuildTreeIndividualBVH();
+	BuildRootBVH();
+	//BuildTreeGlobalBVH();
+	BuildInternalBVHs();
 }
 
 void ContourTree::BuildTree()
 {
-
-	//auto generate_node = []() {return std::make_shared<ContourNode>(); };
-
-	//std::vector<std::shared_ptr<ContourNode>> contour_nodes;
-	//std::generate_n(std::back_inserter(contour_nodes), contours.size(), generate_node);
-	//for (int idx = 0; idx < contour_nodes.size(); idx++)
-	//{
-	//	contour_nodes[idx]->SetNodeID(node_id_counter++);
-	//	tree_root->AddChild(contour_nodes[idx]);
-	//}
 
 	std::vector<std::shared_ptr<ContourNode>> contour_nodes;
 	for (int idx = 0; idx < contours.size(); idx++)
@@ -314,10 +306,11 @@ void ContourTree::BuildRootBVH()
 {
 	std::vector<std::shared_ptr<Contour>> root_children_contours = tree_root->GetChildrenContours();
 	root_bvh = new BVH({ root_children_contours.begin(), root_children_contours.end() }, SplitMethod::EqualCounts, 255);
+	bbox = root_bvh->getBVHBBox();
 }
 
-//build a tree for each set of external-internal contours
-void ContourTree::BuildTreeIndividualBVH()
+//build a bvh for each set of external-internal contours
+void ContourTree::BuildInternalBVHs()
 {
 	for (std::shared_ptr<ContourNode> c : tree_root->children_set)
 	{
@@ -337,7 +330,7 @@ void ContourTree::BuildTreeIndividualBVH()
 			
 		}
 
-		tree_individual_bvhs.push_back(node_bvhs);
+		internal_bvhs.push_back(node_bvhs);
 	}
 }
 //
@@ -363,7 +356,7 @@ void ContourTree::BuildTreeGlobalBVH()
 bool ContourTree::Intersect(Ray& ray, RayIntersectionInfo& info)
 {
 	bool result = false;
-	for (auto branch_bvhs : tree_individual_bvhs)
+	for (auto branch_bvhs : internal_bvhs)
 	{
 		for (auto bvh : branch_bvhs)
 		{
@@ -376,7 +369,7 @@ bool ContourTree::Intersect(Ray& ray, RayIntersectionInfo& info)
 
 bool ContourTree::AnyIntersect(Ray& ray)
 {
-	for (auto branch_bvhs : tree_individual_bvhs)
+	for (auto branch_bvhs : internal_bvhs)
 	{
 		for (auto bvh : branch_bvhs)
 		{
@@ -390,7 +383,7 @@ bool ContourTree::AnyIntersect(Ray& ray)
 bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 {
 	bool result = false;
-	for (auto branch_bvhs : tree_individual_bvhs)
+	for (auto branch_bvhs : internal_bvhs)
 	{
 		for (auto bvh : branch_bvhs)
 		{
@@ -401,9 +394,82 @@ bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 	return result;
 }
 
+std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle, Matrix4x4& const rot_matrix)
+{
+	
+	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
+	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
+	//float const ray_min = 0;
+	//float const ray_max = std::numeric_limits<float>::infinity();
+	if (density < 1.0)
+		overlap = 0.0;
+
+	std::vector < std::vector<std::vector<float3>>> individual_hit_points(internal_bvhs.size());
+	int bvh_idx = 0;
+	for (auto branch_bvhs : internal_bvhs)
+	{
+		for (auto bvh : branch_bvhs)
+		{
+			float3 bbox_min = bvh->getBVHBBox().GetpMin();
+			float3 bbox_max = bvh->getBVHBBox().GetpMax();
+			float3 bbox_center = 0.5f * (bbox_min + bbox_max);
+			float bbox_width = (bbox_max.x - bbox_min.x);
+			float bbox_depth = (bbox_max.z - bbox_min.z);
+			float bbox_diagonal = bbox.Diagonal().length();
+			float bbox_max_length = bbox_width * cosf(rot_angle) + bbox_depth * sinf(rot_angle);
+			//std::cout << "min " << bbox_min << " max " << bbox_max << " maxlength " << bbox_max_length << std::endl;
+			int number_of_rays = ceil(bbox_max_length / (laser_width_microns - laser_width_microns * overlap) * 1000 * density);
+			if (number_of_rays == 0)
+				continue;
+			//std::cout << "Rays: " << number_of_rays << std::endl;
+			float rays_origin_offset = bbox_max_length / number_of_rays;
+			float ray_origin_x = (-bbox_max_length * 0.5) + rays_origin_offset * 0.5;
+			float ray_origin_y = layer_thickness_microns * (current_slice + height_offset) / 1000.0f;
+			float ray_origin_z = -bbox_max_length * 0.5 - 1.0;
+			float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
+			//std::cout << "Ray start origin " << ray_origin << std::endl;
+			std::vector<Ray> rays(number_of_rays);
+			std::vector<RayIntersectionInfo> infos(number_of_rays);
+
+			concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+				{
+					float3 ray_o = (rot_matrix * float4(ray_origin.x + rays_origin_offset * idx, ray_origin.y, ray_origin.z, 1.0f) + float4(bbox_center.x, 0, bbox_center.z, 0));
+					rays[idx].SetOrigin(ray_o);
+					rays[idx].SetDirection(ray_direction);
+					//rays[idx].SetMax(ray_max);
+					//rays[idx].SetMin(ray_min);
+				});
+			concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+				{
+					bvh->all_intersects(rays[idx], infos[idx]);
+				});
+
+			std::vector<std::vector<float3>> hit_points(number_of_rays);
+			try {
+				for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)
+				{
+					std::vector<float> t_hits = *infos[ray_idx].GetHits();
+					for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
+					{
+						float3 hit_point = rays[ray_idx].GetOrigin() + t_hits[hit_idx] * rays[ray_idx].GetDirection();
+						hit_points[ray_idx].push_back(hit_point);
+						//std::cout << hit_point << std::endl;
+					}
+				}
+				individual_hit_points[bvh_idx++] = hit_points;
+			}
+			catch (...)
+			{
+				std::cout << "Ray Intersection Exception" << std::endl;
+			}
+		}
+	}
+	return individual_hit_points;
+}
+
 BBox ContourTree::GetBBox()
 {
-	return root_bvh->getBVHBBox();
+	return bbox;
 
 }
 /////////////////////////////////////////////////////////////////////////
