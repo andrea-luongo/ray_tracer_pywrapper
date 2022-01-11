@@ -323,12 +323,12 @@ public:
 };
 
 
-class PyContour {
+class PyBindContour {
 public:
     std::shared_ptr<Contour> contour = nullptr;
 public:
 
-    PyContour(std::vector<float>& vertices, py::array_t<float> n)
+    PyBindContour(std::vector<float>& vertices, py::array_t<float> n)
     {
         float3 normal(n.at(0), n.at(1), n.at(2));
         try {
@@ -348,29 +348,29 @@ public:
         }
     };
 
-    PyContour(Contour &c)
+    PyBindContour(Contour &c)
     {
         contour = std::make_shared<Contour>(c);
     }
 
-    ~PyContour() {
+    ~PyBindContour() {
         //delete bvh;
     }
 
-    py::tuple IsContained(PyContour& contour_b)
+    py::tuple IsContained(PyBindContour& contour_b)
     {
         float t_hit;
         bool result = contour->IsContained(*contour_b.contour, t_hit);
         return py::make_tuple(result, t_hit);
     }
 
-    py::tuple Contains(PyContour& contour_b)
+    py::tuple Contains(PyBindContour& contour_b)
     {
         float t_hit;
         bool result = contour->Contains(*contour_b.contour, t_hit);
         return py::make_tuple(result, t_hit);
     }
-    py::tuple EvaluateContoursRelationship(PyContour& contour_b)
+    py::tuple EvaluateContoursRelationship(PyBindContour& contour_b)
     {
         float t_hit;
         int result = Contour::EvaluateContoursRelationship(*contour, *contour_b.contour, t_hit);
@@ -408,13 +408,13 @@ public:
     }
 };
 
-class PyContourTree {
+class PyBindContourTree {
 
 public:
     std::shared_ptr<ContourTree> contour_tree = nullptr;
 public:
 
-    PyContourTree(std::vector<PyContour>& py_contours)
+    PyBindContourTree(std::vector<PyBindContour>& py_contours)
     {
         std::vector<std::shared_ptr<Contour>> contours;
         for (int i = 0; i < py_contours.size(); i++)
@@ -424,7 +424,7 @@ public:
         contour_tree = std::make_shared<ContourTree>(contours);
     };
 
-    ~PyContourTree() {
+    ~PyBindContourTree() {
         //delete bvh;
     }
 
@@ -534,26 +534,26 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
         .export_values();
 
 
-    py::class_<PyContour> contour(m, "PyContour");
+    py::class_<PyBindContour> contour(m, "PyBindContour");
     contour.def(py::init<std::vector<float>&, py::array_t<float>>());
-    contour.def("IsContained", &PyContour::IsContained);
-    contour.def("Contains", &PyContour::Contains);
-    contour.def("EvaluateContoursRelationship", &PyContour::EvaluateContoursRelationship);
-    contour.def("GetBBoxMin", &PyContour::GetBBoxMin);
-    contour.def("GetBBoxMax", &PyContour::GetBBoxMax);
-    contour.def("AllIntersects", &PyContour::AllIntersects);
-    contour.def("AnyIntersect", &PyContour::AnyIntersect);
-    contour.def("Intersect", &PyContour::Intersect);
+    contour.def("IsContained", &PyBindContour::IsContained);
+    contour.def("Contains", &PyBindContour::Contains);
+    contour.def("EvaluateContoursRelationship", &PyBindContour::EvaluateContoursRelationship);
+    contour.def("GetBBoxMin", &PyBindContour::GetBBoxMin);
+    contour.def("GetBBoxMax", &PyBindContour::GetBBoxMax);
+    contour.def("AllIntersects", &PyBindContour::AllIntersects);
+    contour.def("AnyIntersect", &PyBindContour::AnyIntersect);
+    contour.def("Intersect", &PyBindContour::Intersect);
 
-    py::class_<PyContourTree> contourtree(m, "PyContourTree");
-    contourtree.def(py::init<std::vector<PyContour>&>());
-    contourtree.def("GetTreeInternalPyBVHs", &PyContourTree::GetTreeInternalPyBVHs);
-    contourtree.def("AllIntersects", &PyContourTree::AllIntersects);
-    contourtree.def("AnyIntersect", &PyContourTree::AnyIntersect);
-    contourtree.def("Intersect", &PyContourTree::Intersect);
-    contourtree.def("MultiRayIndividualBVHsAllIntersects", &PyContourTree::MultiRayIndividualBVHsAllIntersects);
-    contourtree.def("GetBBoxMin", &PyContourTree::GetBBoxMin);
-    contourtree.def("GetBBoxMax", &PyContourTree::GetBBoxMax);
+    py::class_<PyBindContourTree> contourtree(m, "PyBindContourTree");
+    contourtree.def(py::init<std::vector<PyBindContour>&>());
+    contourtree.def("GetTreeInternalPyBVHs", &PyBindContourTree::GetTreeInternalPyBVHs);
+    contourtree.def("AllIntersects", &PyBindContourTree::AllIntersects);
+    contourtree.def("AnyIntersect", &PyBindContourTree::AnyIntersect);
+    contourtree.def("Intersect", &PyBindContourTree::Intersect);
+    contourtree.def("MultiRayIndividualBVHsAllIntersects", &PyBindContourTree::MultiRayIndividualBVHsAllIntersects);
+    contourtree.def("GetBBoxMin", &PyBindContourTree::GetBBoxMin);
+    contourtree.def("GetBBoxMax", &PyBindContourTree::GetBBoxMax);
 
     py::class_<PyBindRay> ray(m, "PyBindRay");
     ray.def(py::init<py::array_t<float>, py::array_t<float>, float, float, int, int>());
