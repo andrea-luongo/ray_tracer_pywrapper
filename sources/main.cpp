@@ -475,6 +475,20 @@ public:
     {
         
         Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
+        bool verbose = false;
+        if (verbose)
+        {
+            std::cout << "laser width " << laser_width_microns << std::endl;
+            std::cout << "layer_thickness_microns " << layer_thickness_microns << std::endl;
+            std::cout << " density " << density << std::endl;
+            std::cout << " overlap " << overlap << std::endl;
+            std::cout << " current_slice " << current_slice << std::endl;
+            std::cout << "height_offseth " << height_offset << std::endl;
+            std::cout << "rot_angle " << rot_angle << std::endl;
+            std::cout << "rotation_matrix " << rotation_matrix << std::endl;
+
+        }
+       
         std::vector < std::vector<std::vector<float3>>> individual_hit_points = contour_tree->MultiRayIndividualBVHsAllIntersects(laser_width_microns, layer_thickness_microns, density, overlap, current_slice, height_offset, rot_angle, rot_matrix);
 
         std::vector <std::vector<std::vector<py::array_t<float>>>> reinterpreted_individual_hit_points(individual_hit_points.size());
@@ -488,6 +502,7 @@ public:
                     std::vector<float3> ray_hits = bvh_hits[ray_idx];
                     for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
                     {  
+                        std::cout << "hit " << ray_hits[hit_idx] << std::endl;
                         hit_points[ray_idx].push_back(reinterpret_float3(ray_hits[hit_idx]));
                     }
                 }

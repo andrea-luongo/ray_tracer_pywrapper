@@ -85,7 +85,7 @@ public:
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACERDLL_API std::vector<std::vector<std::vector<float3>>> MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle, Matrix4x4& const rot_matrix);
+	RAYTRACERDLL_API std::vector<std::vector<std::vector<float3>>> MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix);
 	RAYTRACERDLL_API BBox GetBBox();
 private:
 	RAYTRACERDLL_API void BuildTree();
