@@ -226,6 +226,7 @@ std::vector<std::shared_ptr<ContourNode>> ContourNode::GetChildren()
 ///////IMPLEMENTING CONTOURTREE CLASS
 ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 {
+	std::cout << "building tree with " << c.size() << std::endl;
 	contours = c;
 	tree_root = std::make_shared<ContourNode>(node_id_counter++);
 	BuildTree();
@@ -327,13 +328,16 @@ void ContourTree::BuildInternalBVHs()
 				std::vector<std::shared_ptr<Contour>> contours = nodes[idx]->GetChildrenContours();
 				contours.push_back(nodes[idx]->contour);
 				BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+				// TODO fix this part, problem with size of node bvhs and internal bvhs
 				node_bvhs.push_back(std::shared_ptr<BVH>(bvh));
 			}
 			
 		}
-
+		std::cout << "nodes size " << nodes.size() << std::endl;
+		std::cout << "current bvh size " << node_bvhs.size() << std::endl;
 		internal_bvhs.push_back(node_bvhs);
 	}
+	std::cout << "internal bvh size " << internal_bvhs.size() << std::endl;
 }
 //
 //
@@ -398,7 +402,7 @@ bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 
 std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
-	bool verbose = false;
+	bool verbose = true;
 	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
 	float rot_angle = fmod(rot_angle_deg * current_slice, 360) * M_PI / 180.0f;
 	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
@@ -407,12 +411,29 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 	if (density < 1.0)
 		overlap = 0.0;
 
+	if (verbose)
+	{
+		std::cout << "Step 1" << std::endl;
+	}
 	std::vector < std::vector<std::vector<float3>>> individual_hit_points(internal_bvhs.size());
 	int bvh_idx = 0;
+	if (verbose)
+	{
+		std::cout << "internal bvhs " << internal_bvhs.size() << std::endl;
+	}
 	for (auto branch_bvhs : internal_bvhs)
 	{
+		if (verbose)
+		{
+			std::cout << "Step 2" << std::endl;
+			std::cout << "branch bvhs " << branch_bvhs.size() << std::endl;
+		}
 		for (auto bvh : branch_bvhs)
 		{
+			if (verbose)
+			{
+				std::cout << "Step 3" << std::endl;
+			}
 			float3 bbox_min = bvh->getBVHBBox().GetpMin();
 			float3 bbox_max = bvh->getBVHBBox().GetpMax();
 			float3 bbox_center = 0.5f * (bbox_min + bbox_max);
@@ -442,6 +463,10 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 
 			}
 			//std::cout << "Ray start origin " << ray_origin << std::endl;
+			if (verbose)
+			{
+				std::cout << "Step 4" << std::endl;
+			}
 			std::vector<Ray> rays(number_of_rays);
 			std::vector<RayIntersectionInfo> infos(number_of_rays);
 
@@ -453,11 +478,18 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 					//rays[idx].SetMax(ray_max);
 					//rays[idx].SetMin(ray_min);
 				});
+			if (verbose)
+			{
+				std::cout << "Step 5" << std::endl;
+			}
 			concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
 				{
 					bvh->all_intersects(rays[idx], infos[idx]);
 				});
-
+			if (verbose)
+			{
+				std::cout << "Step 6" << std::endl;
+			}
 			std::vector<std::vector<float3>> hit_points(number_of_rays);
 			try {
 				for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)
@@ -466,17 +498,34 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 					for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
 					{
 						float3 hit_point = rays[ray_idx].GetOrigin() + t_hits[hit_idx] * rays[ray_idx].GetDirection();
+						if (verbose)
+						{
+							//std::cout << hit_point << std::endl;
+						}
 						hit_points[ray_idx].push_back(hit_point);
-						//std::cout << hit_point << std::endl;
 					}
 				}
+				if (verbose)
+				{
+					std::cout << "Step 7" << std::endl;
+					std::cout << "bvh idx " << bvh_idx << std::endl;
+					std::cout << "ind hit points length " << individual_hit_points.size() << std::endl;
+				}
 				individual_hit_points[bvh_idx++] = hit_points;
+				if (verbose)
+				{
+					std::cout << "Step 8" << std::endl;
+				}
 			}
 			catch (...)
 			{
 				std::cout << "Ray Intersection Exception" << std::endl;
 			}
 		}
+	}
+	if (verbose)
+	{
+		std::cout << "END" << std::endl;
 	}
 	return individual_hit_points;
 }
