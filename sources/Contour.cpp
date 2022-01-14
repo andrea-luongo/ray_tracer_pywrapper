@@ -315,28 +315,44 @@ void ContourTree::BuildRootBVH()
 //build a bvh for each set of external-internal contours
 void ContourTree::BuildInternalBVHs()
 {
-	for (std::shared_ptr<ContourNode> c : tree_root->children_set)
-	{
-		std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
-		nodes.push_back(c);
-		std::vector<std::shared_ptr<BVH>> node_bvhs;
+	//for (std::shared_ptr<ContourNode> c : tree_root->children_set)
+	//{
+	//	std::vector<std::shared_ptr<ContourNode>> nodes = c->GetDescendants();
+	//	nodes.push_back(c);
+	//	std::vector<std::shared_ptr<BVH>> node_bvhs;
 
-		for (int idx = 0; idx < nodes.size(); idx++)
+	//	for (int idx = 0; idx < nodes.size(); idx++)
+	//	{
+	//		if (nodes[idx]->depth % 2 == 1)
+	//		{
+	//			std::vector<std::shared_ptr<Contour>> contours = nodes[idx]->GetChildrenContours();
+	//			contours.push_back(nodes[idx]->contour);
+	//			BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+	//			// TODO fix this part, problem with size of node bvhs and internal bvhs
+	//			node_bvhs.push_back(std::shared_ptr<BVH>(bvh));
+	//		}
+	//		
+	//	}
+	//	std::cout << "nodes size " << nodes.size() << std::endl;
+	//	std::cout << "current bvh size " << node_bvhs.size() << std::endl;
+	//	internal_bvhs.push_back(node_bvhs);
+	//}
+	//std::cout << "internal bvh size " << internal_bvhs.size() << std::endl;
+	std::vector<std::shared_ptr<ContourNode>> nodes = tree_root->GetDescendants();
+
+	for (int idx = 0; idx < nodes.size(); idx++)
+	{
+		if (nodes[idx]->depth % 2 == 1)
 		{
-			if (nodes[idx]->depth % 2 == 1)
-			{
-				std::vector<std::shared_ptr<Contour>> contours = nodes[idx]->GetChildrenContours();
-				contours.push_back(nodes[idx]->contour);
-				BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
-				// TODO fix this part, problem with size of node bvhs and internal bvhs
-				node_bvhs.push_back(std::shared_ptr<BVH>(bvh));
-			}
-			
+			std::vector<std::shared_ptr<Contour>> contours = nodes[idx]->GetChildrenContours();
+			contours.push_back(nodes[idx]->contour);
+			BVH* bvh = new BVH({ contours.begin(), contours.end() }, SplitMethod::EqualCounts, 255);
+			// TODO fix this part, problem with size of node bvhs and internal bvhs
+			internal_bvhs.push_back(std::shared_ptr<BVH>(bvh));
 		}
-		std::cout << "nodes size " << nodes.size() << std::endl;
-		std::cout << "current bvh size " << node_bvhs.size() << std::endl;
-		internal_bvhs.push_back(node_bvhs);
+			
 	}
+	std::cout << "nodes size " << nodes.size() << std::endl;
 	std::cout << "internal bvh size " << internal_bvhs.size() << std::endl;
 }
 //
@@ -361,44 +377,60 @@ void ContourTree::BuildTreeGlobalBVH()
 
 bool ContourTree::Intersect(Ray& ray, RayIntersectionInfo& info)
 {
+	//bool result = false;
+	//for (auto branch_bvhs : internal_bvhs)
+	//{
+	//	for (auto bvh : branch_bvhs)
+	//	{
+	//		result = bvh->intersect(ray, info);
+	//		//result = bvh->all_intersects(*ray.ray, *info.rayInfo);
+	//	}
+	//}
 	bool result = false;
-	for (auto branch_bvhs : internal_bvhs)
+	for (auto bvh : internal_bvhs)
 	{
-		for (auto bvh : branch_bvhs)
-		{
-			result = bvh->intersect(ray, info);
-			//result = bvh->all_intersects(*ray.ray, *info.rayInfo);
-		}
+		result = bvh->intersect(ray, info);
 	}
 	return result;
 }
 
 bool ContourTree::AnyIntersect(Ray& ray)
 {
-	for (auto branch_bvhs : internal_bvhs)
+	//for (auto branch_bvhs : internal_bvhs)
+	//{
+	//	for (auto bvh : branch_bvhs)
+	//	{
+	//		if (bvh->any_intersect(ray))
+	//			return true;
+	//	}
+	//}
+	for (auto bvh : internal_bvhs)
 	{
-		for (auto bvh : branch_bvhs)
-		{
-			if (bvh->any_intersect(ray))
-				return true;
-		}
+		if (bvh->any_intersect(ray))
+			return true;
 	}
 	return false;
 }
 
 bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 {
+	//bool result = false;
+	//for (auto branch_bvhs : internal_bvhs)
+	//{
+	//	for (auto bvh : branch_bvhs)
+	//	{
+	//		result = bvh->all_intersects(ray, info);
+	//		//result = bvh->all_intersects(*ray.ray, *info.rayInfo);
+	//	}
+	//}
 	bool result = false;
-	for (auto branch_bvhs : internal_bvhs)
+	for (auto bvh : internal_bvhs)
 	{
-		for (auto bvh : branch_bvhs)
-		{
 			result = bvh->all_intersects(ray, info);
-			//result = bvh->all_intersects(*ray.ray, *info.rayInfo);
-		}
 	}
 	return result;
 }
+
 
 std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
@@ -421,15 +453,16 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 	{
 		std::cout << "internal bvhs " << internal_bvhs.size() << std::endl;
 	}
-	for (auto branch_bvhs : internal_bvhs)
+	//for (auto branch_bvhs : internal_bvhs)
+	for (auto bvh : internal_bvhs)
 	{
 		if (verbose)
 		{
 			std::cout << "Step 2" << std::endl;
-			std::cout << "branch bvhs " << branch_bvhs.size() << std::endl;
+			//std::cout << "branch bvhs " << branch_bvhs.size() << std::endl;
 		}
-		for (auto bvh : branch_bvhs)
-		{
+		//for (auto bvh : branch_bvhs)
+		//{
 			if (verbose)
 			{
 				std::cout << "Step 3" << std::endl;
@@ -521,7 +554,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 			{
 				std::cout << "Ray Intersection Exception" << std::endl;
 			}
-		}
+		//}
 	}
 	if (verbose)
 	{

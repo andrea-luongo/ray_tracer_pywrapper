@@ -428,18 +428,18 @@ public:
         //delete bvh;
     }
 
-    std::vector<std::vector<PyBindBVH>> GetTreeInternalPyBVHs()
-    {
-        std::vector<std::vector<PyBindBVH>> pybvhs(contour_tree->internal_bvhs.size());
-        for (int branch_idx = 0; branch_idx < pybvhs.size(); branch_idx++)
-        {
-            for (auto bvh : contour_tree->internal_bvhs[branch_idx])
-            {
-                pybvhs[branch_idx].push_back(PyBindBVH(bvh));
-            }
-        }
-        return pybvhs;
-    }
+    //std::vector<std::vector<PyBindBVH>> GetTreeInternalPyBVHs()
+    //{
+    //    std::vector<std::vector<PyBindBVH>> pybvhs(contour_tree->internal_bvhs.size());
+    //    for (int branch_idx = 0; branch_idx < pybvhs.size(); branch_idx++)
+    //    {
+    //        for (auto bvh : contour_tree->internal_bvhs[branch_idx])
+    //        {
+    //            pybvhs[branch_idx].push_back(PyBindBVH(bvh));
+    //        }
+    //    }
+    //    return pybvhs;
+    //}
 
     py::array_t<float> GetBBoxMin()
     {
@@ -570,7 +570,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
 
     py::class_<PyBindContourTree> contourtree(m, "PyBindContourTree");
     contourtree.def(py::init<std::vector<PyBindContour>&>());
-    contourtree.def("GetTreeInternalPyBVHs", &PyBindContourTree::GetTreeInternalPyBVHs);
+    //contourtree.def("GetTreeInternalPyBVHs", &PyBindContourTree::GetTreeInternalPyBVHs);
     contourtree.def("AllIntersects", &PyBindContourTree::AllIntersects);
     contourtree.def("AnyIntersect", &PyBindContourTree::AnyIntersect);
     contourtree.def("Intersect", &PyBindContourTree::Intersect);
