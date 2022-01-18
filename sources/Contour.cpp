@@ -490,9 +490,11 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 			std::cout << "bbox " << bbox_min << " " << bbox_max << std::endl;
 			std::cout << "rot angle rad " << rot_angle << std::endl;
 			std::cout << "bbox max length " << bbox_max_width << std::endl;
+			std::cout << "bbox_center " << bbox_center << std::endl;
 			std::cout << "number of rays " << number_of_rays << " ray offset "<< rays_origin_offset << std::endl;
 			std::cout << "ray_origin " << ray_origin << std::endl;
 			std::cout << "ray_direction " << ray_direction << std::endl;
+			std::cout << "rot_matrix " << rot_matrix << std::endl;
 
 			}
 			//std::cout << "Ray start origin " << ray_origin << std::endl;
@@ -513,6 +515,9 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 				});
 			if (verbose)
 			{
+				for (int idx=0; idx < number_of_rays; idx++)
+					std::cout << "ray_origin " << rays[idx].GetOrigin() << std::endl;
+				
 				std::cout << "Step 5" << std::endl;
 			}
 			concurrency::parallel_for(int(0), number_of_rays, [&](int idx)

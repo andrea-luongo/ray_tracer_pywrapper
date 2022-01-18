@@ -485,7 +485,7 @@ public:
             std::cout << " current_slice " << current_slice << std::endl;
             std::cout << "height_offseth " << height_offset << std::endl;
             std::cout << "rot_angle " << rot_angle << std::endl;
-            std::cout << "rotation_matrix " << rotation_matrix << std::endl;
+            std::cout << "rotation_matrix " << rot_matrix << std::endl;
 
             std::cout << "COMPUTING INTERSECTIONS" << std::endl;
         }
