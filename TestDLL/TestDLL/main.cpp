@@ -256,7 +256,18 @@ int main() {
 	/*std::vector<float> points_a = { 3.0902, 2.5, - 5 ,0.0095 ,2.5, - 5,0.0095, 2.5, - 5, - 3.0902, 2.5, - 5,- 3.0902, 2.5, - 5, - 3.0902, 2.5, 0.0153,- 3.0902, 2.5, 0.0153 ,- 3.0902, 2.5, 5,
 			- 3.0902, 2.5, 5, - 0.0095, 2.5, 5, - 0.0095, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, 5, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 0.0153, 3.0902, 2.5, - 5 };*/
 
-	std::vector<float> points_a = { 1, 0, 1 , 1, 0, -1, 1, 0, -1, -1, 0, -1, -1, 0, -1, -1, 0, 1, -1, 0, 1, 1, 0, 1};
+	//std::vector<float> points_a = { 1, 0, 1 , 1, 0, -1, 1, 0, -1, -1, 0, -1, -1, 0, -1, -1, 0, 1, -1, 0, 1, 1, 0, 1};
+	std::vector<float> points_a = {-3.0471 , 0.15 , -10.5569 ,-4.6921 , 0.15 , -10.2532 ,-4.6921 , 0.15 , -10.2532 ,-4.897 , 0.15 , -10.2594 ,-4.897 , 0.15 , -10.2594 ,
+-5.015 , 0.15 , -10.1759 ,-5.015 , 0.15 , -10.1759 ,-10.9659 , 0.15 , -8.3395 ,-10.9659 , 0.15 , -8.3395 ,-11.0964 , 0.15 , -8.3294 ,-11.0964 , 0.15 , -8.3294 ,
+-11.1683 , 0.15 , -8.2675 ,-11.1683 , 0.15 , -8.2675 ,-11.2192 , 0.15 , -8.2736 ,-11.2192 , 0.15 , -8.2736 ,-13.315 , 0.15 , -5.6983 ,-13.315 , 0.15 , -5.6983 ,
+-13.3396 , 0.15 , -5.6117 ,-13.3396 , 0.15 , -5.6117 ,-12.1954 , 0.15 , -2.2828 ,-12.1954 , 0.15 , -2.2828 ,-12.1695 , 0.15 , -2.2219 ,-12.1695 , 0.15 , -2.2219 ,
+-12.1154 , 0.15 , -2.2208 ,-12.1154 , 0.15 , -2.2208 ,-11.999 , 0.15 , -2.1125 ,-11.999 , 0.15 , -2.1125 ,-7.5816 , 0.15 , -0.6159 ,-7.5816 , 0.15 , -0.6159 ,
+-7.445 , 0.15 , -0.4803 ,-7.445 , 0.15 , -0.4803 ,-7.42 , 0.15 , 3.326 ,-7.42 , 0.15 , 3.326 ,-7.1133 , 0.15 , 3.3826 ,-7.1133 , 0.15 , 3.3826 ,2.2042 , 0.15 , 4.9798 ,
+2.2042 , 0.15 , 4.9798 ,2.6666 , 0.15 , 4.9605 ,2.6666 , 0.15 , 4.9605 ,6.197 , 0.15 , 1.5338 ,6.197 , 0.15 , 1.5338 ,6.3576 , 0.15 , 1.0588 ,6.3576 , 0.15 , 1.0588 ,
+7.2546 , 0.15 , 0.808 ,7.2546 , 0.15 , 0.808 ,9.5026 , 0.15 , -3.5256 ,9.5026 , 0.15 , -3.5256 ,9.2194 , 0.15 , -4.3074 ,9.2194 , 0.15 , -4.3074 ,8.8707 , 0.15 , -4.3668 ,
+8.8707 , 0.15 , -4.3668 ,10.6005 , 0.15 , -7.1144 ,10.6005 , 0.15 , -7.1144 ,10.8317 , 0.15 , -7.4183 ,10.8317 , 0.15 , -7.4183 ,10.6537 , 0.15 , -7.6879 ,
+10.6537 , 0.15 , -7.6879 ,5.7951 , 0.15 , -9.091 ,5.7951 , 0.15 , -9.091 ,5.3126 , 0.15 , -8.976 ,5.3126 , 0.15 , -8.976 ,5.1848 , 0.15 , -9.0396 ,5.1848 , 0.15 , -9.0396 ,
+4.7435 , 0.15 , -9.6361 ,4.7435 , 0.15 , -9.6361 ,-3.0471 , 0.15 , -10.5569	};
 
 	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
 	for (int i = 0; i < (int)(points_a.size() / 6); i++)
@@ -267,53 +278,53 @@ int main() {
 	}
 
 
-	std::vector<float> points_b(points_a.size());
-	for (int i = 0; i < points_b.size(); i++)
-	{
-		float p = points_a[i];
-		if (i % 3 != 1)
-			p *= 0.5f;
-		points_b[i] = p;
-	}
-	std::vector<std::shared_ptr<Segment>> primitives_b((int)(points_b.size() / 6));
-	for (int i = 0; i < (int)(points_b.size() / 6); i++)
-	{
-		float3 p0(points_b[i * 6], points_b[i * 6 + 1], points_b[i * 6 + 2]);
-		float3 p1(points_b[i * 6 + 3], points_b[i * 6 + 4], points_b[i * 6 + 5]);
-		primitives_b[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
-	}
+	//std::vector<float> points_b(points_a.size());
+	//for (int i = 0; i < points_b.size(); i++)
+	//{
+	//	float p = points_a[i];
+	//	if (i % 3 != 1)
+	//		p *= 0.5f;
+	//	points_b[i] = p;
+	//}
+	//std::vector<std::shared_ptr<Segment>> primitives_b((int)(points_b.size() / 6));
+	//for (int i = 0; i < (int)(points_b.size() / 6); i++)
+	//{
+	//	float3 p0(points_b[i * 6], points_b[i * 6 + 1], points_b[i * 6 + 2]);
+	//	float3 p1(points_b[i * 6 + 3], points_b[i * 6 + 4], points_b[i * 6 + 5]);
+	//	primitives_b[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+	//}
 
-	std::vector<float> points_c(points_a.size());
-	for (int i = 0; i < points_c.size(); i++)
-	{
-		float p = points_a[i];
-		if (i % 3 != 1)
-			p = p*1.5f + 20;
-		points_c[i] = p;
-	}
-	std::vector<std::shared_ptr<Segment>> primitives_c((int)(points_c.size() / 6));
-	for (int i = 0; i < (int)(points_c.size() / 6); i++)
-	{
-		float3 p0(points_c[i * 6], points_c[i * 6 + 1], points_c[i * 6 + 2]);
-		float3 p1(points_c[i * 6 + 3], points_c[i * 6 + 4], points_c[i * 6 + 5]);
-		primitives_c[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
-	}
+	//std::vector<float> points_c(points_a.size());
+	//for (int i = 0; i < points_c.size(); i++)
+	//{
+	//	float p = points_a[i];
+	//	if (i % 3 != 1)
+	//		p = p*1.5f + 20;
+	//	points_c[i] = p;
+	//}
+	//std::vector<std::shared_ptr<Segment>> primitives_c((int)(points_c.size() / 6));
+	//for (int i = 0; i < (int)(points_c.size() / 6); i++)
+	//{
+	//	float3 p0(points_c[i * 6], points_c[i * 6 + 1], points_c[i * 6 + 2]);
+	//	float3 p1(points_c[i * 6 + 3], points_c[i * 6 + 4], points_c[i * 6 + 5]);
+	//	primitives_c[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+	//}
 
-	std::vector<float> points_d(points_a.size());
-	for (int i = 0; i < points_d.size(); i++)
-	{
-		float p = points_a[i];
-		if (i % 3 != 1)
-			p = p*0.2f + 20;
-		points_d[i] = p;
-	}
-	std::vector<std::shared_ptr<Segment>> primitives_d((int)(points_d.size() / 6));
-	for (int i = 0; i < (int)(points_d.size() / 6); i++)
-	{
-		float3 p0(points_d[i * 6], points_d[i * 6 + 1], points_d[i * 6 + 2]);
-		float3 p1(points_d[i * 6 + 3], points_d[i * 6 + 4], points_d[i * 6 + 5]);
-		primitives_d[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
-	}
+	//std::vector<float> points_d(points_a.size());
+	//for (int i = 0; i < points_d.size(); i++)
+	//{
+	//	float p = points_a[i];
+	//	if (i % 3 != 1)
+	//		p = p*0.2f + 20;
+	//	points_d[i] = p;
+	//}
+	//std::vector<std::shared_ptr<Segment>> primitives_d((int)(points_d.size() / 6));
+	//for (int i = 0; i < (int)(points_d.size() / 6); i++)
+	//{
+	//	float3 p0(points_d[i * 6], points_d[i * 6 + 1], points_d[i * 6 + 2]);
+	//	float3 p1(points_d[i * 6 + 3], points_d[i * 6 + 4], points_d[i * 6 + 5]);
+	//	primitives_d[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+	//}
 
 
 	clock_t tStart;
@@ -324,37 +335,38 @@ int main() {
 	std::cout << "Building Contour" << std::endl;
 	tStart = clock();
 	std::shared_ptr<Contour> contour_a(new Contour(primitives_a, n));
-	std::shared_ptr<Contour> contour_b(new Contour(primitives_b, n));
-	std::shared_ptr<Contour> contour_c(new Contour(primitives_c, n));
-	std::shared_ptr<Contour> contour_d(new Contour(primitives_d, n));
+	//std::shared_ptr<Contour> contour_b(new Contour(primitives_b, n));
+	//std::shared_ptr<Contour> contour_c(new Contour(primitives_c, n));
+	//std::shared_ptr<Contour> contour_d(new Contour(primitives_d, n));
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 
 	/////////////TEST CONTOURS INCLUSION
-	float t_hit;
-	int r = Contour::EvaluateContoursRelationship(*contour_a, *contour_b, t_hit);
-	std::cout << r << ' ' << t_hit << std::endl;
-	r = Contour::EvaluateContoursRelationship(*contour_a, *contour_c, t_hit);
-	std::cout << r << ' ' << t_hit << std::endl;
-	r = Contour::EvaluateContoursRelationship(*contour_a, *contour_d, t_hit);
-	std::cout << r << ' ' << t_hit << std::endl;
-	r = Contour::EvaluateContoursRelationship(*contour_b, *contour_c, t_hit);
-	std::cout << r << ' ' << t_hit << std::endl;
-	r = Contour::EvaluateContoursRelationship(*contour_b, *contour_d, t_hit);
-	std::cout << r << ' ' << t_hit << std::endl;
-	r = Contour::EvaluateContoursRelationship(*contour_c, *contour_d, t_hit);
-	std::cout << r << ' ' << t_hit << std::endl;
+	//float t_hit;
+	//int r = Contour::EvaluateContoursRelationship(*contour_a, *contour_b, t_hit);
+	//std::cout << r << ' ' << t_hit << std::endl;
+	//r = Contour::EvaluateContoursRelationship(*contour_a, *contour_c, t_hit);
+	//std::cout << r << ' ' << t_hit << std::endl;
+	//r = Contour::EvaluateContoursRelationship(*contour_a, *contour_d, t_hit);
+	//std::cout << r << ' ' << t_hit << std::endl;
+	//r = Contour::EvaluateContoursRelationship(*contour_b, *contour_c, t_hit);
+	//std::cout << r << ' ' << t_hit << std::endl;
+	//r = Contour::EvaluateContoursRelationship(*contour_b, *contour_d, t_hit);
+	//std::cout << r << ' ' << t_hit << std::endl;
+	//r = Contour::EvaluateContoursRelationship(*contour_c, *contour_d, t_hit);
+	//std::cout << r << ' ' << t_hit << std::endl;
 
 
 	/////////////////////BUILD ContourTree
 	std::cout << "Building Tree Contour" << std::endl;
 	tStart = clock();
-	ContourTree contour_tree({ contour_a, contour_b, contour_c, contour_d });
+	//ContourTree contour_tree({ contour_a, contour_b, contour_c, contour_d });
+	ContourTree contour_tree({ contour_a});
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
-	std::shared_ptr<ContourNode> root = contour_tree.tree_root;
+	/*std::shared_ptr<ContourNode> root = contour_tree.tree_root;
 	std::vector<std::shared_ptr<ContourNode>> child = root->GetChildren();
-	std::vector<std::shared_ptr<ContourNode>> desc = root->GetDescendants();
+	std::vector<std::shared_ptr<ContourNode>> desc = root->GetDescendants();*/
 
 	//for (auto branch_bvhs : contour_tree.internal_bvhs) 
 	//{
@@ -416,23 +428,23 @@ int main() {
 	//		std::cout << "\n" << std::endl;
 	//}
 
-	Matrix4x4 rot;
-	auto result = contour_tree.MultiRayIndividualBVHsAllIntersects(100, 0, 1, 0, 0, 0, 0, rot);
-	for (int bvh_idx = 0; bvh_idx < result.size(); bvh_idx++)
-	{
-		auto bvh_hits = result[bvh_idx];
-		std::cout << "bvh: " << bvh_idx << "rays: " << bvh_hits.size() << std::endl;
-		for (int ray_idx = 0; ray_idx < bvh_hits.size(); ray_idx++)
-		{
-			std::cout << "ray: " << ray_idx << "hits " << bvh_hits[ray_idx].size() << std::endl;
-			std::vector<float3> ray_hits = bvh_hits[ray_idx];
-			for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
-			{
-				std::cout << "hit: " << ray_hits[hit_idx] << std::endl;
-				
-			}
-		}
-		std::cout << std::endl;
-	}
+	Matrix4x4 rot(float4(0.984808, 0, 0.173648, 0), float4(0, 1, 0, 0), float4(-0.173648, 0, 0.984808, 0), float4(0, 0, 0, 1));
+	auto result = contour_tree.MultiRayIndividualBVHsAllIntersects(600, 100, 1, 0, 1, 0.5, 10, rot);
+	//for (int bvh_idx = 0; bvh_idx < result.size(); bvh_idx++)
+	//{
+	//	auto bvh_hits = result[bvh_idx];
+	//	std::cout << "bvh: " << bvh_idx << "rays: " << bvh_hits.size() << std::endl;
+	//	for (int ray_idx = 0; ray_idx < bvh_hits.size(); ray_idx++)
+	//	{
+	//		std::cout << "ray: " << ray_idx << "hits " << bvh_hits[ray_idx].size() << std::endl;
+	//		std::vector<float3> ray_hits = bvh_hits[ray_idx];
+	//		for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
+	//		{
+	//			std::cout << "hit: " << ray_hits[hit_idx] << std::endl;
+	//			
+	//		}
+	//	}
+	//	std::cout << std::endl;
+	//}
 	return 0;
 }

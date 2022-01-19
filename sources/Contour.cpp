@@ -226,7 +226,7 @@ std::vector<std::shared_ptr<ContourNode>> ContourNode::GetChildren()
 ///////IMPLEMENTING CONTOURTREE CLASS
 ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 {
-	std::cout << "building tree with " << c.size() << std::endl;
+	//std::cout << "building tree with " << c.size() << std::endl;
 	contours = c;
 	tree_root = std::make_shared<ContourNode>(node_id_counter++);
 	BuildTree();
@@ -352,8 +352,8 @@ void ContourTree::BuildInternalBVHs()
 		}
 			
 	}
-	std::cout << "nodes size " << nodes.size() << std::endl;
-	std::cout << "internal bvh size " << internal_bvhs.size() << std::endl;
+	//std::cout << "nodes size " << nodes.size() << std::endl;
+	//std::cout << "internal bvh size " << internal_bvhs.size() << std::endl;
 }
 //
 //
@@ -434,7 +434,7 @@ bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 
 std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
-	bool verbose = true;
+	bool verbose = false;
 	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
 	float rot_angle = fmod(rot_angle_deg * current_slice, 360) * M_PI / 180.0f;
 	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
@@ -490,6 +490,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 			std::cout << "bbox " << bbox_min << " " << bbox_max << std::endl;
 			std::cout << "rot angle rad " << rot_angle << std::endl;
 			std::cout << "bbox max length " << bbox_max_width << std::endl;
+			std::cout << "bbox max depth " << bbox_max_depth << std::endl;
 			std::cout << "bbox_center " << bbox_center << std::endl;
 			std::cout << "number of rays " << number_of_rays << " ray offset "<< rays_origin_offset << std::endl;
 			std::cout << "ray_origin " << ray_origin << std::endl;
@@ -524,6 +525,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 				{
 					bvh->all_intersects(rays[idx], infos[idx]);
 				});
+	
 			if (verbose)
 			{
 				std::cout << "Step 6" << std::endl;
@@ -538,7 +540,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 						float3 hit_point = rays[ray_idx].GetOrigin() + t_hits[hit_idx] * rays[ray_idx].GetDirection();
 						if (verbose)
 						{
-							//std::cout << hit_point << std::endl;
+							std::cout <<"ray idx " << ray_idx <<  " hit " << hit_point << std::endl;
 						}
 						hit_points[ray_idx].push_back(hit_point);
 					}
