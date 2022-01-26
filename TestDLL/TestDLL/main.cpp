@@ -260,12 +260,18 @@ int main() {
 		22.919 , 6.5 , 17.872 ,		22.7723 , 6.5 , 17.872 ,		22.7723 , 6.5 , 17.872 ,		22.511 , 6.5 , 17.872
 	};
 
+	std::vector<int> points_a_int(points_a.size());
+	for (int i = 0; i < points_a_int.size(); i++)
+	{
+		points_a_int[i] = int(points_a[i] * 1000);
+	}
+
 	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
 	for (int i = 0; i < (int)(points_a.size() / 6); i++)
 	{
-		float3 p0(points_a[i * 6], points_a[i * 6 + 1], points_a[i * 6 + 2]);
-		float3 p1(points_a[i * 6 + 3], points_a[i * 6 + 4], points_a[i * 6 + 5]);
-		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0*1000, p1*1000));
+		float3 p0(points_a_int[i * 6], points_a_int[i * 6 + 1]/1000.0, points_a_int[i * 6 + 2]);
+		float3 p1(points_a_int[i * 6 + 3], points_a_int[i * 6 + 4] / 1000.0, points_a_int[i * 6 + 5]);
+		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
 	}
 
 	clock_t tStart;
@@ -290,13 +296,13 @@ int main() {
 	Matrix4x4 rot(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(0, 0, 0, 1));
 	auto result = contour_tree.MultiRayIndividualBVHsAllIntersects(600*1000, 1000, 1, 0, 6, 0.5, 0, rot);
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	//for (int r_idx = 0; r_idx < result.size(); r_idx++)
-	//{
-	//	for (int i_idx = 0; i_idx < result[r_idx].size(); i_idx++)
-	//	{
-	//		std::cout << result[r_idx][i_idx][0] << ' ' << result[r_idx][i_idx][1] << std::endl;
-	//	}
-	//}
+	for (int r_idx = 0; r_idx < result.size(); r_idx++)
+	{
+		for (int i_idx = 0; i_idx < result[r_idx].size(); i_idx++)
+		{
+			std::cout << result[r_idx][i_idx][0] << ' ' << result[r_idx][i_idx][1] << std::endl;
+		}
+	}
 
 	return 0;
 }

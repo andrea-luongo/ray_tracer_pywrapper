@@ -226,7 +226,7 @@ bool Segment::Intersect(Ray& ray, RayIntersectionInfo& info)
 	float x = float3::length(cross_dir_s);
 	float t = float3::length(float3::cross(e, s)) / x;
 	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
-	if (ray.GetMax() > t && t > ray.GetMin() && u >= 0.0f)
+	if (ray.GetMax() > t && t > ray.GetMin() && 1 >= u && u >= 0.0f)
 	{
 		ray.SetMax(t);
 		float3 n = float3::cross(float3::cross(ray.GetDirection(), s), s);
@@ -239,7 +239,6 @@ bool Segment::Intersect(Ray& ray, RayIntersectionInfo& info)
 
 bool Segment::AnyIntersect(Ray& ray)
 {
-	std::cout << "lbl" << std::endl;
 	float3 s = v1 - v0;
 	float3 e = v0 - ray.GetOrigin();
 	float3 cross_dir_s = float3::cross(ray.GetDirection(), s);
@@ -247,10 +246,8 @@ bool Segment::AnyIntersect(Ray& ray)
 	float x = float3::length(cross_dir_s);
 	float t = float3::length(float3::cross(e, s)) / x;
 	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
-	std::cout << "blblbl" << std::endl;
-	if (ray.GetMax() > t && t > ray.GetMin() && u >= 0.0f)
+	if (ray.GetMax() > t && t > ray.GetMin() && 1 >= u && u >= 0.0f)
 	{
-		std::cout << "jojo blblbl" << std::endl;
 		return true;
 	}
 	return false;

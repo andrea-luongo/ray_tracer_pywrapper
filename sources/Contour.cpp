@@ -434,7 +434,7 @@ bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 
 std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualBVHsAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
-	bool verbose = true;
+	bool verbose = false;
 	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
 	float rot_angle = fmod(rot_angle_deg * current_slice, 360) * M_PI / 180.0f;
 	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
