@@ -303,6 +303,7 @@ int main() {
 			std::cout << result[r_idx][i_idx][0] << ' ' << result[r_idx][i_idx][1] << std::endl;
 		}
 	}
-
+	float3 tmp(std::numeric_limits<float>::min());
+	std::cout << tmp;
 	return 0;
 }

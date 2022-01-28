@@ -8,7 +8,7 @@
 #include <ppl.h>
 namespace py = pybind11;
 
-enum class PrimitiveType { SEGMENT, SPHERE, TRIANGLE, CONTOUR };
+enum class PrimitiveType { SEGMENT, SPHERE, TRIANGLE, INT_TRIANGLE, CONTOUR };
 
 inline Matrix4x4 reinterpret_matrix(py::array_t<float>& pd)
 {
@@ -161,6 +161,63 @@ public:
         else if (primitive_type == PrimitiveType::SEGMENT)
         {
 
+        }
+        else if (primitive_type == PrimitiveType::INT_TRIANGLE)
+        {
+            for (int i = 0; i < (int)(vertices.size() / 9); i++)
+            {
+                int3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
+                int3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
+                int3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
+                std::shared_ptr<Primitive> primitive = std::shared_ptr<IntTriangle>(new IntTriangle(p0, p1, p2));
+                primitives.push_back(primitive);
+            }
+        }
+
+        bvh = std::make_shared<BVH>(primitives, splitMethod, maxPrimsInNode);
+    }
+
+    py::array_t<float> GetBBoxMin()
+    {
+        float3 x = bvh->getBVHBBox().GetpMin();
+        return reinterpret_float3(x);
+    }
+
+    py::array_t<float> GetBBoxMax()
+    {
+        float3 x = bvh->getBVHBBox().GetpMax();
+        return reinterpret_float3(x);
+    }
+
+    PyBindBVH(std::vector<int32_t>& vertices, SplitMethod splitMethod, int maxPrimsInNode = 255, PrimitiveType primitive_type = PrimitiveType::TRIANGLE)
+    {
+        std::vector<std::shared_ptr<Primitive>> primitives;
+        if (primitive_type == PrimitiveType::TRIANGLE)
+        {
+            for (int i = 0; i < (int)(vertices.size() / 9); i++)
+            {
+                float3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
+                float3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
+                float3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
+                std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
+                primitives.push_back(primitive);
+            }
+        }
+        else if (primitive_type == PrimitiveType::SEGMENT)
+        {
+
+        }
+        else if (primitive_type == PrimitiveType::INT_TRIANGLE)
+        {
+            for (int i = 0; i < (int)(vertices.size() / 9); i++)
+            {
+                int3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
+                int3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
+                int3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
+                //std::cout << p0 << p1 << p2 << std::endl;
+                std::shared_ptr<Primitive> primitive = std::shared_ptr<IntTriangle>(new IntTriangle(p0, p1, p2));
+                primitives.push_back(primitive);
+            }
         }
 
         bvh = std::make_shared<BVH>(primitives, splitMethod, maxPrimsInNode);
@@ -531,15 +588,22 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     m.doc() = R"pbdoc(
         Pybind wrapper for BVH build and traversal
     )pbdoc";
+
     py::enum_ <PrimitiveType>(m, "PrimitiveType")
         .value("SEGMENT", PrimitiveType::SEGMENT)
         .value("SPHERE", PrimitiveType::SPHERE)
         .value("TRIANGLE", PrimitiveType::TRIANGLE)
+        .value("INT_TRIANGLE", PrimitiveType::INT_TRIANGLE)
         .value("CONTOUR", PrimitiveType::CONTOUR)
         .export_values();
+
     py::class_<PyBindBVH> bvh(m, "PyBindBVH");
     //bvh.def(py::init());// , SplitMethod > ());
     bvh.def(py::init < std::vector<float>&, SplitMethod, int> ());
+    bvh.def(py::init < std::vector<float>&, SplitMethod, int, PrimitiveType> ());
+    bvh.def(py::init < std::vector<int32_t>&, SplitMethod, int, PrimitiveType> ());
+    bvh.def("GetBBoxMin", &PyBindBVH::GetBBoxMin);
+    bvh.def("GetBBoxMax", &PyBindBVH::GetBBoxMax);
     bvh.def("Intersect", &PyBindBVH::Intersect);
     bvh.def("AnyIntersect", &PyBindBVH::AnyIntersect);
     bvh.def("AllIntersects", &PyBindBVH::AllIntersects);
@@ -555,7 +619,6 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
         .value("Middle", SplitMethod::Middle)
         .value("EqualCounts", SplitMethod::EqualCounts)
         .export_values();
-
 
     py::class_<PyBindContour> contour(m, "PyBindContour");
     contour.def(py::init<std::vector<float>&, py::array_t<float>>());

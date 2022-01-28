@@ -11,6 +11,7 @@
 #include <iostream>
 //#include "MyFloat3.h"
 class float3;
+class int3;
 
 class double3 {
 public:
@@ -21,6 +22,7 @@ public:
 	RAYTRACERDLL_API double3(double x);
 	RAYTRACERDLL_API double3(double x, double y, double z);
 	RAYTRACERDLL_API double3(float3 d);
+	RAYTRACERDLL_API double3(int3 d);
 	RAYTRACERDLL_API double3(const double3 &d);
 	RAYTRACERDLL_API double operator[](int i);
 	RAYTRACERDLL_API double operator[](int i) const;

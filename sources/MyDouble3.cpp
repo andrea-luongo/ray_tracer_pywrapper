@@ -1,5 +1,7 @@
 #include "MyDouble3.h"
 #include "MyFloat3.h"
+#include "MyFloat3.h"
+#include "MyInt3.h"
 
 double3::double3()
 {
@@ -30,6 +32,13 @@ double3::double3(const double3& d)
 };
 
 double3::double3(float3 d)
+{
+	this->x = d.x;
+	this->y = d.y;
+	this->z = d.z;
+}
+
+double3::double3(int3 d)
 {
 	this->x = d.x;
 	this->y = d.y;

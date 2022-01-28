@@ -12,6 +12,7 @@
 
 class double3;
 class float4;
+class int3;
 
 class float3 {
 public:
@@ -23,6 +24,7 @@ public:
 	RAYTRACERDLL_API float3(float x, float y, float z);
 	RAYTRACERDLL_API float3(float4 d);
 	RAYTRACERDLL_API float3(double3 d);
+	RAYTRACERDLL_API float3(int3 d);
 	RAYTRACERDLL_API float3(const float3&);
 	RAYTRACERDLL_API float operator[](int i);
 	RAYTRACERDLL_API float operator[](int i) const;

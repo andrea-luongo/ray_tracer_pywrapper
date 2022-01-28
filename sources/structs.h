@@ -10,6 +10,7 @@
 #include "MyFloat3.h"
 #include "MyDouble3.h"
 #include "MyFloat4.h"
+#include "MyInt3.h"
 #include "MyMatrix4x4.h"
 namespace num = Windows::Foundation::Numerics;
 
@@ -185,6 +186,22 @@ public:
 	float3 v2;
 public:
 	RAYTRACERDLL_API Triangle(const float3 p0, const float3 p1, const float3 p2);
+	RAYTRACERDLL_API void ComputeBBox();
+	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
+	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
+	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
+};
+
+
+class IntTriangle : public Primitive
+{
+public:
+	int3 v0;
+	int3 v1;
+	int3 v2;
+public:
+	RAYTRACERDLL_API IntTriangle(const int3 p0, const int3 p1, const int3 p2);
 	RAYTRACERDLL_API void ComputeBBox();
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
