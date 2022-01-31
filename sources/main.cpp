@@ -463,6 +463,38 @@ public:
         bool result = contour->AllIntersect(*ray.ray, *info.rayInfo);
         return result;
     }
+
+    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle, py::array_t<float>& rotation_matrix)
+    {
+
+        Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
+        bool verbose = false;
+   
+        std::vector<std::vector<float3>> individual_hit_points = contour->MultiRayAllIntersects(laser_width_microns, layer_thickness_microns, density, overlap, current_slice, height_offset, rot_angle, rot_matrix);
+
+        if (verbose)
+        {
+            std::cout << "REINTERPRETING INTERSECTIONS" << std::endl;
+        }
+        std::vector<std::vector<py::array_t<float>>> reinterpreted_individual_hit_points(individual_hit_points.size());
+        try {
+
+            for (int ray_idx = 0; ray_idx < individual_hit_points.size(); ray_idx++)
+            {
+                std::vector<float3> ray_hits = individual_hit_points[ray_idx];
+                for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
+                {
+                    reinterpreted_individual_hit_points[ray_idx].push_back(reinterpret_float3(ray_hits[hit_idx]));
+                }
+            }
+        }
+        catch (...)
+        {
+            std::cout << "Ray Intersection Exception" << std::endl;
+        }
+        return reinterpreted_individual_hit_points;
+    };
+
 };
 
 class PyBindContourTree {
@@ -630,6 +662,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contour.def("AllIntersects", &PyBindContour::AllIntersects);
     contour.def("AnyIntersect", &PyBindContour::AnyIntersect);
     contour.def("Intersect", &PyBindContour::Intersect);
+    contour.def("MultiRayAllIntersects", &PyBindContour::MultiRayAllIntersects);
 
     py::class_<PyBindContourTree> contourtree(m, "PyBindContourTree");
     contourtree.def(py::init<std::vector<PyBindContour>&>());

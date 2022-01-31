@@ -29,6 +29,7 @@ public:
 	RAYTRACERDLL_API bool Contains(Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API static int EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
+	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix);
 };
 
 
