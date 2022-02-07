@@ -254,23 +254,43 @@ std::shared_ptr<ContourNode> generate_node()
 int main() {
 	
 	std::vector<float> points_a = {
-		22.511 , 6.5 , 17.872 ,		22.5112 , 6.5 , 18.4326 ,		22.5112 , 6.5 , 18.4326 ,		22.5106 , 6.5 , 18.8197 ,
-		22.5106 , 6.5 , 18.8197 ,		22.7148 , 6.5 , 18.8197 ,		22.7148 , 6.5 , 18.8197 ,		22.9178 , 6.5 , 18.8196 ,
-		22.9178 , 6.5 , 18.8196 ,		22.9183 , 6.5 , 18.3773 ,		22.9183 , 6.5 , 18.3773 ,		22.919 , 6.5 , 17.872 ,
-		22.919 , 6.5 , 17.872 ,		22.7723 , 6.5 , 17.872 ,		22.7723 , 6.5 , 17.872 ,		22.511 , 6.5 , 17.872
+		30880, 1075000, -34790, -30889, 1075000, -34770, -30889, 1075000, -34770, -30889, 1075000, -34770, -30889, 1075000, -34770, 
+		-31840, 1075000, -34623, -31840, 1075000, -34623, -32100, 1075000, -34526, -32100, 1075000, -34526, -32438, 1075000, -34304, 
+		-32438, 1075000, -34304, -33280, 1075000, -33688, -33280, 1075000, -33688, -34033, 1075000, -32953, -34033, 1075000, -32953, 
+		-34079, 1075000, -32896, -34079, 1075000, -32896, -34101, 1075000, -32855, -34101, 1075000, -32855, -34720, 1075000, -31540, 
+		-34720, 1075000, -31540, -34725, 1075000, -31501, -34725, 1075000, -31501, -34732, 1075000, -31438, -34732, 1075000, -31438, 
+		-34789, 1075000, -30890, -34789, 1075000, -30890, -34789, 1075000, -30880, -34789, 1075000, -30880, -34769, 1075000, 30889, 
+		-34769, 1075000, 30889, -34769, 1075000, 30889, -34769, 1075000, 30889, -34655, 1075000, 31558, -34655, 1075000, 31558, 
+		-34358, 1075000, 32385, -34358, 1075000, 32385, -34317, 1075000, 32477, -34317, 1075000, 32477, -34245, 1075000, 32585, 
+		-34245, 1075000, 32585, -33324, 1075000, 33707, -33324, 1075000, 33707, -33189, 1075000, 33825, -33189, 1075000, 33825, 
+		-32664, 1075000, 34123, -32664, 1075000, 34123, -31770, 1075000, 34617, -31770, 1075000, 34617, -31633, 1075000, 34683, 
+		-31633, 1075000, 34683, -31519, 1075000, 34688, -31519, 1075000, 34688, -31398, 1075000, 34706, -31398, 1075000, 34706, 
+		-30889, 1075000, 34789, -30889, 1075000, 34789, -30889, 1075000, 34789, -30889, 1075000, 34789, -30879, 1075000, 34789, 
+		-30879, 1075000, 34789, 30890, 1075000, 34769, 30890, 1075000, 34769, 30890, 1075000, 34769, 30890, 1075000, 34769, 
+		31303, 1075000, 34755, 31303, 1075000, 34755, 31391, 1075000, 34733, 31391, 1075000, 34733, 31528, 1075000, 34711, 
+		31528, 1075000, 34711, 31857, 1075000, 34551, 31857, 1075000, 34551, 32946, 1075000, 34025, 32946, 1075000, 34025, 
+		33776, 1075000, 33171, 33776, 1075000, 33171, 34129, 1075000, 32799, 34129, 1075000, 32799, 34155, 1075000, 32764, 
+		34155, 1075000, 32764, 34206, 1075000, 32671, 34206, 1075000, 32671, 34641, 1075000, 31703, 34641, 1075000, 31703, 
+		34790, 1075000, 30889, 34790, 1075000, 30889, 34790, 1075000, 30889, 34790, 1075000, 30889, 34790, 1075000, 30879, 
+		34790, 1075000, 30879, 34759, 1075000, -30890, 34759, 1075000, -30890, 34751, 1075000, -30940, 34751, 1075000, -30940, 
+		34656, 1075000, -31570, 34656, 1075000, -31570, 34320, 1075000, -32358, 34320, 1075000, -32358, 34182, 1075000, -32648,
+		34182, 1075000, -32648, 34052, 1075000, -32876, 34052, 1075000, -32876, 33271, 1075000, -33749, 33271, 1075000, -33749, 
+		33213, 1075000, -33804, 33213, 1075000, -33804, 32401, 1075000, -34326, 32401, 1075000, -34326, 32102, 1075000, -34490, 
+		32102, 1075000, -34490, 31472, 1075000, -34728, 31472, 1075000, -34728, 31353, 1075000, -34744, 31353, 1075000, -34744, 
+		30890, 1075000, -34790, 30890, 1075000, -34790, 30880, 1075000, -34790
 	};
 
 	std::vector<int> points_a_int(points_a.size());
 	for (int i = 0; i < points_a_int.size(); i++)
 	{
-		points_a_int[i] = int(points_a[i] * 1000);
+		points_a_int[i] = int(points_a[i]);
 	}
 
 	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
 	for (int i = 0; i < (int)(points_a.size() / 6); i++)
 	{
-		float3 p0(points_a_int[i * 6], points_a_int[i * 6 + 1]/1000.0, points_a_int[i * 6 + 2]);
-		float3 p1(points_a_int[i * 6 + 3], points_a_int[i * 6 + 4] / 1000.0, points_a_int[i * 6 + 5]);
+		float3 p0(points_a_int[i * 6], points_a_int[i * 6 + 1], points_a_int[i * 6 + 2]);
+		float3 p1(points_a_int[i * 6 + 3], points_a_int[i * 6 + 4], points_a_int[i * 6 + 5]);
 		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
 	}
 
@@ -290,20 +310,31 @@ int main() {
 	ContourTree contour_tree({ contour_a});
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
-	std::cout << "Intersecting Tree Contour" << std::endl;
-	tStart = clock();
-	//ContourTree contour_tree({ contour_a, contour_b, contour_c, contour_d });
+	//std::cout << "Intersecting Tree Contour" << std::endl;
+	//tStart = clock();
+	////ContourTree contour_tree({ contour_a, contour_b, contour_c, contour_d });
+	//Matrix4x4 rot(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(0, 0, 0, 1));
+	//auto result = contour_tree.MultiRayIndividualBVHsAllIntersects(600*1000, 1000, 1, 0, 6, 0.5, 0, rot);
+	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//for (int r_idx = 0; r_idx < result.size(); r_idx++)
+	//{
+	//	for (int i_idx = 0; i_idx < result[r_idx].size(); i_idx++)
+	//	{
+	//		std::cout << result[r_idx][i_idx][0] << ' ' << result[r_idx][i_idx][1] << std::endl;
+	//	}
+	//}
+
+	std::cout << "Intersecting Contour" << std::endl;
+	int  decimals = 4;
+	float vertices_scale = pow(10, decimals);
+	int slice_thickness_microns = 1000 * vertices_scale;
+	int laser_width_microns = 600 * vertices_scale;
+	float slice_height_offset = 0.5;
+	int current_slice = 107;
+	float rot_angle = 0;
 	Matrix4x4 rot(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(0, 0, 0, 1));
-	auto result = contour_tree.MultiRayIndividualBVHsAllIntersects(600*1000, 1000, 1, 0, 6, 0.5, 0, rot);
-	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	for (int r_idx = 0; r_idx < result.size(); r_idx++)
-	{
-		for (int i_idx = 0; i_idx < result[r_idx].size(); i_idx++)
-		{
-			std::cout << result[r_idx][i_idx][0] << ' ' << result[r_idx][i_idx][1] << std::endl;
-		}
-	}
-	float3 tmp(std::numeric_limits<float>::min());
-	std::cout << tmp;
+	auto contour_hits = contour_a->MultiRayAllIntersects(laser_width_microns, contour_a->bvh->getBVHBBox().GetpMin().y, 1.0, 0.0, current_slice, rot_angle, rot);
+	auto contour_hits_2 = contour_tree.MultiRayAllIntersects(laser_width_microns, contour_a->bvh->getBVHBBox().GetpMin().y, 1.0, 0.0, current_slice, rot_angle, rot);
+
 	return 0;
 }

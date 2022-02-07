@@ -120,7 +120,90 @@ Contour Contour::OffsetContour(float offset)
 	return Contour();
 }
 
-std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix)
+//std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle_deg, Matrix4x4& const rot_matrix)
+//{
+//	bool verbose = true;
+//	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
+//	float rot_angle = fmod(rot_angle_deg * current_slice, 360) * M_PI / 180.0f;
+//	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
+//	//float const ray_min = 0;
+//	//float const ray_max = std::numeric_limits<float>::infinity();
+//	if (density < 1.0)
+//		overlap = 0.0;
+//
+//
+//	float3 bbox_min = bvh->getBVHBBox().GetpMin();
+//	float3 bbox_max = bvh->getBVHBBox().GetpMax();
+//	float3 bbox_center = 0.5f * (bbox_min + bbox_max);
+//	float bbox_width = (bbox_max.x - bbox_min.x);
+//	float bbox_depth = (bbox_max.z - bbox_min.z);
+//	float bbox_diagonal = bbox.Diagonal().length();
+//	float bbox_max_width = bbox_width * fabsf(cosf(rot_angle)) + bbox_depth * fabsf(sinf(rot_angle));
+//	float bbox_max_depth = bbox_width * fabsf(sinf(rot_angle)) + bbox_depth * fabsf(cosf(rot_angle));
+//	//std::cout << "min " << bbox_min << " max " << bbox_max << " maxlength " << bbox_max_length << std::endl;
+//	int number_of_rays = ceil(bbox_max_width / (laser_width_microns - laser_width_microns * overlap) * 1000 * density);
+//	std::vector<std::vector<float3>> individual_hit_points(number_of_rays);
+//	if (number_of_rays == 0)
+//		return individual_hit_points;
+//	//std::cout << "Rays: " << number_of_rays << std::endl;
+//	float rays_origin_offset = bbox_max_width / number_of_rays;
+//	float ray_origin_x = (-bbox_max_width * 0.5) + rays_origin_offset * 0.5;
+//	float ray_origin_y = layer_thickness_microns * (current_slice + height_offset) / 1000.0f;
+//	float ray_origin_z = -bbox_max_depth * 0.5 - 1.0;
+//	float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
+//	
+//	if (verbose)
+//	{
+//		std::cout << "bbox " << bbox_min << " " << bbox_max << std::endl;
+//		std::cout << "rot angle rad " << rot_angle << std::endl;
+//		std::cout << "bbox max length " << bbox_max_width << std::endl;
+//		std::cout << "bbox max depth " << bbox_max_depth << std::endl;
+//		std::cout << "bbox_center " << bbox_center << std::endl;
+//		std::cout << "number of rays " << number_of_rays << " ray offset " << rays_origin_offset << std::endl;
+//		std::cout << "ray_origin " << ray_origin << std::endl;
+//		std::cout << "ray_direction " << ray_direction << std::endl;
+//	}
+//	std::vector<Ray> rays(number_of_rays);
+//	std::vector<RayIntersectionInfo> infos(number_of_rays);
+//	concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+//		{
+//			float3 ray_o = (rot_matrix * float4(ray_origin.x + rays_origin_offset * idx, ray_origin.y, ray_origin.z, 1.0f) + float4(bbox_center.x, 0, bbox_center.z, 0));
+//			rays[idx].SetOrigin(ray_o);
+//			rays[idx].SetDirection(ray_direction);
+//		});
+//	if (verbose)
+//	{
+//		for (int idx = 0; idx < number_of_rays; idx++)
+//			std::cout << "ray_origin " << rays[idx].GetOrigin() << std::endl;
+//
+//		std::cout << "Step 5" << std::endl;
+//	}
+//	concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+//		{
+//			bvh->all_intersects(rays[idx], infos[idx]);
+//		});
+//	std::vector<std::vector<float3>> hit_points(number_of_rays);
+//	try {
+//		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)
+//		{
+//			std::vector<float> t_hits = *infos[ray_idx].GetHits();
+//			for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
+//			{
+//				float3 hit_point = rays[ray_idx].GetOrigin() + t_hits[hit_idx] * rays[ray_idx].GetDirection();
+//		
+//				individual_hit_points[ray_idx].push_back(hit_point);
+//			}
+//		}
+//	}
+//	catch (...)
+//	{
+//		std::cout << "Ray Intersection Exception" << std::endl;
+//	}
+//
+//	return individual_hit_points;
+//}
+
+std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float ray_height, float density, float overlap, float current_slice, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
 	bool verbose = false;
 	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
@@ -148,10 +231,21 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 	//std::cout << "Rays: " << number_of_rays << std::endl;
 	float rays_origin_offset = bbox_max_width / number_of_rays;
 	float ray_origin_x = (-bbox_max_width * 0.5) + rays_origin_offset * 0.5;
-	float ray_origin_y = layer_thickness_microns * (current_slice + height_offset) / 1000.0f;
+	float ray_origin_y = ray_height;
 	float ray_origin_z = -bbox_max_depth * 0.5 - 1.0;
 	float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
 	
+	if (verbose)
+	{
+		std::cout << "bbox " << bbox_min << " " << bbox_max << std::endl;
+		std::cout << "rot angle rad " << rot_angle << std::endl;
+		std::cout << "bbox max length " << bbox_max_width << std::endl;
+		std::cout << "bbox max depth " << bbox_max_depth << std::endl;
+		std::cout << "bbox_center " << bbox_center << std::endl;
+		std::cout << "number of rays " << number_of_rays << " ray offset " << rays_origin_offset << std::endl;
+		std::cout << "ray_origin " << ray_origin << std::endl;
+		std::cout << "ray_direction " << ray_direction << std::endl;
+	}
 	std::vector<Ray> rays(number_of_rays);
 	std::vector<RayIntersectionInfo> infos(number_of_rays);
 	concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
@@ -160,7 +254,13 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 			rays[idx].SetOrigin(ray_o);
 			rays[idx].SetDirection(ray_direction);
 		});
-	
+	if (verbose)
+	{
+		for (int idx = 0; idx < number_of_rays; idx++)
+			std::cout << "ray_origin " << rays[idx].GetOrigin() << std::endl;
+
+		std::cout << "Step 5" << std::endl;
+	}
 	concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
 		{
 			bvh->all_intersects(rays[idx], infos[idx]);
@@ -549,6 +649,145 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 			float rays_origin_offset = bbox_max_width / number_of_rays;
 			float ray_origin_x = (-bbox_max_width * 0.5) + rays_origin_offset * 0.5;
 			float ray_origin_y = layer_thickness_microns * (current_slice + height_offset) / 1000.0f;
+			float ray_origin_z = -bbox_max_depth * 0.5 - 1.0;
+			float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
+			if (verbose)
+			{
+			std::cout << "bbox " << bbox_min << " " << bbox_max << std::endl;
+			std::cout << "rot angle rad " << rot_angle << std::endl;
+			std::cout << "bbox max length " << bbox_max_width << std::endl;
+			std::cout << "bbox max depth " << bbox_max_depth << std::endl;
+			std::cout << "bbox_center " << bbox_center << std::endl;
+			std::cout << "number of rays " << number_of_rays << " ray offset "<< rays_origin_offset << std::endl;
+			std::cout << "ray_origin " << ray_origin << std::endl;
+			std::cout << "ray_direction " << ray_direction << std::endl;
+			std::cout << "rot_matrix " << rot_matrix << std::endl;
+
+			}
+			//std::cout << "Ray start origin " << ray_origin << std::endl;
+			if (verbose)
+			{
+				std::cout << "Step 4" << std::endl;
+			}
+			std::vector<Ray> rays(number_of_rays);
+			std::vector<RayIntersectionInfo> infos(number_of_rays);
+
+			concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+				{
+					float3 ray_o = (rot_matrix * float4(ray_origin.x + rays_origin_offset * idx, ray_origin.y, ray_origin.z, 1.0f) + float4(bbox_center.x, 0, bbox_center.z, 0));
+					rays[idx].SetOrigin(ray_o);
+					rays[idx].SetDirection(ray_direction);
+					//rays[idx].SetMax(ray_max);
+					//rays[idx].SetMin(ray_min);
+				});
+			if (verbose)
+			{
+				for (int idx=0; idx < number_of_rays; idx++)
+					std::cout << "ray_origin " << rays[idx].GetOrigin() << std::endl;
+				
+				std::cout << "Step 5" << std::endl;
+			}
+			concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+				{
+					bvh->all_intersects(rays[idx], infos[idx]);
+				});
+	
+			if (verbose)
+			{
+				std::cout << "Step 6" << std::endl;
+			}
+			std::vector<std::vector<float3>> hit_points(number_of_rays);
+			try {
+				for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)
+				{
+					std::vector<float> t_hits = *infos[ray_idx].GetHits();
+					for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
+					{
+						float3 hit_point = rays[ray_idx].GetOrigin() + t_hits[hit_idx] * rays[ray_idx].GetDirection();
+						if (verbose)
+						{
+							std::cout <<"ray idx " << ray_idx <<  " hit " << hit_point << std::endl;
+						}
+						hit_points[ray_idx].push_back(hit_point);
+					}
+				}
+				if (verbose)
+				{
+					std::cout << "Step 7" << std::endl;
+					std::cout << "bvh idx " << bvh_idx << std::endl;
+					std::cout << "ind hit points length " << individual_hit_points.size() << std::endl;
+				}
+				individual_hit_points[bvh_idx++] = hit_points;
+				if (verbose)
+				{
+					std::cout << "Step 8" << std::endl;
+				}
+			}
+			catch (...)
+			{
+				std::cout << "Ray Intersection Exception" << std::endl;
+			}
+		//}
+	}
+	if (verbose)
+	{
+		std::cout << "END" << std::endl;
+	}
+	return individual_hit_points;
+}
+
+
+std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects(float laser_width_microns, float ray_height, float density, float overlap, float current_slice, float rot_angle_deg, Matrix4x4& const rot_matrix)
+{
+	bool verbose = false;
+	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
+	float rot_angle = fmod(rot_angle_deg * current_slice, 360) * M_PI / 180.0f;
+	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
+	//float const ray_min = 0;
+	//float const ray_max = std::numeric_limits<float>::infinity();
+	if (density < 1.0)
+		overlap = 0.0;
+
+	if (verbose)
+	{
+		std::cout << "Step 1" << std::endl;
+	}
+	std::vector < std::vector<std::vector<float3>>> individual_hit_points(internal_bvhs.size());
+	int bvh_idx = 0;
+	if (verbose)
+	{
+		std::cout << "internal bvhs " << internal_bvhs.size() << std::endl;
+	}
+	//for (auto branch_bvhs : internal_bvhs)
+	for (auto bvh : internal_bvhs)
+	{
+		if (verbose)
+		{
+			std::cout << "Step 2" << std::endl;
+			//std::cout << "branch bvhs " << branch_bvhs.size() << std::endl;
+		}
+		//for (auto bvh : branch_bvhs)
+		//{
+			if (verbose)
+			{
+				std::cout << "Step 3" << std::endl;
+			}
+			float3 bbox_min = bvh->getBVHBBox().GetpMin();
+			float3 bbox_max = bvh->getBVHBBox().GetpMax();
+			float3 bbox_center = 0.5f * (bbox_min + bbox_max);
+			float bbox_width = (bbox_max.x - bbox_min.x);
+			float bbox_depth = (bbox_max.z - bbox_min.z);
+			float bbox_diagonal = bbox.Diagonal().length();
+			float bbox_max_width = bbox_width * fabsf(cosf(rot_angle)) + bbox_depth * fabsf(sinf(rot_angle));
+			float bbox_max_depth = bbox_width * fabsf(sinf(rot_angle)) + bbox_depth * fabsf(cosf(rot_angle));
+			//std::cout << "min " << bbox_min << " max " << bbox_max << " maxlength " << bbox_max_length << std::endl;
+			int number_of_rays = ceil(bbox_max_width / (laser_width_microns - laser_width_microns * overlap) * 1000 * density);
+			if (number_of_rays == 0)
+				continue;
+			//std::cout << "Rays: " << number_of_rays << std::endl;
+			float rays_origin_offset = bbox_max_width / number_of_rays;
+			float ray_origin_x = (-bbox_max_width * 0.5) + rays_origin_offset * 0.5;
+			float ray_origin_y = ray_height;
 			float ray_origin_z = -bbox_max_depth * 0.5 - 1.0;
 			float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
 			if (verbose)

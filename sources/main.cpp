@@ -464,13 +464,44 @@ public:
         return result;
     }
 
-    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle, py::array_t<float>& rotation_matrix)
+  /*  std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersects(float laser_width_microns, float layer_thickness_microns, float density, float overlap, float current_slice, float height_offset, float rot_angle, py::array_t<float>& rotation_matrix)
     {
 
         Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
         bool verbose = false;
    
         std::vector<std::vector<float3>> individual_hit_points = contour->MultiRayAllIntersects(laser_width_microns, layer_thickness_microns, density, overlap, current_slice, height_offset, rot_angle, rot_matrix);
+
+        if (verbose)
+        {
+            std::cout << "REINTERPRETING INTERSECTIONS" << std::endl;
+        }
+        std::vector<std::vector<py::array_t<float>>> reinterpreted_individual_hit_points(individual_hit_points.size());
+        try {
+
+            for (int ray_idx = 0; ray_idx < individual_hit_points.size(); ray_idx++)
+            {
+                std::vector<float3> ray_hits = individual_hit_points[ray_idx];
+                for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
+                {
+                    reinterpreted_individual_hit_points[ray_idx].push_back(reinterpret_float3(ray_hits[hit_idx]));
+                }
+            }
+        }
+        catch (...)
+        {
+            std::cout << "Ray Intersection Exception" << std::endl;
+        }
+        return reinterpreted_individual_hit_points;
+    };*/
+
+    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersects(float laser_width_microns, float ray_height, float density, float overlap, int current_slice, float rot_angle, py::array_t<float>& rotation_matrix)
+    {
+
+        Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
+        bool verbose = false;
+
+        std::vector<std::vector<float3>> individual_hit_points = contour->MultiRayAllIntersects(laser_width_microns, ray_height, density, overlap, current_slice, rot_angle, rot_matrix);
 
         if (verbose)
         {
@@ -613,6 +644,58 @@ public:
         return reinterpreted_individual_hit_points;
     };
 
+    std::vector< std::vector<std::vector<py::array_t<float>>>> MultiRayAllIntersects(float laser_width_microns, float ray_height, float density, float overlap, float current_slice, float rot_angle, py::array_t<float>& rotation_matrix)
+    {
+
+        Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
+        bool verbose = false;
+        if (verbose)
+        {
+            std::cout << "laser width " << laser_width_microns << std::endl;
+            std::cout << "ray_height " << ray_height << std::endl;
+            std::cout << "density " << density << std::endl;
+            std::cout << "overlap " << overlap << std::endl;
+            std::cout << "current_slice " << current_slice << std::endl;
+            std::cout << "rot_angle " << rot_angle << std::endl;
+            std::cout << "rotation_matrix " << rot_matrix << std::endl;
+
+            std::cout << "COMPUTING INTERSECTIONS" << std::endl;
+        }
+
+        std::vector < std::vector<std::vector<float3>>> individual_hit_points = contour_tree->MultiRayAllIntersects(laser_width_microns, ray_height, density, overlap, current_slice, rot_angle, rot_matrix);
+
+        if (verbose)
+        {
+            std::cout << "REINTERPRETING INTERSECTIONS" << std::endl;
+        }
+        std::vector <std::vector<std::vector<py::array_t<float>>>> reinterpreted_individual_hit_points(individual_hit_points.size());
+        try {
+            for (int bvh_idx = 0; bvh_idx < individual_hit_points.size(); bvh_idx++)
+            {
+                auto bvh_hits = individual_hit_points[bvh_idx];
+                std::vector<std::vector<py::array_t<float>>> hit_points(bvh_hits.size());
+                for (int ray_idx = 0; ray_idx < bvh_hits.size(); ray_idx++)
+                {
+                    std::vector<float3> ray_hits = bvh_hits[ray_idx];
+                    for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
+                    {
+                        //if (verbose)
+                        //{
+                        //    std::cout << "hit " << ray_hits[hit_idx] << std::endl;
+                        //}
+                        hit_points[ray_idx].push_back(reinterpret_float3(ray_hits[hit_idx]));
+                    }
+                }
+                reinterpreted_individual_hit_points[bvh_idx] = hit_points;
+            }
+        }
+        catch (...)
+        {
+            std::cout << "Ray Intersection Exception" << std::endl;
+        }
+        return reinterpreted_individual_hit_points;
+    };
+
 };
 
 
@@ -671,6 +754,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contourtree.def("AnyIntersect", &PyBindContourTree::AnyIntersect);
     contourtree.def("Intersect", &PyBindContourTree::Intersect);
     contourtree.def("MultiRayIndividualBVHsAllIntersects", &PyBindContourTree::MultiRayIndividualBVHsAllIntersects);
+    contourtree.def("MultiRayAllIntersects", &PyBindContourTree::MultiRayAllIntersects);
     contourtree.def("GetBBoxMin", &PyBindContourTree::GetBBoxMin);
     contourtree.def("GetBBoxMax", &PyBindContourTree::GetBBoxMax);
 
