@@ -205,7 +205,7 @@ Contour Contour::OffsetContour(float offset)
 
 std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float ray_height, float density, float overlap, float current_slice, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
-	bool verbose = false;
+	bool verbose = true;
 	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
 	float rot_angle = fmod(rot_angle_deg * current_slice, 360) * M_PI / 180.0f;
 	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
@@ -261,10 +261,13 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 
 		std::cout << "Step 5" << std::endl;
 	}
-	concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
-		{
-			bvh->all_intersects(rays[idx], infos[idx]);
-		});
+	//concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+	//	{
+	//		bvh->all_intersects(rays[idx], infos[idx]);
+	//	});
+	for(int idx=0; idx < number_of_rays; idx++)
+		bvh->all_intersects(rays[idx], infos[idx]);
+
 	std::vector<std::vector<float3>> hit_points(number_of_rays);
 	try {
 		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)

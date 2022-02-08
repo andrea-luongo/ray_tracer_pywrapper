@@ -102,8 +102,8 @@ public:
 class BBox
 {
 private:
-	float3 pMax;
 	float3 pMin;
+	float3 pMax;
 public:
 	RAYTRACERDLL_API BBox();
 	RAYTRACERDLL_API BBox(const float3& p);
