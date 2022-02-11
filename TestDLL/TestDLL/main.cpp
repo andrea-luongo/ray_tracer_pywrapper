@@ -106,145 +106,6 @@ std::vector<std::shared_ptr<Primitive>> build_box(float l)
 }
 
 
-//int main() {
-//	// TESTING BVH CONSTRUCTION AND INTERSECTION
-//	std::vector<std::shared_ptr<Primitive>> primitives;
-//	clock_t tStart;
-//	bool is_cube = false;
-//	float height, width, depth;
-//	
-//	float4 r0(1, 2, 3, 4);
-//	float4 r1(5, 6, 7, 8);
-//	float4 r2(9, 10, 11, 12);
-//	float4 r3(13, 14, 15, 16);
-//	Matrix4x4 m(r0, r1, r2, r3);
-//	std::cout << m << std::endl;
-//	std::cout << m.Transpose() << std::endl;
-//
-//
-//	////////////////////// CUBE 
-//	width = 5;
-//	depth = 5;
-//	height = 5;
-//	is_cube = true;
-//	primitives = build_box(width);
-//	///////////////////////
-//
-//	//////////////////////RANDOM PRIMITIVES
-//	//generate "number_of_primitives" random triangles and store them in a vector
-//	//srand((unsigned)time(NULL));
-//	//int number_of_primitives = 65000;
-//	//std::cout << "Generating " << number_of_primitives << " random primitives" << std::endl;
-//	//tStart = clock();
-//	//std::generate_n(std::back_inserter(primitives), number_of_primitives, triangle_generator);
-//	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-//	/////////////////////////////////////////////////////////
-//
-//	/////////////// LOAD OBJ
-//	//std::cout << "LOAD GEOMETRY" << std::endl;
-//	//is_cube = false;
-//	//tStart = clock();
-//	//std::string filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\Bunny-LowPoly.obj";
-//	//filename = "C:\\Users\\aluo\\Documents\\Repos\\3DOpenSource_development\\resources\\closed_bunny_vn_centered.obj";
-//	//float3 b_min, b_max;
-//	//std::vector<float3> vertices;
-//	//load_obj(filename.c_str(), vertices, b_min, b_max);
-//	//width = b_max.x - b_min.x;
-//	//height = b_max.y - b_min.y;
-//	//depth = b_max.z - b_min.z;
-//	//for (int i = 0; i < (int)(vertices.size() / 3); i++)
-//	//{
-//	//	float3 p0 = vertices[i * 3];
-//	//	float3 p1 = vertices[i * 3 +1 ];
-//	//	float3 p2 = vertices[i * 3 + 2];
-//	//	std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
-//	//	primitives.push_back(primitive);
-//	//}
-//	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-//	//////////////////////////////////
-//
-//	/////////////////////BUILD BVH
-//	std::cout << "Building BVH" << std::endl;
-//	tStart = clock();
-//	BVH* bvh = new BVH(primitives, SplitMethod::EqualCounts);
-//	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-//	/////////////////////////////
-//
-//	//// PARALLEL FOR TEST
-//	tStart = clock();
-//	int sum = 0;
-//	concurrency::parallel_for(size_t(0), primitives.size(), [&](size_t idx)
-//		{
-//			sum += idx;
-//		});
-//	std::cout << sum << std::endl;
-//	printf("Parallel Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-//	tStart = clock();
-//	int sum2 = 0;
-//	for (int idx = 0; idx < primitives.size(); idx++)
-//		{
-//			sum2 += idx;
-//		}
-//	std::cout << sum2 << std::endl;
-//	printf("Sequential Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-//	////////////////////
-//
-//	////////////////RAY TRACING
-//	int number_of_rays = 10000;
-//	int number_of_layers = 10;
-//	float w_offset, h_offset;
-//	float x_start, y_start;
-//	if (is_cube)
-//	{
-//		w_offset = 2 * width / number_of_rays;
-//		h_offset = 2 * height / number_of_layers;
-//		x_start = -width;
-//		y_start = -height;
-//	}
-//	else
-//	{
-//		w_offset = width / number_of_rays;
-//		h_offset = height / number_of_layers;
-//		x_start = -0.5*width;
-//		y_start = -0.5*height;
-//	}
-//	std::cout << "Testing ray intersection" << std::endl;
-//	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
-//	{
-//		tStart = clock();
-//		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++) {
-//			float3 o(x_start + ray_idx * w_offset, y_start + l_idx*h_offset, depth);
-//			float3 d(0, 0, -1);
-//			Ray ray(o, d, 0, 100000, 0, 0);
-//			RayIntersectionInfo rinfo;
-//			bvh->all_intersects(ray, rinfo);
-//		}
-//		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-//	}
-//	///////////////////////////////
-//
-//
-//	////////////// PLANE TRACING
-//	std::cout << "Testing Plane intersection" << std::endl;
-//	for (int l_idx = 0; l_idx < number_of_layers; l_idx++)
-//	{
-//		tStart = clock();
-//		float3 x0(0.0, y_start + h_offset * l_idx, 0.0);
-//		float3 n(0, 1, 0);
-//		Plane plane(x0, n);
-//		PlaneIntersectionInfo pinfo;
-//		bvh->plane_all_intersects(plane, pinfo);
-//		printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-//		std::vector<float3> *hits = pinfo.GetHits();
-//		//for (int i = 0; i < hits->size(); i++)
-//		//{
-//		//	std::cout << (*hits)[i] << std::endl;
-//		//}
-//	}
-//	//////////////////
-//	return 0;
-//}
-
 std::shared_ptr<ContourNode> generate_node() 
 {
 	return std::make_shared<ContourNode>();
@@ -254,10 +115,18 @@ std::shared_ptr<ContourNode> generate_node()
 int main() {
 	
 	std::vector<float> points_a = {
-		30000, 15000, -30000, 15000, 15000, -30000, 15000, 15000, -30000, -30000, 15000, -30000, -30000, 15000, -30000, 
-		-30000, 15000, 15000, -30000, 15000, 15000, -30000, 15000, 30000, -30000, 15000, 30000, -15000, 15000, 30000, 
-		-15000, 15000, 30000, 30000, 15000, 30000, 30000, 15000, 30000, 30000, 15000, -15000, 30000, 15000, -15000, 
-		30000, 15000, -30000
+		-18688934.0, 3500000.0, -25060522.0, -18689254.0, 3500000.0, -24587258.0, -18689254.0, 3500000.0, -24587258.0, -18689254.0, 3500000.0, -24555360.0, 
+		-18689254.0, 3500000.0, -24555360.0, -18688710.0, 3500000.0, -24180638.0, -18688710.0, 3500000.0, -24180638.0, -18633990.0, 3500000.0, -24180652.0, 
+		-18633990.0, 3500000.0, -24180652.0, -18484966.0, 3500000.0, -24180522.0, -18484966.0, 3500000.0, -24180522.0, -16389469.0, 3500000.0, -24180522.0,
+		-16389469.0, 3500000.0, -24180522.0, -16340429.0, 3500000.0, -24502560.0, -16340429.0, 3500000.0, -24502560.0, -16333876.0, 3500000.0, -24860230.0, 
+		-16333876.0, 3500000.0, -24860230.0, -17272572.0, 3500000.0, -24860230.0, -17272572.0, 3500000.0, -24860230.0, -17601854.0, 3500000.0, -24860466.0, 
+		-17601854.0, 3500000.0, -24860466.0, -17617568.0, 3500000.0, -24860858.0, -17617568.0, 3500000.0, -24860858.0, -17738776.0, 3500000.0, -24860780.0, 
+		-17738776.0, 3500000.0, -24860780.0, -17738776.0, 3500000.0, -25098012.0, -17738776.0, 3500000.0, -25098012.0, -17738828.0, 3500000.0, -25109716.0, 
+		-17738828.0, 3500000.0, -25109716.0, -17738836.0, 3500000.0, -25110220.0, -17738836.0, 3500000.0, -25110220.0, -17738870.0, 3500000.0, -25132872.0, 
+		-17738870.0, 3500000.0, -25132872.0, -17807046.0, 3500000.0, -25132872.0, -17807046.0, 3500000.0, -25132872.0, -18688790.0, 3500000.0, -25130792.0, 
+		-18688790.0, 3500000.0, -25130792.0, -18688754.0, 3500000.0, -25120772.0, -18688754.0, 3500000.0, -25120772.0, -18688800.0, 3500000.0, -25110128.0, 
+		-18688800.0, 3500000.0, -25110128.0, -18688744.0, 3500000.0, -25102274.0, -18688744.0, 3500000.0, -25102274.0, -18688804.0, 3500000.0, -25098964.0, 
+		-18688804.0, 3500000.0, -25098964.0, -18688902.0, 3500000.0, -25075074.0, -18688902.0, 3500000.0, -25075074.0, -18688934.0, 3500000.0, -25060522.0
 	};
 
 	std::vector<int> points_a_int(points_a.size());
@@ -305,12 +174,12 @@ int main() {
 	//}
 
 	std::cout << "Intersecting Contour" << std::endl;
-	int  decimals = 4;
+	int  decimals = 6;
 	float vertices_scale = pow(10, decimals);
 	int slice_thickness_microns = 1000 * vertices_scale;
 	int laser_width_microns = 600 * vertices_scale;
 	float slice_height_offset = 0.5;
-	int current_slice = 1;
+	int current_slice = 3;
 	float rot_angle = 0;
 	Matrix4x4 rot(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(0, 0, 0, 1));
 	auto contour_hits = contour_a->MultiRayAllIntersects(laser_width_microns, contour_a->bvh->getBVHBBox().GetpMin().y, 1.0, 0.0, current_slice, rot_angle, rot);
