@@ -162,6 +162,7 @@ bool BBox::AnyIntersect(const Ray& ray, const float3& invDir, const int dirIsNeg
 	float3 ray_origin = ray.GetOrigin();
 	const BBox& bounds = *this;
 	float epsilon = 1e-6;
+	//float epsilon = 0;
 	float tMin = (bounds[dirIsNeg[0]].x - ray_origin.x - epsilon) * invDir.x;
 	float tMax = (bounds[1 - dirIsNeg[0]].x - ray_origin.x + epsilon) * invDir.x;
 	float tyMin = (bounds[dirIsNeg[1]].y - ray_origin.y - epsilon) * invDir.y;
