@@ -117,6 +117,11 @@ int Contour::EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b
 
 Contour Contour::OffsetContour(float offset)
 {
+	for (int idx = 0; idx < segments.size(); idx++)
+	{
+		auto s_cur = segments[idx];
+
+	}
 	return Contour();
 }
 

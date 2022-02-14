@@ -626,7 +626,7 @@ public:
                 {
                     std::vector<float3> ray_hits = bvh_hits[ray_idx];
                     for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
-                    {  
+                    {
                         //if (verbose)
                         //{
                         //    std::cout << "hit " << ray_hits[hit_idx] << std::endl;

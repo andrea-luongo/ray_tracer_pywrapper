@@ -510,7 +510,10 @@ bool Triangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
 		}
 	
 	}
-
+	else
+	{
+		std::cout << v0 << ' ' << v1 << ' ' << v2 << std::endl;
+	}
 	//sign(float3::dot(cross_dir_s, cross_e_dir));
 	return hit;
 }
