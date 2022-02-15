@@ -208,7 +208,7 @@ Contour Contour::OffsetContour(float offset)
 //	return individual_hit_points;
 //}
 
-std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float ray_height, float density, float overlap, float current_slice, float rot_angle_deg, Matrix4x4& const rot_matrix)
+std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float current_slice, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
 	bool verbose = false;
 	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
@@ -236,7 +236,7 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 	//std::cout << "Rays: " << number_of_rays << std::endl;
 	float rays_origin_offset = bbox_max_width / number_of_rays;
 	float ray_origin_x = (-bbox_max_width * 0.5) + rays_origin_offset * 0.5;
-	float ray_origin_y = ray_height;
+	float ray_origin_y = bbox_max[1];
 	float ray_origin_z = -bbox_max_depth * 0.5 - 1.0;
 	float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
 	
@@ -745,7 +745,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayIndividualB
 }
 
 
-std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects(float laser_width_microns, float ray_height, float density, float overlap, float current_slice, float rot_angle_deg, Matrix4x4& const rot_matrix)
+std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float current_slice, float rot_angle_deg, Matrix4x4& const rot_matrix)
 {
 	bool verbose = false;
 	//float3 ray_direction = rot_matrix * float4(0.0f, 0.0f, 1.0f, 0.0f);
@@ -795,7 +795,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersec
 			//std::cout << "Rays: " << number_of_rays << std::endl;
 			float rays_origin_offset = bbox_max_width / number_of_rays;
 			float ray_origin_x = (-bbox_max_width * 0.5) + rays_origin_offset * 0.5;
-			float ray_origin_y = ray_height;
+			float ray_origin_y = bbox_max[1];
 			float ray_origin_z = -bbox_max_depth * 0.5 - 1.0;
 			float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
 			if (verbose)
