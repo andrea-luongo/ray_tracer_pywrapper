@@ -228,7 +228,7 @@ bool Segment::Intersect(Ray& ray, RayIntersectionInfo& info)
 	float x = float3::length(cross_dir_s);
 	float t = float3::length(float3::cross(e, s)) / x;
 	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
-	if (ray.GetMax() > t && t > ray.GetMin() && 1 >= u && u > 0.0f)
+	if (ray.GetMax() > t && t > ray.GetMin() && 1 > u && u >= 0.0f)
 	{
 		ray.SetMax(t);
 		float3 n = float3::cross(float3::cross(ray.GetDirection(), s), s);
@@ -248,7 +248,7 @@ bool Segment::AnyIntersect(Ray& ray)
 	float x = float3::length(cross_dir_s);
 	float t = float3::length(float3::cross(e, s)) / x;
 	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
-	if (ray.GetMax() > t && t > ray.GetMin() && 1 >= u && u > 0.0f)
+	if (ray.GetMax() > t && t > ray.GetMin() && 1 > u && u >= 0.0f)
 	{
 		return true;
 	}
@@ -264,7 +264,7 @@ bool Segment::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 	float x = float3::length(cross_dir_s);
 	float t = float3::length(float3::cross(e, s)) / x;
 	float u = float3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
-	if (ray.GetMax() > t && t > ray.GetMin() && 1 >= u && u > 0.0f)
+	if (ray.GetMax() > t && t > ray.GetMin() && 1 > u && u >= 0.0f)
 	{
 		info.AddHit(t);
 		if (info.GetHits()->size() == 3) {
@@ -510,11 +510,6 @@ bool Triangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
 		}
 	
 	}
-	else
-	{
-		std::cout << v0 << ' ' << v1 << ' ' << v2 << std::endl;
-	}
-	//sign(float3::dot(cross_dir_s, cross_e_dir));
 	return hit;
 }
 

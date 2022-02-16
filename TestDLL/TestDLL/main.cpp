@@ -115,31 +115,20 @@ std::shared_ptr<ContourNode> generate_node()
 void test_contour_intersection()
 {
 	std::vector<float> points_a = {
-		-18688934.0, 3500000.0, -25060522.0, -18689254.0, 3500000.0, -24587258.0, -18689254.0, 3500000.0, -24587258.0, -18689254.0, 3500000.0, -24555360.0,
-		-18689254.0, 3500000.0, -24555360.0, -18688710.0, 3500000.0, -24180638.0, -18688710.0, 3500000.0, -24180638.0, -18633990.0, 3500000.0, -24180652.0,
-		-18633990.0, 3500000.0, -24180652.0, -18484966.0, 3500000.0, -24180522.0, -18484966.0, 3500000.0, -24180522.0, -16389469.0, 3500000.0, -24180522.0,
-		-16389469.0, 3500000.0, -24180522.0, -16340429.0, 3500000.0, -24502560.0, -16340429.0, 3500000.0, -24502560.0, -16333876.0, 3500000.0, -24860230.0,
-		-16333876.0, 3500000.0, -24860230.0, -17272572.0, 3500000.0, -24860230.0, -17272572.0, 3500000.0, -24860230.0, -17601854.0, 3500000.0, -24860466.0,
-		-17601854.0, 3500000.0, -24860466.0, -17617568.0, 3500000.0, -24860858.0, -17617568.0, 3500000.0, -24860858.0, -17738776.0, 3500000.0, -24860780.0,
-		-17738776.0, 3500000.0, -24860780.0, -17738776.0, 3500000.0, -25098012.0, -17738776.0, 3500000.0, -25098012.0, -17738828.0, 3500000.0, -25109716.0,
-		-17738828.0, 3500000.0, -25109716.0, -17738836.0, 3500000.0, -25110220.0, -17738836.0, 3500000.0, -25110220.0, -17738870.0, 3500000.0, -25132872.0,
-		-17738870.0, 3500000.0, -25132872.0, -17807046.0, 3500000.0, -25132872.0, -17807046.0, 3500000.0, -25132872.0, -18688790.0, 3500000.0, -25130792.0,
-		-18688790.0, 3500000.0, -25130792.0, -18688754.0, 3500000.0, -25120772.0, -18688754.0, 3500000.0, -25120772.0, -18688800.0, 3500000.0, -25110128.0,
-		-18688800.0, 3500000.0, -25110128.0, -18688744.0, 3500000.0, -25102274.0, -18688744.0, 3500000.0, -25102274.0, -18688804.0, 3500000.0, -25098964.0,
-		-18688804.0, 3500000.0, -25098964.0, -18688902.0, 3500000.0, -25075074.0, -18688902.0, 3500000.0, -25075074.0, -18688934.0, 3500000.0, -25060522.0
+		3.0, 1.5, -3.0, 1.5, 1.5, -3.0, 1.5, 1.5, -3.0, -3.0, 1.5, -3.0, -3.0, 1.5, -3.0, -3.0, 1.5, 1.5, -3.0, 1.5, 1.5, -3.0, 1.5, 3.0, -3.0, 1.5, 3.0, -1.5, 1.5, 3.0, -1.5, 1.5, 3.0, 3.0, 1.5, 3.0, 3.0, 1.5, 3.0, 3.0, 1.5, -1.5, 3.0, 1.5, -1.5, 3.0, 1.5, -3.0
 	};
 
-	std::vector<int> points_a_int(points_a.size());
-	for (int i = 0; i < points_a_int.size(); i++)
-	{
-		points_a_int[i] = int(points_a[i]);
-	}
+	//std::vector<int> points_a_int(points_a.size());
+	//for (int i = 0; i < points_a_int.size(); i++)
+	//{
+	//	points_a_int[i] = int(points_a[i]);
+	//}
 
 	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
 	for (int i = 0; i < (int)(points_a.size() / 6); i++)
 	{
-		float3 p0(points_a_int[i * 6], points_a_int[i * 6 + 1], points_a_int[i * 6 + 2]);
-		float3 p1(points_a_int[i * 6 + 3], points_a_int[i * 6 + 4], points_a_int[i * 6 + 5]);
+		float3 p0(points_a[i * 6], points_a[i * 6 + 1], points_a[i * 6 + 2]);
+		float3 p1(points_a[i * 6 + 3], points_a[i * 6 + 4], points_a[i * 6 + 5]);
 		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
 	}
 
@@ -159,31 +148,15 @@ void test_contour_intersection()
 	ContourTree contour_tree({ contour_a });
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
-	//std::cout << "Intersecting Tree Contour" << std::endl;
-	//tStart = clock();
-	////ContourTree contour_tree({ contour_a, contour_b, contour_c, contour_d });
-	//Matrix4x4 rot(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(0, 0, 0, 1));
-	//auto result = contour_tree.MultiRayIndividualBVHsAllIntersects(600*1000, 1000, 1, 0, 6, 0.5, 0, rot);
-	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-	//for (int r_idx = 0; r_idx < result.size(); r_idx++)
-	//{
-	//	for (int i_idx = 0; i_idx < result[r_idx].size(); i_idx++)
-	//	{
-	//		std::cout << result[r_idx][i_idx][0] << ' ' << result[r_idx][i_idx][1] << std::endl;
-	//	}
-	//}
-
 	std::cout << "Intersecting Contour" << std::endl;
-	int  decimals = 6;
+	int  decimals = 4;
 	float vertices_scale = pow(10, decimals);
-	int slice_thickness_microns = 1000 * vertices_scale;
-	int laser_width_microns = 600 * vertices_scale;
+	int laser_width_microns = 600;
 	float slice_height_offset = 0.5;
-	int current_slice = 3;
 	float rot_angle = 0;
 	Matrix4x4 rot(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(0, 0, 0, 1));
-	auto contour_hits = contour_a->MultiRayAllIntersects(laser_width_microns, contour_a->bvh->getBVHBBox().GetpMin().y, 1.0, 0.0, current_slice, rot_angle, rot);
-	//auto contour_hits_2 = contour_tree.MultiRayAllIntersects(laser_width_microns, contour_a->bvh->getBVHBBox().GetpMin().y, 1.0, 0.0, current_slice, rot_angle, rot);
+	auto contour_hits = contour_a->MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, rot, true);
+	//auto contour_hits_2 = contour_tree.MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, rot, true);
 
 	
 };
@@ -195,6 +168,6 @@ void test_geometry_precision()
 }
 
 int main() {
-	test_geometry_precision();
+	test_contour_intersection();
 	return 0;
 }
