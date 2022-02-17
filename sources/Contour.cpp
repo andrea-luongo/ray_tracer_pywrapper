@@ -124,9 +124,10 @@ Contour Contour::OffsetContour(float offset)
 }
 
 
-std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, Matrix4x4& const rot_matrix, bool verbose=false)
+std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose=false)
 {
 	float rot_angle = rot_angle_deg * M_PI / 180.0f;
+	Matrix4x4 rot_matrix = Matrix4x4::Rotate(rot_angle, float3(0, 1, 0));
 	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
 	if (density < 1.0)
 		overlap = 0.0;
@@ -461,9 +462,10 @@ bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 }
 
 
-std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, Matrix4x4& const rot_matrix, bool verbose=false)
+std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose=false)
 {
 	float rot_angle = rot_angle_deg * M_PI / 180.0f;
+	Matrix4x4 rot_matrix = Matrix4x4::Rotate(rot_angle, float3(0, 1, 0));
 	float3 ray_direction(sinf(rot_angle), 0.0f, cosf(rot_angle));
 	if (density < 1.0)
 		overlap = 0.0;
@@ -522,11 +524,15 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersec
 				std::cout << "ray_origin " << rays[idx].GetOrigin() << std::endl;
 			
 		}
-		concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
-			{
-				bvh->all_intersects(rays[idx], infos[idx]);
-			});
-	
+		//concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+		//	{
+		//		bvh->all_intersects(rays[idx], infos[idx]);
+		//	});
+		for (int idx = 0; idx < number_of_rays; idx++)
+		{
+			bvh->all_intersects(rays[idx], infos[idx]);
+		}
+
 		std::vector<std::vector<float3>> hit_points(number_of_rays);
 		try {
 			for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)

@@ -29,7 +29,7 @@ public:
 	RAYTRACERDLL_API bool Contains(Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API static int EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
-	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, Matrix4x4& const rot_matrix, bool verbose);
+	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
 };
 
 
@@ -86,7 +86,7 @@ public:
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACERDLL_API std::vector<std::vector<std::vector<float3>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, Matrix4x4& const rot_matrix, bool verbose);
+	RAYTRACERDLL_API std::vector<std::vector<std::vector<float3>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
 	RAYTRACERDLL_API BBox GetBBox();
 private:
 	RAYTRACERDLL_API void BuildTree();

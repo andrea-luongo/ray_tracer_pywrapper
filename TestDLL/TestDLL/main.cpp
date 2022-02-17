@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sstream>
 #include <ppl.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 bool load_obj(const char* filename, std::vector<float3> &out_vertices, float3 &b_min, float3 &b_max)
 {
@@ -115,14 +117,8 @@ std::shared_ptr<ContourNode> generate_node()
 void test_contour_intersection()
 {
 	std::vector<float> points_a = {
-		3.0, 1.5, -3.0, 1.5, 1.5, -3.0, 1.5, 1.5, -3.0, -3.0, 1.5, -3.0, -3.0, 1.5, -3.0, -3.0, 1.5, 1.5, -3.0, 1.5, 1.5, -3.0, 1.5, 3.0, -3.0, 1.5, 3.0, -1.5, 1.5, 3.0, -1.5, 1.5, 3.0, 3.0, 1.5, 3.0, 3.0, 1.5, 3.0, 3.0, 1.5, -1.5, 3.0, 1.5, -1.5, 3.0, 1.5, -3.0
+		26.143, 1.5, 16.637, 25.9709, 1.5, 16.637, 25.9709, 1.5, 16.637, 19.6609, 1.5, 16.637, 19.6609, 1.5, 16.637, 16.637, 1.5, 16.637, 16.637, 1.5, 16.637, 16.637, 1.5, 19.6609, 16.637, 1.5, 19.6609, 16.637, 1.5, 25.9709, 16.637, 1.5, 25.9709, 16.637, 1.5, 26.143, 16.637, 1.5, 26.143, 22.947, 1.5, 26.143, 22.947, 1.5, 26.143, 26.143, 1.5, 26.143, 26.143, 1.5, 26.143, 26.143, 1.5, 22.947, 26.143, 1.5, 22.947, 26.143, 1.5, 16.637
 	};
-
-	//std::vector<int> points_a_int(points_a.size());
-	//for (int i = 0; i < points_a_int.size(); i++)
-	//{
-	//	points_a_int[i] = int(points_a[i]);
-	//}
 
 	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
 	for (int i = 0; i < (int)(points_a.size() / 6); i++)
@@ -144,7 +140,6 @@ void test_contour_intersection()
 	/////////////////////BUILD ContourTree
 	std::cout << "Building Tree Contour" << std::endl;
 	tStart = clock();
-	//ContourTree contour_tree({ contour_a, contour_b, contour_c, contour_d });
 	ContourTree contour_tree({ contour_a });
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
@@ -153,11 +148,10 @@ void test_contour_intersection()
 	float vertices_scale = pow(10, decimals);
 	int laser_width_microns = 600;
 	float slice_height_offset = 0.5;
-	float rot_angle = 0;
-	Matrix4x4 rot(float4(1, 0, 0, 0), float4(0, 1, 0, 0), float4(0, 0, 1, 0), float4(0, 0, 0, 1));
-	auto contour_hits = contour_a->MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, rot, true);
+	float rot_angle = 45;
+	auto contour_hits = contour_a->MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, true);
 	//auto contour_hits_2 = contour_tree.MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, rot, true);
-
+	std::cout << "DONE\n";
 	
 };
 

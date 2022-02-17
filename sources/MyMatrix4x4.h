@@ -29,6 +29,7 @@ public:
 	RAYTRACERDLL_API float4 GetRow(int r) const;
 	RAYTRACERDLL_API float4 GetColumn(int c) const;
 	RAYTRACERDLL_API Matrix4x4 Transpose() const;
+	RAYTRACERDLL_API static Matrix4x4 Rotate(float angle_rad, float3 axis);
 	//RAYTRACERDLL_API static float dot(const float4& a, const float4& b);
 	
 };

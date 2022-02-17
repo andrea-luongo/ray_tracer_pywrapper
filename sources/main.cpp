@@ -464,12 +464,10 @@ public:
         return result;
     }
 
-    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle, py::array_t<float>& rotation_matrix, bool verbose=false)
+    std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle, bool verbose=false)
     {
 
-        Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
-
-        std::vector<std::vector<float3>> individual_hit_points = contour->MultiRayAllIntersects(laser_width_microns, density, overlap, rot_angle, rot_matrix, verbose);
+        std::vector<std::vector<float3>> individual_hit_points = contour->MultiRayAllIntersects(laser_width_microns, density, overlap, rot_angle, verbose);
 
         if (verbose)
         {
@@ -546,22 +544,20 @@ public:
         return result;
     }
 
-    std::vector< std::vector<std::vector<py::array_t<float>>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle, py::array_t<float>& rotation_matrix, bool verbose=false)
+    std::vector< std::vector<std::vector<py::array_t<float>>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle, bool verbose=false)
     {
 
-        Matrix4x4 rot_matrix = reinterpret_matrix(rotation_matrix);
         if (verbose)
         {
             std::cout << "laser width " << laser_width_microns << std::endl;
             std::cout << "density " << density << std::endl;
             std::cout << "overlap " << overlap << std::endl;
             std::cout << "rot_angle " << rot_angle << std::endl;
-            std::cout << "rotation_matrix " << rot_matrix << std::endl;
 
             std::cout << "COMPUTING INTERSECTIONS" << std::endl;
         }
 
-        std::vector < std::vector<std::vector<float3>>> individual_hit_points = contour_tree->MultiRayAllIntersects(laser_width_microns, density, overlap, rot_angle, rot_matrix, verbose);
+        std::vector < std::vector<std::vector<float3>>> individual_hit_points = contour_tree->MultiRayAllIntersects(laser_width_microns, density, overlap, rot_angle, verbose);
 
         if (verbose)
         {

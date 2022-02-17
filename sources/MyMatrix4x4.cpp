@@ -55,6 +55,19 @@ Matrix4x4 Matrix4x4::Transpose() const
 	return Matrix4x4(GetColumn(0), GetColumn(1), GetColumn(2), GetColumn(3));
 };
 
+Matrix4x4 Matrix4x4::Rotate(float angle_rad, float3 axis)
+{
+	float3 u = float3::normalize(axis);
+	float cos_t = cosf(angle_rad);
+	float sin_t = sinf(angle_rad);
+	
+	float4 r_0(cos_t + u[0]*u[0] *(1-cos_t), u[0]*u[1]*(1-cos_t) - u[2]*sin_t, u[0] * u[2] * (1 - cos_t) + u[1] * sin_t, 0);
+	float4 r_1(u[0] * u[1] * (1 - cos_t) + u[2] * sin_t, cos_t + u[1] * u[1] * (1 - cos_t), u[1] * u[2] * (1 - cos_t) - u[0] * sin_t, 0);
+	float4 r_2(u[2] * u[0] * (1 - cos_t) - u[1] * sin_t, u[2] * u[1] * (1 - cos_t) + u[0] * sin_t, cos_t + u[2] * u[2] * (1 - cos_t), 0);
+	float4 r_3(0, 0, 0, 1);
+	return Matrix4x4(r_0, r_1, r_2, r_3);
+}
+
 float Matrix4x4::operator[](int i) {
 	return m_elements[i];
 }
