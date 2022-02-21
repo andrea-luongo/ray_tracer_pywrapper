@@ -257,6 +257,8 @@ bool Segment::AnyIntersect(Ray& ray)
 
 bool Segment::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 {
+	double epsilon = 1e-8;
+	epsilon = 0.0;
 	double3 s = v1 - v0;
 	double3 e = v0 - ray.GetOrigin();
 	double3 cross_dir_s = double3::cross(ray.GetDirection(), s);
@@ -264,7 +266,7 @@ bool Segment::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 	double x = double3::length(cross_dir_s);
 	double t = double3::length(double3::cross(e, s)) / x;
 	double u = double3::length(cross_e_dir) / x * sign(double3::dot(cross_dir_s, cross_e_dir));
-	if (ray.GetMax() > t && t > ray.GetMin() && 1 > u && u >= 0.0f)
+	if (ray.GetMax() > t && t > ray.GetMin() && 1.0-epsilon > u && u >= 0.0f)
 	{
 		info.AddHit(t);
 		if (info.GetHits()->size() == 3) {

@@ -116,8 +116,10 @@ std::shared_ptr<ContourNode> generate_node()
 
 void test_contour_intersection()
 {
+	int  decimals = 4;
+	float vertices_scale = pow(10, decimals);
 	std::vector<float> points_a = {
-1.0596, 54.5, 0.6947, 0.8988, 54.5, 0.6949, 0.8988, 54.5, 0.6949, 0.6949, 54.5, 0.6949, 0.6949, 54.5, 0.6949, 0.6947, 54.5, 0.863, 0.6947, 54.5, 0.863, 0.6947, 54.5, 1.0596, 0.6947, 54.5, 1.0596, 0.863, 54.5, 1.0596, 0.863, 54.5, 1.0596, 1.0581, 54.5, 1.0581, 1.0581, 54.5, 1.0581, 1.0596, 54.5, 0.863, 1.0596, 54.5, 0.863, 1.0596, 54.5, 0.6947
+-972.0143, 659999.0, -972.0455, -972.0143, 659999.0, -2390.7551, -972.0143, 659999.0, -2390.7551, -972.0145, 659999.0, -3420.758, -972.0145, 659999.0, -3420.758, -1606.1254, 659999.0, -3416.54, -1606.1254, 659999.0, -3416.54, -3416.5088, 659999.0, -3416.54, -3416.5088, 659999.0, -3416.54, -3420.7263, 659999.0, -2349.1455, -3420.7263, 659999.0, -2349.1455, -3420.7263, 659999.0, -972.0457, -3420.7263, 659999.0, -972.0457, -2349.1143, 659999.0, -972.0457, -2349.1143, 659999.0, -972.0457, -972.0143, 659999.0, -972.0455
 	};
 
 	std::vector<std::shared_ptr<Segment>> primitives_a((int)(points_a.size() / 6));
@@ -125,7 +127,7 @@ void test_contour_intersection()
 	{
 		float3 p0(points_a[i * 6], points_a[i * 6 + 1], points_a[i * 6 + 2]);
 		float3 p1(points_a[i * 6 + 3], points_a[i * 6 + 4], points_a[i * 6 + 5]);
-		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+		primitives_a[i] = std::shared_ptr<Segment>(new Segment(p0 , p1 ));
 	}
 
 	clock_t tStart;
@@ -144,10 +146,8 @@ void test_contour_intersection()
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	std::cout << "Intersecting Contour" << std::endl;
-	int  decimals = 4;
-	float vertices_scale = pow(10, decimals);
-	int laser_width_microns = 600;
-	float slice_height_offset = 0.5;
+
+	int laser_width_microns = 600 * vertices_scale;
 	float rot_angle = 45;
 	auto contour_hits = contour_a->MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, true);
 	//auto contour_hits_2 = contour_tree.MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, rot, true);
