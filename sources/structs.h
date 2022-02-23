@@ -90,7 +90,7 @@ public:
 	RAYTRACERDLL_API float3 GetNormal() { return normal; };
 	RAYTRACERDLL_API std::vector<float>* GetHits() { return &t_hits; };
 	RAYTRACERDLL_API void AddHit(float t) { 
-		//if (std::find(t_hits.begin(), t_hits.end(), t) == t_hits.end())
+		if (std::find(t_hits.begin(), t_hits.end(), t) == t_hits.end())
 			t_hits.push_back(t); 
 	};
 	RAYTRACERDLL_API void AddClosestHit(float t) {

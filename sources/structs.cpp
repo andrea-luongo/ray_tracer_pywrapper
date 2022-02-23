@@ -275,6 +275,24 @@ bool Segment::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 		return true;
 	}
 	return false;
+	/*double epsilon = 1e-5;
+	epsilon = 0.0;
+	float3 s = v1 - v0;
+	float3 e = v0 - ray.GetOrigin();
+	float3 cross_dir_s = float3::cross(ray.GetDirection(), s);
+	float3 cross_e_dir = float3::cross(e, ray.GetDirection());
+	float x = float3::length(cross_dir_s);
+	float t = float3::length(float3::cross(e, s)) / x;
+	float u = double3::length(cross_e_dir) / x * sign(float3::dot(cross_dir_s, cross_e_dir));
+	if (ray.GetMax() > t && t > ray.GetMin() && 1.0-epsilon > u && u >= 0.0f)
+	{
+		info.AddHit(t);
+		if (info.GetHits()->size() == 3) {
+			int tmp = 0;
+		}
+		return true;
+	}
+	return false;*/
 }
 
 bool Segment::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info)

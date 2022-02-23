@@ -174,14 +174,11 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 		for (int idx = 0; idx < number_of_rays; idx++)
 			std::cout << "ray_origin " << rays[idx].GetOrigin() << std::endl;
 	}
-	//concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
-	//	{
-	//		bvh->all_intersects(rays[idx], infos[idx]);
-	//	});
-	for(int idx=0; idx < number_of_rays; idx++)
-		bvh->all_intersects(rays[idx], infos[idx]);
+	concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+		{
+			bvh->all_intersects(rays[idx], infos[idx]);
+		});
 
-	std::vector<std::vector<float3>> hit_points(number_of_rays);
 	try {
 		for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)
 		{
@@ -201,7 +198,6 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 	{
 		std::cout << "Ray Intersection Exception" << std::endl;
 	}
-
 	return individual_hit_points;
 }
 
@@ -462,7 +458,7 @@ bool ContourTree::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 }
 
 
-std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose=false)
+std::vector<std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose=false)
 {
 	float rot_angle = rot_angle_deg * M_PI / 180.0f;
 	Matrix4x4 rot_matrix = Matrix4x4::Rotate(rot_angle, float3(0, 1, 0));
@@ -470,7 +466,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersec
 	if (density < 1.0)
 		overlap = 0.0;
 
-	std::vector < std::vector<std::vector<float3>>> individual_hit_points(internal_bvhs.size());
+	std::vector < std::vector<std::vector<float3>>> contour_tree_hit_points(internal_bvhs.size());
 	int bvh_idx = 0;
 	if (verbose)
 	{
@@ -524,20 +520,27 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersec
 				std::cout << "ray_origin " << rays[idx].GetOrigin() << std::endl;
 			
 		}
-		//concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
-		//	{
-		//		bvh->all_intersects(rays[idx], infos[idx]);
-		//	});
-		for (int idx = 0; idx < number_of_rays; idx++)
-		{
-			bvh->all_intersects(rays[idx], infos[idx]);
-		}
+		concurrency::parallel_for(int(0), number_of_rays, [&](int idx)
+			{
+				bvh->all_intersects(rays[idx], infos[idx]);
+			});
 
-		std::vector<std::vector<float3>> hit_points(number_of_rays);
+		std::vector<std::vector<float3>> contour_hit_points;
 		try {
 			for (int ray_idx = 0; ray_idx < number_of_rays; ray_idx++)
 			{
 				std::vector<float> t_hits = *infos[ray_idx].GetHits();
+				// DISCARD RAYS WITH ODD NUMBER OF INTERSECTIONS
+				if (t_hits.size() % 2 != 0) 
+				{
+					if (verbose)
+					{
+						std::cout << "ray idx " << ray_idx << " DISCARDED " << "hits" << t_hits.size() << std::endl;
+					}
+					continue;
+				}
+
+				std::vector<float3> ray_hit_points(t_hits.size());
 				for (int hit_idx = 0; hit_idx < t_hits.size(); hit_idx++)
 				{
 					float3 hit_point = rays[ray_idx].GetOrigin() + t_hits[hit_idx] * rays[ray_idx].GetDirection();
@@ -545,15 +548,16 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersec
 					{
 						std::cout <<"ray idx " << ray_idx <<  " hit " << hit_point << std::endl;
 					}
-					hit_points[ray_idx].push_back(hit_point);
+					ray_hit_points[hit_idx] = hit_point;
 				}
+				contour_hit_points.push_back(ray_hit_points);
 			}
 			if (verbose)
 			{
 				std::cout << "bvh idx " << bvh_idx << std::endl;
-				std::cout << "ind hit points length " << individual_hit_points.size() << std::endl;
+				std::cout << "ind hit points length " << contour_tree_hit_points.size() << std::endl;
 			}
-			individual_hit_points[bvh_idx++] = hit_points;
+			contour_tree_hit_points[bvh_idx++] = contour_hit_points;
 		}
 		catch (...)
 		{
@@ -564,7 +568,7 @@ std::vector < std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersec
 	{
 		std::cout << "END" << std::endl;
 	}
-	return individual_hit_points;
+	return contour_tree_hit_points;
 }
 
 BBox ContourTree::GetBBox()

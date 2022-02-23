@@ -214,7 +214,6 @@ public:
                 int3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
                 int3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
                 int3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
-                //std::cout << p0 << p1 << p2 << std::endl;
                 std::shared_ptr<Primitive> primitive = std::shared_ptr<IntTriangle>(new IntTriangle(p0, p1, p2));
                 primitives.push_back(primitive);
             }
@@ -389,13 +388,16 @@ public:
     {
         float3 normal(n.at(0), n.at(1), n.at(2));
         try {
-            std::vector<std::shared_ptr<Segment>> primitives((int)(vertices.size() / 6));
+            //std::vector<std::shared_ptr<Segment>> primitives((int)(vertices.size() / 6));
+            std::vector<std::shared_ptr<Segment>> primitives;
             for (int i = 0; i < (int)(vertices.size() / 6); i++)
             {
                 float3 p0(vertices[i * 6], vertices[i * 6 + 1], vertices[i * 6 + 2]);
                 float3 p1(vertices[i * 6 + 3], vertices[i * 6 + 4], vertices[i * 6 + 5]);
-                primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
-                //std::cout << primitives[i] << std::endl;
+                if (float3::length(p0 - p1) == 0)
+                    continue;
+                //primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
+                primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
             }
             contour = std::make_shared<Contour>(primitives, normal);
         }
@@ -411,7 +413,6 @@ public:
     }
 
     ~PyBindContour() {
-        //delete bvh;
     }
 
     py::tuple IsContained(PyBindContour& contour_b)
@@ -563,32 +564,28 @@ public:
         {
             std::cout << "REINTERPRETING INTERSECTIONS" << std::endl;
         }
-        std::vector <std::vector<std::vector<py::array_t<float>>>> reinterpreted_individual_hit_points(individual_hit_points.size());
+        std::vector <std::vector<std::vector<py::array_t<float>>>> reinterpreted_contour_tree_hit_points(individual_hit_points.size());
         try {
             for (int bvh_idx = 0; bvh_idx < individual_hit_points.size(); bvh_idx++)
             {
                 auto bvh_hits = individual_hit_points[bvh_idx];
-                std::vector<std::vector<py::array_t<float>>> hit_points(bvh_hits.size());
+                std::vector<std::vector<py::array_t<float>>> contour_hit_points(bvh_hits.size());
                 for (int ray_idx = 0; ray_idx < bvh_hits.size(); ray_idx++)
                 {
                     std::vector<float3> ray_hits = bvh_hits[ray_idx];
                     for (int hit_idx = 0; hit_idx < ray_hits.size(); hit_idx++)
                     {
-                        //if (verbose)
-                        //{
-                        //    std::cout << "hit " << ray_hits[hit_idx] << std::endl;
-                        //}
-                        hit_points[ray_idx].push_back(reinterpret_float3(ray_hits[hit_idx]));
+                        contour_hit_points[ray_idx].push_back(reinterpret_float3(ray_hits[hit_idx]));
                     }
                 }
-                reinterpreted_individual_hit_points[bvh_idx] = hit_points;
+                reinterpreted_contour_tree_hit_points[bvh_idx] = contour_hit_points;
             }
         }
         catch (...)
         {
             std::cout << "Ray Intersection Exception" << std::endl;
         }
-        return reinterpreted_individual_hit_points;
+        return reinterpreted_contour_tree_hit_points;
     };
 
 };
@@ -623,7 +620,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     bvh.def("MultiRayAllIntersectsTransformHits", &PyBindBVH::MultiRayAllIntersectsTransformHits);
     bvh.def("PlaneAllIntersects", &PyBindBVH::PlaneAllIntersects);
     bvh.def("PlaneAllIntersectsHits", &PyBindBVH::PlaneAllIntersectsHits);
-    py::enum_ <SplitMethod> (bvh, "SplitMethod")
+    py::enum_ <SplitMethod>(bvh, "SplitMethod")
         .value("SAH", SplitMethod::SAH)
         .value("HLBVH", SplitMethod::HLBVH)
         .value("Middle", SplitMethod::Middle)
