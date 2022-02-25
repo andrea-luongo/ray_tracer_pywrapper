@@ -13,11 +13,12 @@ Contour::Contour()
 
 Contour::Contour(const std::vector<std::shared_ptr<Segment>>& p, const float3 n) : segments(p), contour_normal(n)
 {
-	bvh = new BVH({segments.begin(), segments.end()}, SplitMethod::EqualCounts, 255);
-	ComputeBBox();
 	if (segments.size() < 3) {
 		is_valid = false;
+		return;
 	}
+	bvh = new BVH({segments.begin(), segments.end()}, SplitMethod::EqualCounts, 255);
+	ComputeBBox();
 }
 
 void Contour::ComputeBBox()
@@ -308,6 +309,11 @@ std::vector<std::shared_ptr<ContourNode>> ContourNode::GetChildren()
 ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 {
 	//std::cout << "building tree with " << c.size() << std::endl;
+	for (int idx = 0; idx < c.size(); idx++)
+	{
+		if (c[idx]->is_valid)
+			contours.push_back(c[idx]);
+	}
 	contours = c;
 	tree_root = std::make_shared<ContourNode>(node_id_counter++);
 	BuildTree();

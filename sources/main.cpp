@@ -386,6 +386,7 @@ public:
 
     PyBindContour(std::vector<float>& vertices, py::array_t<float> n)
     {
+        bool verbose = true;
         float3 normal(n.at(0), n.at(1), n.at(2));
         try {
             //std::vector<std::shared_ptr<Segment>> primitives((int)(vertices.size() / 6));
@@ -395,10 +396,13 @@ public:
                 float3 p0(vertices[i * 6], vertices[i * 6 + 1], vertices[i * 6 + 2]);
                 float3 p1(vertices[i * 6 + 3], vertices[i * 6 + 4], vertices[i * 6 + 5]);
                 if (float3::length(p0 - p1) == 0)
+                {
                     continue;
+                }
                 //primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
                 primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
             }
+            std::cout << "BUILT PRIMITIVES" << std::endl;
             contour = std::make_shared<Contour>(primitives, normal);
         }
         catch (const std::exception& exc)
@@ -413,6 +417,11 @@ public:
     }
 
     ~PyBindContour() {
+    }
+
+    bool IsValid()
+    {
+        return contour->is_valid;
     }
 
     py::tuple IsContained(PyBindContour& contour_b)
@@ -506,7 +515,8 @@ public:
         std::vector<std::shared_ptr<Contour>> contours;
         for (int i = 0; i < py_contours.size(); i++)
         {
-            contours.push_back(py_contours[i].contour);
+            if (py_contours[i].IsValid())
+                contours.push_back(py_contours[i].contour);
         }
         contour_tree = std::make_shared<ContourTree>(contours);
     };
@@ -629,6 +639,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
 
     py::class_<PyBindContour> contour(m, "PyBindContour");
     contour.def(py::init<std::vector<float>&, py::array_t<float>>());
+    contour.def("IsValid", &PyBindContour::IsValid);
     contour.def("IsContained", &PyBindContour::IsContained);
     contour.def("Contains", &PyBindContour::Contains);
     contour.def("EvaluateContoursRelationship", &PyBindContour::EvaluateContoursRelationship);

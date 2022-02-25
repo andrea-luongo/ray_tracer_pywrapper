@@ -14,7 +14,7 @@ class Contour : public Primitive
 {
 public:
 	std::vector<std::shared_ptr<Segment>> segments;
-	BVH* bvh;
+	BVH* bvh = nullptr;
 	bool is_valid = true;
 	float3 contour_normal;
 public:

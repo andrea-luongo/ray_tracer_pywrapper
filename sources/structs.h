@@ -155,6 +155,7 @@ public:
 	float3 v0;
 	float3 v1;
 public:
+	RAYTRACERDLL_API Segment() {};
 	RAYTRACERDLL_API Segment(const float3& p0, const float3& p1);
 	RAYTRACERDLL_API void ComputeBBox();
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);

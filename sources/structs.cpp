@@ -514,6 +514,10 @@ bool Triangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
 	if (hit)
 	{
 		float3 dir = t_hits[1] - t_hits[0];
+		if (float3::length(dir) == 0)
+		{
+			return false;
+		}
 		double3 e0 = v1 - v0;
 		double3 e1 = v0 - v2;
 		double3 n = double3::cross(e1, e0);

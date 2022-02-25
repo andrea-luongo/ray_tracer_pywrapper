@@ -10,7 +10,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-bool load_obj(const char* filename, std::vector<float3> &out_vertices, float3 &b_min, float3 &b_max)
+bool load_obj(const std::string filename, float geometry_scaling, bool swap_yz, std::vector<float3> &out_vertices, float3 &b_min, float3 &b_max)
 {
 	std::vector< unsigned int > vertexIndices;
 	std::vector<float3> temp_vertices;
@@ -32,6 +32,9 @@ bool load_obj(const char* filename, std::vector<float3> &out_vertices, float3 &b
 			if (parsed_line[0] == "v")
 			{
 				float3 vertex(std::stof(parsed_line[1]), std::stof(parsed_line[2]), std::stof(parsed_line[3]));
+				vertex = vertex * geometry_scaling;
+				if (swap_yz)
+					vertex = float3(-vertex[0], vertex[2], vertex[1]);
 				temp_vertices.push_back(vertex);
 				if (!bbox_defined)
 				{
@@ -157,11 +160,71 @@ void test_contour_intersection()
 
 void test_geometry_precision()
 {
-	//std::string filename = "C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj";
-	//load_obj(filename, std::vector<float3> &out_vertices, float3 & b_min, float3 & b_max)
+	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
+	std::vector<float3> vertices;
+	float3 b_min, b_max;
+	float geometry_scaling = 10000;
+	bool swap_yz = true;
+	load_obj(filename, geometry_scaling, swap_yz, vertices, b_min, b_max);
+
+	std::vector<std::shared_ptr<Primitive>> primitives;
+	for (int i = 0; i < (int)(vertices.size() / 3); i++)
+	{
+		float3 p0(vertices[i * 3]);
+		float3 p1(vertices[i * 3 + 1]);
+		float3 p2(vertices[i * 3 + 2]);
+		std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
+		primitives.push_back(primitive);
+	}
+	
+	BVH bvh(primitives, SplitMethod::EqualCounts, 255);
+
+	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
+	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 6.04720039e+01);
+	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
+	float4 r3(0., 0., 0., 1.);
+	Matrix4x4 t_matrix(r0, r1, r2, r3);
+
+	float3 plane_x0(0, -355870, 0);
+	float3 plane_n(0, 1e-4, 0);
+
+	Plane plane(plane_x0, plane_n);
+	PlaneIntersectionInfo info;
+	bool result = bvh.plane_all_intersects(plane, info);
+
+	std::vector<float3> hits = *info.GetHits();
+	std::vector<float3> transformed_hits(hits.size());
+	for (int idx = 0; idx < hits.size(); idx++)
+	{
+		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 0) * t_matrix + t_matrix.GetColumn(3)) * geometry_scaling;
+		transformed_hits[idx] = int3(t_hit[0], t_hit[1], t_hit[2]);
+	}
+
+	std::cout << "number of segments " << hits.size() << std::endl;
+
+	
+	//std::vector<Segment> segment_primitives((int)(transformed_hits.size() / 2));
+	std::vector<Segment> segment_primitives;
+	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
+	{
+		float3 p0 = transformed_hits[i * 2];
+		float3 p1 = transformed_hits[i * 2 + 1];
+		if (float3::length(p0 - p1) == 0)
+		{
+			continue;
+		}
+		Segment tmp(p0, p1);
+		//segment_primitives[i] = tmp;
+		segment_primitives.push_back(tmp);
+	}
+	//contour = std::make_shared<Contour>(primitives, normal);
+
+
+	std::cout << "SUCCESS" << std::endl;
 }
 
 int main() {
-	test_contour_intersection();
+	//test_contour_intersection();
+	test_geometry_precision();
 	return 0;
 }
