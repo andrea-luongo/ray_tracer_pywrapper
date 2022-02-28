@@ -92,6 +92,11 @@ float3 float3::normalize(const float3& a)
 	return a / a.length();
 }
 
+float3 float3::normalize()
+{
+	return *this / this->length();
+}
+
 float float3::dot(const float3& a, const float3& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;

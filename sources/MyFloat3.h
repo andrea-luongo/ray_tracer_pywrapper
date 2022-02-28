@@ -32,6 +32,7 @@ public:
 	RAYTRACERDLL_API float length() const;
 	RAYTRACERDLL_API static float length(const float3& a);
 	RAYTRACERDLL_API static float3 normalize(const float3& a);
+	RAYTRACERDLL_API float3 normalize();
 	RAYTRACERDLL_API static float dot(const float3& a, const float3& b);
 	RAYTRACERDLL_API float dot(const float3& b) const;
 	RAYTRACERDLL_API static float3 cross(const float3& a, const float3& b);

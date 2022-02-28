@@ -116,12 +116,32 @@ int Contour::EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b
 
 Contour Contour::OffsetContour(float offset)
 {
+	std::vector<float3> new_vertices(segments.size());
+	std::vector<std::shared_ptr<Segment>> new_segments(segments.size());
 	for (int idx = 0; idx < segments.size(); idx++)
 	{
-		auto s_cur = segments[idx];
-
+		Segment s_cur = *segments[idx];
+		Segment s_prev;
+		if (idx == 0)
+			s_prev = *segments[segments.size()-1];
+		else
+			s_prev = *segments[idx-1];
+		float3 s_normal = float3::cross((s_cur[1] - s_cur[0]), contour_normal).normalize();
+		float3 s_prev_normal = float3::cross((s_prev[1] - s_prev[0]), contour_normal).normalize();
+		float half_angle = 0.5 * (acosf(float3::dot(s_normal, s_prev_normal)));
+		float3 half_normal = (s_normal + s_prev_normal).normalize();
+		float3 v = s_cur[0] + offset / cosf(half_angle) * half_normal;
+		new_vertices[idx] = v;
+		if (idx > 0)
+		{
+			new_segments[idx] = std::shared_ptr<Segment>(new Segment(new_vertices[idx - 1], v));
+		}
+		if (idx == segments.size()-1)
+		{
+			new_segments[0] = std::shared_ptr<Segment>(new Segment(v, new_vertices[0]));
+		}
 	}
-	return Contour();
+	return Contour(new_segments, contour_normal);
 }
 
 
@@ -201,6 +221,13 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 	}
 	return individual_hit_points;
 }
+
+std::ostream& operator<<(std::ostream& os, Contour const& c)
+{
+	for (int i = 0; i < c.segments.size(); i++)
+		std::cout << *c.segments[i] << std::endl;
+	return os;
+};
 
 ///////////////////////////////////////////////////////////////////////
 

@@ -162,6 +162,8 @@ public:
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
+	RAYTRACERDLL_API float3 operator[](int i);
+	RAYTRACERDLL_API float3 operator[](int i) const;
 };
 RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Segment const& s);
 
@@ -195,6 +197,8 @@ public:
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
+	RAYTRACERDLL_API float3 operator[](int i);
+	RAYTRACERDLL_API float3 operator[](int i) const;
 };
 
 

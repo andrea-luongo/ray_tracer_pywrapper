@@ -402,7 +402,7 @@ public:
                 //primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
                 primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
             }
-            std::cout << "BUILT PRIMITIVES" << std::endl;
+            //std::cout << "BUILT PRIMITIVES" << std::endl;
             contour = std::make_shared<Contour>(primitives, normal);
         }
         catch (const std::exception& exc)
@@ -501,6 +501,28 @@ public:
         }
         return reinterpreted_individual_hit_points;
     };
+
+    PyBindContour OffsetContour(float offset)
+    {
+        Contour offset_contour = contour->OffsetContour(offset);
+        return PyBindContour(offset_contour);
+    }
+
+    std::vector<py::array_t<float>> GetSegments()
+    {
+
+        std::vector<py::array_t<float>> result(contour->segments.size() * 2);
+        std::cout << result.size() << std::endl;
+        for (int i = 0; i < contour->segments.size(); i++)
+        {
+            float3 p0 = (*contour->segments[i])[0];
+            float3 p1 = (*contour->segments[i])[1];
+            std::cout << p0 << " " << p1 << std::endl;
+            result[i*2](reinterpret_float3(p0));
+            result[i*2+1](reinterpret_float3(p1));
+        }
+        return result;
+    }
 
 };
 
@@ -649,6 +671,8 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contour.def("AnyIntersect", &PyBindContour::AnyIntersect);
     contour.def("Intersect", &PyBindContour::Intersect);
     contour.def("MultiRayAllIntersects", &PyBindContour::MultiRayAllIntersects);
+    contour.def("OffsetContour", &PyBindContour::OffsetContour);
+    contour.def("GetSegments", &PyBindContour::GetSegments);
 
     py::class_<PyBindContourTree> contourtree(m, "PyBindContourTree");
     contourtree.def(py::init<std::vector<PyBindContour>&>());

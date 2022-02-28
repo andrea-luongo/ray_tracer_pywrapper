@@ -31,6 +31,7 @@ public:
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
 	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
 };
+RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Contour const& c);
 
 
 class ContourNode : public std::enable_shared_from_this<ContourNode>

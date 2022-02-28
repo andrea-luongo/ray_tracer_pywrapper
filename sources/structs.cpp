@@ -309,6 +309,24 @@ bool Segment::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info)
 	return hit;
 }
 
+float3 Segment::operator[](int i) {
+	if (i == 0)
+		return v0;
+	else if (i == 1)
+		return v1;
+	else
+		return float3();
+}
+
+float3 Segment::operator[](int i) const {
+	if (i == 0)
+		return v0;
+	else if (i == 1)
+		return v1;
+	else
+		return float3();
+}
+
 std::ostream& operator<<(std::ostream& os, Segment const& s)
 {
 	os << "v0 " << s.v0 << " v1 " << s.v1;
@@ -536,6 +554,25 @@ bool Triangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
 	}
 	return hit;
 }
+
+float3 Triangle::operator[](int i) {
+	if (i == 0)
+		return v0;
+	else if (i == 1)
+		return v1;
+	else
+		return v2;
+}
+
+float3 Triangle::operator[](int i) const{
+	if (i == 0)
+		return v0;
+	else if (i == 1)
+		return v1;
+	else
+		return v2;
+}
+
 
 IntTriangle::IntTriangle(const int3 p0, const int3 p1, const int3 p2)
 {
