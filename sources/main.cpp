@@ -158,7 +158,7 @@ public:
                 primitives.push_back(primitive);
             }
         }
-        else if (primitive_type == PrimitiveType::SEGMENT)
+     /*   else if (primitive_type == PrimitiveType::SEGMENT)
         {
 
         }
@@ -172,7 +172,7 @@ public:
                 std::shared_ptr<Primitive> primitive = std::shared_ptr<IntTriangle>(new IntTriangle(p0, p1, p2));
                 primitives.push_back(primitive);
             }
-        }
+        }*/
 
         bvh = std::make_shared<BVH>(primitives, splitMethod, maxPrimsInNode);
     }
@@ -189,38 +189,38 @@ public:
         return reinterpret_float3(x);
     }
 
-    PyBindBVH(std::vector<int32_t>& vertices, SplitMethod splitMethod, int maxPrimsInNode = 255, PrimitiveType primitive_type = PrimitiveType::TRIANGLE)
-    {
-        std::vector<std::shared_ptr<Primitive>> primitives;
-        if (primitive_type == PrimitiveType::TRIANGLE)
-        {
-            for (int i = 0; i < (int)(vertices.size() / 9); i++)
-            {
-                float3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
-                float3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
-                float3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
-                std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
-                primitives.push_back(primitive);
-            }
-        }
-        else if (primitive_type == PrimitiveType::SEGMENT)
-        {
+    //PyBindBVH(std::vector<int32_t>& vertices, SplitMethod splitMethod, int maxPrimsInNode = 255, PrimitiveType primitive_type = PrimitiveType::TRIANGLE)
+    //{
+    //    std::vector<std::shared_ptr<Primitive>> primitives;
+    //    if (primitive_type == PrimitiveType::TRIANGLE)
+    //    {
+    //        for (int i = 0; i < (int)(vertices.size() / 9); i++)
+    //        {
+    //            float3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
+    //            float3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
+    //            float3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
+    //            std::shared_ptr<Primitive> primitive = std::shared_ptr<Triangle>(new Triangle(p0, p1, p2));
+    //            primitives.push_back(primitive);
+    //        }
+    //    }
+    //    else if (primitive_type == PrimitiveType::SEGMENT)
+    //    {
 
-        }
-        else if (primitive_type == PrimitiveType::INT_TRIANGLE)
-        {
-            for (int i = 0; i < (int)(vertices.size() / 9); i++)
-            {
-                int3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
-                int3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
-                int3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
-                std::shared_ptr<Primitive> primitive = std::shared_ptr<IntTriangle>(new IntTriangle(p0, p1, p2));
-                primitives.push_back(primitive);
-            }
-        }
+    //    }
+    //    else if (primitive_type == PrimitiveType::INT_TRIANGLE)
+    //    {
+    //        for (int i = 0; i < (int)(vertices.size() / 9); i++)
+    //        {
+    //            int3 p0(vertices[i * 9], vertices[i * 9 + 1], vertices[i * 9 + 2]);
+    //            int3 p1(vertices[i * 9 + 3], vertices[i * 9 + 4], vertices[i * 9 + 5]);
+    //            int3 p2(vertices[i * 9 + 6], vertices[i * 9 + 7], vertices[i * 9 + 8]);
+    //            std::shared_ptr<Primitive> primitive = std::shared_ptr<IntTriangle>(new IntTriangle(p0, p1, p2));
+    //            primitives.push_back(primitive);
+    //        }
+    //    }
 
-        bvh = std::make_shared<BVH>(primitives, splitMethod, maxPrimsInNode);
-    }
+    //    bvh = std::make_shared<BVH>(primitives, splitMethod, maxPrimsInNode);
+    //}
 
     PyBindBVH(std::shared_ptr<BVH> b)
     {
@@ -640,7 +640,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     //bvh.def(py::init());// , SplitMethod > ());
     bvh.def(py::init < std::vector<float>&, SplitMethod, int> ());
     bvh.def(py::init < std::vector<float>&, SplitMethod, int, PrimitiveType> ());
-    bvh.def(py::init < std::vector<int32_t>&, SplitMethod, int, PrimitiveType> ());
+    //bvh.def(py::init < std::vector<int32_t>&, SplitMethod, int, PrimitiveType> ());
     bvh.def("GetBBoxMin", &PyBindBVH::GetBBoxMin);
     bvh.def("GetBBoxMax", &PyBindBVH::GetBBoxMax);
     bvh.def("Intersect", &PyBindBVH::Intersect);

@@ -12,6 +12,8 @@ template <typename T> constexpr int sign(T x)
 	return (T(0) < x) - (x < T(0));
 }
 
+
+// PLANE
 Plane::Plane() 
 { 
 	x_0 = float3(0); 
@@ -41,6 +43,45 @@ bool Plane::PlaneSegmentIntersection(const float3& p_0, const float3& p_1, float
 	return true;
 };
 
+
+//PLANE INTERSECTION INFO
+std::vector<std::shared_ptr<Segment>> PlaneIntersectionInfo::GetSegments()
+{
+	std::vector<std::shared_ptr<Segment>> segments(t_hits.size() / 2);
+	for (int idx = 0; idx < t_hits.size(); idx++)
+	{
+		segments[idx] = std::shared_ptr<Segment>(new Segment(t_hits[idx*2], t_hits[idx*2+1]));
+	}
+	return segments;
+}
+
+
+std::vector<std::vector<std::shared_ptr<Segment>>> PlaneIntersectionInfo::GetSortedSegments()
+{
+	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
+	std::vector<std::shared_ptr<Segment>> segments = GetSegments();
+	if (segments.size() == 1)
+	{
+		sorted_segments.push_back(segments);
+		return sorted_segments;
+	}
+	else
+	{
+		int half_idx = int(segments.size() * 0.5);
+		auto first = segments.begin();
+		auto middle = segments.begin() + half_idx;
+		auto end = segments.end();
+		
+		/*auto left_segments(&first, middle);
+		auto right_segments(&middle, end);*/
+
+	}
+	return sorted_segments;
+}
+
+
+
+// BBOX
 BBox::BBox()
 {
 	pMin = float3(std::numeric_limits<float>::max());
@@ -210,7 +251,7 @@ bool BBox::PlaneAnyIntersect(const Plane& plane) const
 	return false;
 }
 
-
+//SEGMENT
 Segment::Segment(const float3& p0, const float3& p1) { v0 = p0; v1= p1; ComputeBBox(); }
 
 void Segment::ComputeBBox()
@@ -333,7 +374,19 @@ std::ostream& operator<<(std::ostream& os, Segment const& s)
 	return os;
 };
 
+bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
+{
+	bool result = false;
+	float3 s_dist = float3::abs(s0.v1 - s1.v0);
+	if (s_dist.length() < epsilon)
+	{
+		result = true;
+		s0.v1 = s1.v0;
+	}
+	return result;
+}
 
+//SPHERE
 Sphere::Sphere(const float r, const float3& c) { radius = r; center = c; ComputeBBox(); }
 		
 void Sphere::ComputeBBox()
@@ -431,6 +484,7 @@ bool Sphere::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info)
 	return false;
 }
 
+//TRIANGLE
 Triangle::Triangle(const float3 p0, const float3 p1, const float3 p2)
 {
 	v0 = p0; v1 = p1; v2 = p2;
@@ -573,125 +627,125 @@ float3 Triangle::operator[](int i) const{
 		return v2;
 }
 
-
-IntTriangle::IntTriangle(const int3 p0, const int3 p1, const int3 p2)
-{
-	v0 = p0; v1 = p1; v2 = p2;
-	ComputeBBox();
-}
-
-void IntTriangle::ComputeBBox()
-{
-	float area = float3::length(float3::cross(v1 - v0, v2 - v0));
-	if (area > 0.0 && isfinite(area))
-	{
-		float3 b_min = float3::min(float3::min(v0, v1), v2);
-		float3 b_max = float3::max(float3::max(v0, v1), v2);
-		bbox = BBox(b_min, b_max);
-	}
-}
-
-bool IntTriangle::Intersect(Ray& ray, RayIntersectionInfo& info) {
-	double3 ray_origin = ray.GetOrigin();
-	double3 ray_direction = ray.GetDirection();
-	double3 e0 = v1 - v0;
-	double3 e1 = v0 - v2;
-	double3 n = double3::cross(e1, e0);
-	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
-	double3 i = double3::cross(ray_direction, e2);
-	double beta = double3::dot(i, e1);
-	double gamma = double3::dot(i, e0);
-	float t = float3::dot(n, e2);
-	if (ray.GetMax() > t&& t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
-	{
-		ray.SetMax(t);
-		info.SetNormal(float3::normalize(n));
-		info.AddClosestHit(t);
-		return true;
-	}
-	return false;
-}
-
-bool IntTriangle::AnyIntersect(Ray& ray) {
-	double3 ray_origin = ray.GetOrigin();
-	double3 ray_direction = ray.GetDirection();
-	double3 e0 = v1 - v0;
-	double3 e1 = v0 - v2;
-	double3 n = double3::cross(e1, e0);
-	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
-	double3 i = double3::cross(ray_direction, e2);
-	double beta = double3::dot(i, e1);
-	double gamma = double3::dot(i, e0);
-	float t = float3::dot(n, e2);
-	if (ray.GetMax() > t&& t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
-	{
-		return true;
-	}
-	return false;
-}
-
-bool IntTriangle::AllIntersect(Ray& ray, RayIntersectionInfo& info) {
-	double3 ray_origin = ray.GetOrigin();
-	double3 ray_direction = ray.GetDirection();
-	double3 e0 = v1 - v0;
-	double3 e1 = v0 - v2;
-	double3 n = double3::cross(e1, e0);
-	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
-	double3 i = double3::cross(ray_direction, e2);
-	double beta = double3::dot(i, e1);
-	double gamma = double3::dot(i, e0);
-	float t = float3::dot(n, e2);
-	if (ray.GetMax() > t&& t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
-	{
-		info.AddHit(t);
-		return true;
-	}
-	return false;
-}
-
-bool IntTriangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
-	bool hit = false;
-	float3 p0, p1, p2;
-	std::vector<float3> t_hits;
-	bool intersects = plane.PlaneSegmentIntersection(v0, v1, p0);
-	if (intersects)
-	{
-		t_hits.push_back(p0);
-		hit = true;
-
-	}
-	intersects = plane.PlaneSegmentIntersection(v1, v2, p1);
-	if (intersects)
-	{
-		t_hits.push_back(p1);
-		hit = true;
-	}
-	intersects = plane.PlaneSegmentIntersection(v2, v0, p2);
-	if (intersects)
-	{
-		t_hits.push_back(p2);
-		hit = true;
-	}
-	if (hit)
-	{
-		float3 dir = t_hits[1] - t_hits[0];
-		double3 e0 = v1 - v0;
-		double3 e1 = v0 - v2;
-		double3 n = double3::cross(e1, e0);
-		float s = sign(float3::dot(float3::cross(n, dir), plane.GetNormal()));
-		if (s < 0)
-		{
-			info.AddHit(t_hits[1]);
-			info.AddHit(t_hits[0]);
-		}
-		else
-		{
-			info.AddHit(t_hits[0]);
-			info.AddHit(t_hits[1]);
-		}
-
-	}
-
-	//sign(float3::dot(cross_dir_s, cross_e_dir));
-	return hit;
-}
+//
+//IntTriangle::IntTriangle(const int3 p0, const int3 p1, const int3 p2)
+//{
+//	v0 = p0; v1 = p1; v2 = p2;
+//	ComputeBBox();
+//}
+//
+//void IntTriangle::ComputeBBox()
+//{
+//	float area = float3::length(float3::cross(v1 - v0, v2 - v0));
+//	if (area > 0.0 && isfinite(area))
+//	{
+//		float3 b_min = float3::min(float3::min(v0, v1), v2);
+//		float3 b_max = float3::max(float3::max(v0, v1), v2);
+//		bbox = BBox(b_min, b_max);
+//	}
+//}
+//
+//bool IntTriangle::Intersect(Ray& ray, RayIntersectionInfo& info) {
+//	double3 ray_origin = ray.GetOrigin();
+//	double3 ray_direction = ray.GetDirection();
+//	double3 e0 = v1 - v0;
+//	double3 e1 = v0 - v2;
+//	double3 n = double3::cross(e1, e0);
+//	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
+//	double3 i = double3::cross(ray_direction, e2);
+//	double beta = double3::dot(i, e1);
+//	double gamma = double3::dot(i, e0);
+//	float t = float3::dot(n, e2);
+//	if (ray.GetMax() > t&& t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
+//	{
+//		ray.SetMax(t);
+//		info.SetNormal(float3::normalize(n));
+//		info.AddClosestHit(t);
+//		return true;
+//	}
+//	return false;
+//}
+//
+//bool IntTriangle::AnyIntersect(Ray& ray) {
+//	double3 ray_origin = ray.GetOrigin();
+//	double3 ray_direction = ray.GetDirection();
+//	double3 e0 = v1 - v0;
+//	double3 e1 = v0 - v2;
+//	double3 n = double3::cross(e1, e0);
+//	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
+//	double3 i = double3::cross(ray_direction, e2);
+//	double beta = double3::dot(i, e1);
+//	double gamma = double3::dot(i, e0);
+//	float t = float3::dot(n, e2);
+//	if (ray.GetMax() > t&& t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
+//	{
+//		return true;
+//	}
+//	return false;
+//}
+//
+//bool IntTriangle::AllIntersect(Ray& ray, RayIntersectionInfo& info) {
+//	double3 ray_origin = ray.GetOrigin();
+//	double3 ray_direction = ray.GetDirection();
+//	double3 e0 = v1 - v0;
+//	double3 e1 = v0 - v2;
+//	double3 n = double3::cross(e1, e0);
+//	double3 e2 = 1.0 / double3::dot(n, ray_direction) * (double3(v0) - ray_origin);
+//	double3 i = double3::cross(ray_direction, e2);
+//	double beta = double3::dot(i, e1);
+//	double gamma = double3::dot(i, e0);
+//	float t = float3::dot(n, e2);
+//	if (ray.GetMax() > t&& t > ray.GetMin() && beta > 0.0 && gamma >= 0.0 && beta + gamma <= 1)
+//	{
+//		info.AddHit(t);
+//		return true;
+//	}
+//	return false;
+//}
+//
+//bool IntTriangle::PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info) {
+//	bool hit = false;
+//	float3 p0, p1, p2;
+//	std::vector<float3> t_hits;
+//	bool intersects = plane.PlaneSegmentIntersection(v0, v1, p0);
+//	if (intersects)
+//	{
+//		t_hits.push_back(p0);
+//		hit = true;
+//
+//	}
+//	intersects = plane.PlaneSegmentIntersection(v1, v2, p1);
+//	if (intersects)
+//	{
+//		t_hits.push_back(p1);
+//		hit = true;
+//	}
+//	intersects = plane.PlaneSegmentIntersection(v2, v0, p2);
+//	if (intersects)
+//	{
+//		t_hits.push_back(p2);
+//		hit = true;
+//	}
+//	if (hit)
+//	{
+//		float3 dir = t_hits[1] - t_hits[0];
+//		double3 e0 = v1 - v0;
+//		double3 e1 = v0 - v2;
+//		double3 n = double3::cross(e1, e0);
+//		float s = sign(float3::dot(float3::cross(n, dir), plane.GetNormal()));
+//		if (s < 0)
+//		{
+//			info.AddHit(t_hits[1]);
+//			info.AddHit(t_hits[0]);
+//		}
+//		else
+//		{
+//			info.AddHit(t_hits[0]);
+//			info.AddHit(t_hits[1]);
+//		}
+//
+//	}
+//
+//	//sign(float3::dot(cross_dir_s, cross_e_dir));
+//	return hit;
+//}

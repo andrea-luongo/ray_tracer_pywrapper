@@ -15,6 +15,8 @@
 namespace num = Windows::Foundation::Numerics;
 
 extern "C" RAYTRACERDLL_API inline constexpr float gamma_error(int n);
+class Segment;
+
 
 class Plane
 {
@@ -39,6 +41,8 @@ public:
 	RAYTRACERDLL_API void AddHit(float3 t) { t_hits.push_back(t); };
 	RAYTRACERDLL_API int GetHitsSize() { return t_hits.size(); };
 	RAYTRACERDLL_API std::vector<float3>* GetHits() { return &t_hits; };
+	RAYTRACERDLL_API std::vector<std::shared_ptr<Segment>> GetSegments();
+	RAYTRACERDLL_API std::vector < std::vector<std::shared_ptr<Segment>>> GetSortedSegments();
 };
 
 struct Ray
@@ -164,6 +168,9 @@ public:
 	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
 	RAYTRACERDLL_API float3 operator[](int i);
 	RAYTRACERDLL_API float3 operator[](int i) const;
+	RAYTRACERDLL_API void FlipSegment() { float3 tmp = v0; v0 = v1; v1 = tmp; };
+private:
+	RAYTRACERDLL_API bool static CompareSegments(Segment& s0, Segment& s1, float epsilon);
 };
 RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Segment const& s);
 
@@ -201,18 +208,18 @@ public:
 	RAYTRACERDLL_API float3 operator[](int i) const;
 };
 
-
-class IntTriangle : public Primitive
-{
-public:
-	int3 v0;
-	int3 v1;
-	int3 v2;
-public:
-	RAYTRACERDLL_API IntTriangle(const int3 p0, const int3 p1, const int3 p2);
-	RAYTRACERDLL_API void ComputeBBox();
-	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
-	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
-	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
-};
+//
+//class IntTriangle : public Primitive
+//{
+//public:
+//	int3 v0;
+//	int3 v1;
+//	int3 v2;
+//public:
+//	RAYTRACERDLL_API IntTriangle(const int3 p0, const int3 p1, const int3 p2);
+//	RAYTRACERDLL_API void ComputeBBox();
+//	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
+//	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
+//	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
+//	RAYTRACERDLL_API bool PlaneIntersect(Plane& plane, PlaneIntersectionInfo& info);
+//};
