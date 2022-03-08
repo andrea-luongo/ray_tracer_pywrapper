@@ -56,31 +56,6 @@ std::vector<std::shared_ptr<Segment>> PlaneIntersectionInfo::GetSegments()
 }
 
 
-std::vector<std::vector<std::shared_ptr<Segment>>> PlaneIntersectionInfo::GetSortedSegments()
-{
-	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
-	std::vector<std::shared_ptr<Segment>> segments = GetSegments();
-	if (segments.size() == 1)
-	{
-		sorted_segments.push_back(segments);
-		return sorted_segments;
-	}
-	else
-	{
-		int half_idx = int(segments.size() * 0.5);
-		auto first = segments.begin();
-		auto middle = segments.begin() + half_idx;
-		auto end = segments.end();
-		
-		/*auto left_segments(&first, middle);
-		auto right_segments(&middle, end);*/
-
-	}
-	return sorted_segments;
-}
-
-
-
 // BBOX
 BBox::BBox()
 {
@@ -381,10 +356,109 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 	if (s_dist.length() < epsilon)
 	{
 		result = true;
-		s0.v1 = s1.v0;
+		//s0.v1 = s1.v0;
 	}
 	return result;
 }
+
+
+std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments)
+{
+	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
+	if (segments.size() == 1)
+	{
+		sorted_segments.push_back(segments);
+	}
+	else
+	{
+		int half_idx = int(segments.size() * 0.5);
+		std::vector<std::shared_ptr<Segment>> left_segments(segments.begin(), segments.begin() + half_idx);
+		std::vector<std::shared_ptr<Segment>> right_segments(segments.begin() + half_idx, segments.end());
+		auto left_loop = Segment::SortSegments(left_segments);
+		auto right_loop = Segment::SortSegments(right_segments);
+		std::vector<int> left_merged_idxs;
+		std::vector<int> right_merged_idxs;
+
+		//check if left loops can be connected with right loops
+		for (int l_idx = 0; l_idx < left_loop.size(); l_idx++)
+		{
+			for (int r_idx = 0; r_idx < right_loop.size(); r_idx++)
+			{
+				if (std::find(right_merged_idxs.begin(), right_merged_idxs.end(), r_idx) != right_merged_idxs.end())
+					continue;
+				
+				bool is_merged = Segment::MergeSegments(left_loop[l_idx], right_loop[r_idx]);
+				if (is_merged)
+				{
+					left_merged_idxs.push_back(l_idx);
+					right_merged_idxs.push_back(r_idx);
+				}
+			}
+		}
+		//add unconnected right loops to sorted segments
+		for (int r_idx = 0; r_idx < right_loop.size(); r_idx++)
+		{
+			if (std::find(right_merged_idxs.begin(), right_merged_idxs.end(), r_idx) != right_merged_idxs.end())
+				continue;
+			sorted_segments.push_back(right_loop[r_idx]);
+		}
+		//check if left loops can be connected
+		std::vector<int> merged_idxs;
+		for (int idx_1 = 0; idx_1 < left_loop.size(); idx_1++)
+		{
+			for (int idx_2 = idx_1+1; idx_2 < left_loop.size(); idx_2++)
+			{
+				bool is_merged = Segment::MergeSegments(left_loop[idx_1], left_loop[idx_2]);
+				if (is_merged)
+				{
+					merged_idxs.push_back(idx_1);
+					continue;
+				}
+			}
+		}
+		//add unconnected left loops to sorted segments
+		for (int l_idx = 0; l_idx < left_loop.size(); l_idx++)
+		{
+			if (std::find(merged_idxs.begin(), merged_idxs.end(), l_idx) != merged_idxs.end())
+				continue;
+			sorted_segments.push_back(left_loop[l_idx]);
+		}
+
+	}
+	return sorted_segments;
+}
+
+bool  Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1)
+{
+	bool is_merged = false;
+	float epsilon = 0.0;
+	Segment start_0 = *(*s0.begin());
+	Segment end_0 = *(*s0.end());
+	Segment start_1 = *(*s1.begin());
+	Segment end_1 = *(*s1.end());
+
+
+	if (Segment::CompareSegments(end_0, start_1, epsilon))
+	{
+
+	}
+	else if (Segment::CompareSegments(end_1, start_0, epsilon))
+	{
+
+	}
+	//else if (Segment::CompareSegments(end_0, Segment(start_0.v1, start_0.v0), epsilon))
+	//{
+
+	//}
+	//else if (Segment::CompareSegments(start_0, start_1, epsilon))
+	//{
+
+	//}
+
+	return is_merged;
+}
+
+
 
 //SPHERE
 Sphere::Sphere(const float r, const float3& c) { radius = r; center = c; ComputeBBox(); }

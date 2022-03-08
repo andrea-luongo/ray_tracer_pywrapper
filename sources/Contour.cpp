@@ -222,6 +222,7 @@ std::vector<std::vector<float3>> Contour::MultiRayAllIntersects(float laser_widt
 	return individual_hit_points;
 }
 
+
 std::ostream& operator<<(std::ostream& os, Contour const& c)
 {
 	for (int i = 0; i < c.segments.size(); i++)
