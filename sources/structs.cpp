@@ -349,11 +349,11 @@ std::ostream& operator<<(std::ostream& os, Segment const& s)
 	return os;
 };
 
-bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
+bool Segment::CompareSegments(Segment& const s0, Segment& const s1, float epsilon)
 {
 	bool result = false;
 	float3 s_dist = float3::abs(s0.v1 - s1.v0);
-	if (s_dist.length() < epsilon)
+	if (s_dist.length() <= epsilon)
 	{
 		result = true;
 		//s0.v1 = s1.v0;
@@ -362,7 +362,7 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 }
 
 
-std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments)
+std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon)
 {
 	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
 	if (segments.size() == 1)
@@ -374,8 +374,8 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		int half_idx = int(segments.size() * 0.5);
 		std::vector<std::shared_ptr<Segment>> left_segments(segments.begin(), segments.begin() + half_idx);
 		std::vector<std::shared_ptr<Segment>> right_segments(segments.begin() + half_idx, segments.end());
-		auto left_loop = Segment::SortSegments(left_segments);
-		auto right_loop = Segment::SortSegments(right_segments);
+		auto left_loop = Segment::SortSegments(left_segments, epsilon);
+		auto right_loop = Segment::SortSegments(right_segments, epsilon);
 		std::vector<int> left_merged_idxs;
 		std::vector<int> right_merged_idxs;
 
@@ -387,11 +387,15 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 				if (std::find(right_merged_idxs.begin(), right_merged_idxs.end(), r_idx) != right_merged_idxs.end())
 					continue;
 				
-				bool is_merged = Segment::MergeSegments(left_loop[l_idx], right_loop[r_idx]);
+				bool is_merged = Segment::MergeSegments(left_loop[l_idx], right_loop[r_idx], epsilon);
 				if (is_merged)
 				{
 					left_merged_idxs.push_back(l_idx);
 					right_merged_idxs.push_back(r_idx);
+				}
+				else
+				{
+					int a = 1;
 				}
 			}
 		}
@@ -408,11 +412,15 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		{
 			for (int idx_2 = idx_1+1; idx_2 < left_loop.size(); idx_2++)
 			{
-				bool is_merged = Segment::MergeSegments(left_loop[idx_1], left_loop[idx_2]);
+				bool is_merged = Segment::MergeSegments(left_loop[idx_2], left_loop[idx_1], epsilon);
 				if (is_merged)
 				{
 					merged_idxs.push_back(idx_1);
 					continue;
+				}
+				else
+				{
+					int a = 1;
 				}
 			}
 		}
@@ -428,33 +436,43 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 	return sorted_segments;
 }
 
-bool  Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1)
+bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon)
 {
 	bool is_merged = false;
-	float epsilon = 0.0;
 	Segment start_0 = *(*s0.begin());
-	Segment end_0 = *(*s0.end());
+	Segment end_0 = *(*(s0.end()-1));
 	Segment start_1 = *(*s1.begin());
-	Segment end_1 = *(*s1.end());
-
+	Segment end_1 = *(*(s1.end() - 1));
+	Segment start_1_flipped = Segment::FlipSegment(start_1);
+	Segment end_1_flipped = Segment::FlipSegment(end_1);
 
 	if (Segment::CompareSegments(end_0, start_1, epsilon))
 	{
-
+		s0.insert(s0.end(), s1.begin(), s1.end());
+		is_merged = true;
 	}
 	else if (Segment::CompareSegments(end_1, start_0, epsilon))
 	{
-
+		s0.insert(s0.begin(), s1.begin(), s1.end());
+		is_merged = true;
 	}
-	//else if (Segment::CompareSegments(end_0, Segment(start_0.v1, start_0.v0), epsilon))
-	//{
+	else if (Segment::CompareSegments(end_0, end_1_flipped, epsilon))
+	{
+		std::rotate(s1.begin(), s1.end()-1, s1.end());
+		for (auto s : s1)
+			s->FlipSegment();
+		s0.insert(s0.end(), s1.begin(), s1.end());
+		is_merged = true;
+	}
+	else if (Segment::CompareSegments(start_1_flipped, start_0, epsilon))
+	{
+		std::rotate(s1.begin(), s1.end() - 1, s1.end());
+		for (auto s : s1)
+			s->FlipSegment();
 
-	//}
-	//else if (Segment::CompareSegments(start_0, start_1, epsilon))
-	//{
-
-	//}
-
+		s0.insert(s0.begin(), s1.begin(), s1.end());
+		is_merged = true;
+	}
 	return is_merged;
 }
 
