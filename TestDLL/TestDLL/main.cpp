@@ -192,9 +192,9 @@ void test_geometry_precision()
 	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 6.04720039e+01);
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
-	Matrix4x4 t_matrix(r0, r1, r2, r3);
+	Matrix4x4 t_matrix(r0,r1,r2,r3);
 
-	float3 plane_x0(0, -355870, 0);
+	float3 plane_x0(0, -399720, 0);
 	float3 plane_n(0, 1e-4, 0);
 
 	Plane plane(plane_x0, plane_n);
@@ -206,15 +206,15 @@ void test_geometry_precision()
 	for (int idx = 0; idx < hits.size(); idx++)
 	{
 		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 0) * t_matrix + t_matrix.GetColumn(3)) * geometry_scaling;
-		transformed_hits[idx] = int3(t_hit[0], t_hit[1], t_hit[2]);
+		transformed_hits[idx] = float3(t_hit[0], t_hit[1], t_hit[2]);
 	}
 
 	std::cout << "number of segments " << hits.size() << std::endl;
 
 	
 	//std::vector<Segment> segment_primitives((int)(transformed_hits.size() / 2));
-	std::vector<Segment> segment_primitives;
-	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
+	std::vector<std::shared_ptr<Segment>> segment_primitives;
+	for (int i = 0; i < (int)(transformed_hits.size()/2); i++)
 	{
 		float3 p0 = transformed_hits[i * 2];
 		float3 p1 = transformed_hits[i * 2 + 1];
@@ -222,18 +222,28 @@ void test_geometry_precision()
 		{
 			continue;
 		}
-		Segment tmp(p0, p1);
+		//Segment tmp(p0, p1);
 		//segment_primitives[i] = tmp;
-		segment_primitives.push_back(tmp);
+		segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
 	}
 	//contour = std::make_shared<Contour>(primitives, normal);
 
-
+	std::cout << "sorting Contour" << std::endl;
+	float epsilon = 1e-7;
+	clock_t tStart = clock();
+	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon);
+	int total = 0;
+	for (auto s : sorted_segments)
+	{
+		total += s.size();
+	}
+	std::cout << total << std::endl;
+	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	std::cout << "SUCCESS" << std::endl;
 }
 
 int main() {
-	test_contour_intersection();
-	//test_geometry_precision();
+	//test_contour_intersection();
+	test_geometry_precision();
 	return 0;
 }
