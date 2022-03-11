@@ -349,14 +349,14 @@ std::ostream& operator<<(std::ostream& os, Segment const& s)
 	return os;
 };
 
-bool Segment::CompareSegments(Segment& const s0, Segment& const s1, float epsilon)
+bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 {
 	bool result = false;
 	float3 s_dist = float3::abs(s0.v1 - s1.v0);
 	if (s_dist.length() <= epsilon)
 	{
 		result = true;
-		//s0.v1 = s1.v0;
+		s0.v1 = s1.v0;
 	}
 	return result;
 }
@@ -393,10 +393,6 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 					left_merged_idxs.push_back(l_idx);
 					right_merged_idxs.push_back(r_idx);
 				}
-				else
-				{
-					int a = 1;
-				}
 			}
 		}
 		//add unconnected right loops to sorted segments
@@ -417,10 +413,6 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 				{
 					merged_idxs.push_back(idx_1);
 					continue;
-				}
-				else
-				{
-					int a = 1;
 				}
 			}
 		}

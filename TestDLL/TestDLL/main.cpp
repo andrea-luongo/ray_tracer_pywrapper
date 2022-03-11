@@ -169,7 +169,7 @@ void test_contour_intersection()
 
 void test_geometry_precision()
 {
-	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
+	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/circles.obj");
 	std::vector<float3> vertices;
 	float3 b_min, b_max;
 	float geometry_scaling = 10000;
@@ -189,12 +189,12 @@ void test_geometry_precision()
 	BVH bvh(primitives, SplitMethod::EqualCounts, 255);
 
 	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
-	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 6.04720039e+01);
+	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 2.0e+01);
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0,r1,r2,r3);
 
-	float3 plane_x0(0, -399720, 0);
+	float3 plane_x0(0, 5000, 0);
 	float3 plane_n(0, 1e-4, 0);
 
 	Plane plane(plane_x0, plane_n);
@@ -205,11 +205,11 @@ void test_geometry_precision()
 	std::vector<float3> transformed_hits(hits.size());
 	for (int idx = 0; idx < hits.size(); idx++)
 	{
-		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 0) * t_matrix + t_matrix.GetColumn(3)) * geometry_scaling;
+		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * t_matrix + t_matrix.GetColumn(3)) * geometry_scaling;
 		transformed_hits[idx] = float3(t_hit[0], t_hit[1], t_hit[2]);
 	}
 
-	std::cout << "number of segments " << hits.size() << std::endl;
+	std::cout << "number of segments " << hits.size()/2 << std::endl;
 
 	
 	//std::vector<Segment> segment_primitives((int)(transformed_hits.size() / 2));
@@ -229,7 +229,7 @@ void test_geometry_precision()
 	//contour = std::make_shared<Contour>(primitives, normal);
 
 	std::cout << "sorting Contour" << std::endl;
-	float epsilon = 1e-7;
+	float epsilon = 0.0002 * geometry_scaling;
 	clock_t tStart = clock();
 	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon);
 	int total = 0;
@@ -237,7 +237,8 @@ void test_geometry_precision()
 	{
 		total += s.size();
 	}
-	std::cout << total << std::endl;
+	std::cout << "total contours " << sorted_segments.size() << std::endl;
+	std::cout << "sorted segments " << total << std::endl;
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	std::cout << "SUCCESS" << std::endl;
 }

@@ -173,7 +173,7 @@ public:
 	RAYTRACERDLL_API static std::vector<std::vector<std::shared_ptr<Segment>>> SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon);
 private:
 
-	RAYTRACERDLL_API bool static CompareSegments(Segment& const s0, Segment& const s1, float const epsilon);
+	RAYTRACERDLL_API bool static CompareSegments(Segment& s0, Segment& s1, float const epsilon);
 	RAYTRACERDLL_API bool static MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon);
 };
 RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Segment const& s);
