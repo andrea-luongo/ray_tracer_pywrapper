@@ -240,6 +240,12 @@ void test_geometry_precision()
 	std::cout << "total contours " << sorted_segments.size() << std::endl;
 	std::cout << "sorted segments " << total << std::endl;
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+
+	std::vector<std::shared_ptr<Contour>> sorted_contours(sorted_segments.size());
+	for (int i = 0; i < sorted_segments.size(); i++) {
+		sorted_contours[i] = std::make_shared<Contour>(sorted_segments[i], plane.GetNormal());
+	}
+	ContourTree ct(sorted_contours);
 	std::cout << "SUCCESS" << std::endl;
 }
 

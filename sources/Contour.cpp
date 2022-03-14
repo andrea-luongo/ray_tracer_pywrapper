@@ -347,7 +347,7 @@ ContourTree::ContourTree(std::vector<std::shared_ptr<Contour>> c)
 	BuildTree();
 	BuildRootBVH();
 	BuildInternalBVHs();
-	std::cout << internal_bvhs.size() << ' ' << contours.size() << ' ' << std::endl;
+	std::cout << "Tree components " << internal_bvhs.size() << " contours " << contours.size() << std::endl;
 }
 
 void ContourTree::BuildTree()
