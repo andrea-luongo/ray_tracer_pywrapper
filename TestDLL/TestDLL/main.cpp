@@ -194,7 +194,7 @@ void test_geometry_precision()
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0,r1,r2,r3);
 
-	float3 plane_x0(0, 5000, 0);
+	float3 plane_x0(0, -95000, 0);
 	float3 plane_n(0, 1e-4, 0);
 
 	Plane plane(plane_x0, plane_n);
@@ -246,6 +246,11 @@ void test_geometry_precision()
 		sorted_contours[i] = std::make_shared<Contour>(sorted_segments[i], plane.GetNormal());
 	}
 	ContourTree ct(sorted_contours);
+
+	float laser_width = 600;
+	auto intersection_points = ct.MultiRayAllIntersects(laser_width * geometry_scaling,
+		1, 0, 0, false);
+
 	std::cout << "SUCCESS" << std::endl;
 }
 

@@ -310,11 +310,16 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
 
     std::vector<float3> hits = *info.planeInfo->GetHits();
+    std::cout << "number of segments " << hits.size() / 2 << std::endl;
     std::vector<float3> transformed_hits(hits.size());
     for (int idx = 0; idx < hits.size(); idx++)
     {
         float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix + tr_matrix.GetColumn(3)) * geometry_scaling;
-        transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
+        if (geometry_scaling != 1)
+            transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
+        else
+            transformed_hits[idx] = float3(t_hit[0], t_hit[1], t_hit[2]);
+
     }
     std::vector<std::shared_ptr<Segment>> segment_primitives;
     for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
@@ -466,14 +471,14 @@ std::vector<py::array_t<float>> PyBindContour::GetSegments()
 {
 
     std::vector<py::array_t<float>> result(contour->segments.size() * 2);
-    std::cout << result.size() << std::endl;
+    //std::cout << result.size() << std::endl;
     for (int i = 0; i < contour->segments.size(); i++)
     {
         float3 p0 = (*contour->segments[i])[0];
         float3 p1 = (*contour->segments[i])[1];
-        std::cout << p0 << " " << p1 << std::endl;
-        result[i*2](reinterpret_float3(p0));
-        result[i*2+1](reinterpret_float3(p1));
+        //std::cout << p0 << " " << p1 << std::endl;
+        result[i*2] = (reinterpret_float3(p0));
+        result[i*2+1] = (reinterpret_float3(p1));
     }
     return result;
 }

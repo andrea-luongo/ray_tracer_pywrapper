@@ -266,7 +266,8 @@ void ContourNode::AddChild(std::shared_ptr<ContourNode> c)
 	}
 	children_set.insert(c);
 	c->parent = shared_from_this();
-	c->depth = depth + 1;
+	/*c->depth = depth + 1;*/
+	UpdateChildrenDepth();
 };
 
 void ContourNode::RemoveChild(std::shared_ptr<ContourNode> c)

@@ -356,7 +356,7 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 	if (s_dist.length() <= epsilon)
 	{
 		result = true;
-		s0.v1 = s1.v0;
+		//s0.v1 = s1.v0;
 	}
 	return result;
 }
@@ -431,33 +431,37 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon)
 {
 	bool is_merged = false;
-	Segment start_0 = *(*s0.begin());
-	Segment end_0 = *(*(s0.end()-1));
-	Segment start_1 = *(*s1.begin());
-	Segment end_1 = *(*(s1.end() - 1));
-	Segment start_1_flipped = Segment::FlipSegment(start_1);
-	Segment end_1_flipped = Segment::FlipSegment(end_1);
+	std::shared_ptr<Segment> start_0 = (*s0.begin());
+	std::shared_ptr<Segment> end_0 = (*(s0.end()-1));
+	std::shared_ptr<Segment> start_1 = (*s1.begin());
+	std::shared_ptr<Segment> end_1 = (*(s1.end() - 1));
+	Segment start_1_flipped = Segment::FlipSegment(*start_1);
+	Segment end_1_flipped = Segment::FlipSegment(*end_1);
 
-	if (Segment::CompareSegments(end_0, start_1, epsilon))
+	if (Segment::CompareSegments(*end_0, *start_1, epsilon))
 	{
+		end_0->v1 = start_1->v0;
 		s0.insert(s0.end(), s1.begin(), s1.end());
 		is_merged = true;
 	}
-	else if (Segment::CompareSegments(end_1, start_0, epsilon))
+	else if (Segment::CompareSegments(*end_1, *start_0, epsilon))
 	{
+		end_1->v1 = start_0->v0;
 		s0.insert(s0.begin(), s1.begin(), s1.end());
 		is_merged = true;
 	}
-	else if (Segment::CompareSegments(end_0, end_1_flipped, epsilon))
+	else if (Segment::CompareSegments(*end_0, end_1_flipped, epsilon))
 	{
+		end_0->v1 = end_1_flipped.v0;
 		std::rotate(s1.begin(), s1.end()-1, s1.end());
 		for (auto s : s1)
 			s->FlipSegment();
 		s0.insert(s0.end(), s1.begin(), s1.end());
 		is_merged = true;
 	}
-	else if (Segment::CompareSegments(start_1_flipped, start_0, epsilon))
+	else if (Segment::CompareSegments(start_1_flipped, *start_0, epsilon))
 	{
+		start_1->v0 = start_0->v0;
 		std::rotate(s1.begin(), s1.end() - 1, s1.end());
 		for (auto s : s1)
 			s->FlipSegment();
