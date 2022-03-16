@@ -169,7 +169,7 @@ void test_contour_intersection()
 
 void test_geometry_precision()
 {
-	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/circles.obj");
+	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
 	std::vector<float3> vertices;
 	float3 b_min, b_max;
 	float geometry_scaling = 10000;
@@ -189,13 +189,12 @@ void test_geometry_precision()
 	BVH bvh(primitives, SplitMethod::EqualCounts, 255);
 
 	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
-	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 2.0e+01);
+	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 6.04720039e+01);
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0,r1,r2,r3);
-
-	float3 plane_x0(0, -95000, 0);
-	float3 plane_n(0, 1e-4, 0);
+	float3 plane_x0(0, 554779, 0); 
+	float3 plane_n(0, 1, 0);
 
 	Plane plane(plane_x0, plane_n);
 	PlaneIntersectionInfo info;
@@ -222,11 +221,9 @@ void test_geometry_precision()
 		{
 			continue;
 		}
-		//Segment tmp(p0, p1);
-		//segment_primitives[i] = tmp;
+
 		segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
 	}
-	//contour = std::make_shared<Contour>(primitives, normal);
 
 	std::cout << "sorting Contour" << std::endl;
 	float epsilon = 0.0002 * geometry_scaling;

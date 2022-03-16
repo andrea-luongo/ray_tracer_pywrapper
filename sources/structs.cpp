@@ -378,7 +378,6 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		auto right_loop = Segment::SortSegments(right_segments, epsilon);
 		std::vector<int> left_merged_idxs;
 		std::vector<int> right_merged_idxs;
-
 		//check if left loops can be connected with right loops
 		for (int l_idx = 0; l_idx < left_loop.size(); l_idx++)
 		{
@@ -412,7 +411,7 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 				if (is_merged)
 				{
 					merged_idxs.push_back(idx_1);
-					continue;
+					break;
 				}
 			}
 		}
@@ -423,7 +422,6 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 				continue;
 			sorted_segments.push_back(left_loop[l_idx]);
 		}
-
 	}
 	return sorted_segments;
 }

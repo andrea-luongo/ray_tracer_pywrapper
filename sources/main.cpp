@@ -309,8 +309,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
 
-    std::vector<float3> hits = *info.planeInfo->GetHits();
-    std::cout << "number of segments " << hits.size() / 2 << std::endl;
+    std::vector<float3> hits = *(info.planeInfo->GetHits());
     std::vector<float3> transformed_hits(hits.size());
     for (int idx = 0; idx < hits.size(); idx++)
     {
@@ -321,6 +320,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
             transformed_hits[idx] = float3(t_hit[0], t_hit[1], t_hit[2]);
 
     }
+
     std::vector<std::shared_ptr<Segment>> segment_primitives;
     for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
     {
@@ -330,8 +330,6 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         {
             continue;
         }
-        //Segment tmp(p0, p1);
-        //segment_primitives[i] = tmp;
         segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
     }
     float epsilon = 0.0002 * geometry_scaling;
@@ -492,7 +490,6 @@ PyBindContourTree::PyBindContourTree(std::vector<PyBindContour>& py_contours)
         if (py_contours[i].IsValid())
             contours.push_back(py_contours[i].contour);
     }
-    std::cout << contours.size() << std::endl;
     contour_tree = std::make_shared<ContourTree>(contours);
 };
 
