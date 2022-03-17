@@ -426,7 +426,7 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 	return sorted_segments;
 }
 
-bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon)
+bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, float const alignment_epsilon)
 {
 	bool is_merged = false;
 	std::shared_ptr<Segment> start_0 = (*s0.begin());
@@ -439,13 +439,36 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	if (Segment::CompareSegments(*end_0, *start_1, epsilon))
 	{
 		end_0->v1 = start_1->v0;
-		s0.insert(s0.end(), s1.begin(), s1.end());
+		float3 s_0_dir = (end_0->v1 - end_0->v0).normalize();
+		float3 s_1_dir = (start_1->v1 - start_1->v0).normalize();
+		float dot_pr = abs(float3::dot(s_0_dir, s_1_dir));
+		if (dot_pr > 1 - alignment_epsilon)
+		{
+			end_0->v1 = start_1->v1;
+			s0.insert(s0.end(), s1.begin()+1, s1.end());
+		}
+		else 
+		{
+			s0.insert(s0.end(), s1.begin(), s1.end());
+		}
 		is_merged = true;
 	}
 	else if (Segment::CompareSegments(*end_1, *start_0, epsilon))
 	{
 		end_1->v1 = start_0->v0;
-		s0.insert(s0.begin(), s1.begin(), s1.end());
+		float3 s_0_dir = (end_1->v1 - end_1->v0).normalize();
+		float3 s_1_dir = (start_0->v1 - start_0->v0).normalize();
+		float dot_pr = abs(float3::dot(s_0_dir, s_1_dir));
+		if (dot_pr > 1 - alignment_epsilon)
+		{
+			start_0->v0 = end_1->v0;
+			s0.insert(s0.begin(), s1.begin(), s1.end()-1);
+		}
+		else
+		{
+			s0.insert(s0.begin(), s1.begin(), s1.end());
+		}
+
 		is_merged = true;
 	}
 	else if (Segment::CompareSegments(*end_0, end_1_flipped, epsilon))
@@ -454,7 +477,21 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 		std::rotate(s1.begin(), s1.end()-1, s1.end());
 		for (auto s : s1)
 			s->FlipSegment();
-		s0.insert(s0.end(), s1.begin(), s1.end());
+
+		float3 s_0_dir = (end_0->v1 - end_0->v0).normalize();
+		float3 s_1_dir = (end_1_flipped.v1 - end_1_flipped.v0).normalize();
+		float dot_pr = abs(float3::dot(s_0_dir, s_1_dir));
+		if (dot_pr > 1 - alignment_epsilon)
+		{
+			end_0->v1 = end_1_flipped.v1;
+			s0.insert(s0.end(), s1.begin()+1, s1.end());
+		}
+		else
+		{
+			s0.insert(s0.end(), s1.begin(), s1.end());
+		}
+
+		//s0.insert(s0.end(), s1.begin(), s1.end());
 		is_merged = true;
 	}
 	else if (Segment::CompareSegments(start_1_flipped, *start_0, epsilon))
@@ -464,9 +501,34 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 		for (auto s : s1)
 			s->FlipSegment();
 
-		s0.insert(s0.begin(), s1.begin(), s1.end());
+		float3 s_0_dir = (start_1_flipped.v1 - start_1_flipped.v0).normalize();
+		float3 s_1_dir = (start_0->v1 - start_0->v0).normalize();
+		float dot_pr = abs(float3::dot(s_0_dir, s_1_dir));
+		if (dot_pr > 1 - alignment_epsilon)
+		{
+			start_0->v0 = start_1_flipped.v0;
+			s0.insert(s0.begin(), s1.begin(), s1.end()-1);
+		}
+		else
+		{
+			s0.insert(s0.begin(), s1.begin(), s1.end());
+		}
+
+		//s0.insert(s0.begin(), s1.begin(), s1.end());
 		is_merged = true;
 	}
+	//check if start and end are aligned, if yes, remove last segment
+	//if (is_merged && s0.size() > 1)
+	//{
+	//	float3 s_0_dir = ((*s0.begin())->v1 - (*s0.begin())->v0).normalize();
+	//	float3 s_1_dir = ((*(s0.end() - 1))->v1 - (*(s0.end() - 1))->v0).normalize();
+	//	float dot_pr = abs(float3::dot(s_0_dir, s_1_dir));
+	//	if (dot_pr > 1 - alignment_epsilon)
+	//	{
+	//		(*s0.begin())->v0 = (*(s0.end() - 1))->v0;
+	//		s0.pop_back();
+	//	}
+	//}
 	return is_merged;
 }
 
