@@ -170,11 +170,12 @@ public:
 	RAYTRACERDLL_API void FlipSegment() { float3 tmp = v0; v0 = v1; v1 = tmp; };
 	RAYTRACERDLL_API static Segment FlipSegment(Segment& const s) { return Segment(s.v1, s.v0); };
 
-	RAYTRACERDLL_API static std::vector<std::vector<std::shared_ptr<Segment>>> SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon);
+	RAYTRACERDLL_API static std::vector<std::vector<std::shared_ptr<Segment>>> SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments);
 private:
 
 	RAYTRACERDLL_API bool static CompareSegments(Segment& s0, Segment& s1, float const epsilon);
-	RAYTRACERDLL_API bool static MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, float const alignment_epsilon=1e-4);
+	RAYTRACERDLL_API bool static CheckAlignment(Segment& s0, Segment& s1, float const epsilon);
+	RAYTRACERDLL_API bool static MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, bool remove_aligned_segments);
 };
 RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Segment const& s);
 

@@ -29,6 +29,7 @@ public:
 	RAYTRACERDLL_API float operator[](int i);
 	RAYTRACERDLL_API float operator[](int i) const;
 	RAYTRACERDLL_API void operator=(const float3& a);
+	RAYTRACERDLL_API bool operator==(const float3& a);
 	RAYTRACERDLL_API float length() const;
 	RAYTRACERDLL_API static float length(const float3& a);
 	RAYTRACERDLL_API static float3 normalize(const float3& a);

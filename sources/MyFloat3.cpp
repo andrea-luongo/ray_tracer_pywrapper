@@ -77,6 +77,11 @@ void float3::operator=(const float3& a) {
 	z = a.z;
 }
 
+bool float3::operator==(const float3& a)
+{
+	return x == a.x && y == a.y && z == a.z;
+}
+
 float float3::length() const
 {
 	return sqrtf(dot(*this, *this));

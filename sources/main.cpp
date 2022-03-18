@@ -333,7 +333,8 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
     }
     float epsilon = 0.0002 * geometry_scaling;
-    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon);
+    bool remove_aligned_segments = true;
+    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments);
     std::vector<PyBindContour> sorted_contours(sorted_segments.size());
     for (int i = 0; i < sorted_segments.size(); i++) {
         Contour c(sorted_segments[i], plane.plane->GetNormal());
