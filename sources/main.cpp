@@ -307,13 +307,14 @@ std::vector<py::array_t<float>> PyBindBVH::PlaneAllIntersectsHits(PyBindPlane& p
 std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling)
 {
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
+    Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
 
     std::vector<float3> hits = *(info.planeInfo->GetHits());
     std::vector<float3> transformed_hits(hits.size());
     for (int idx = 0; idx < hits.size(); idx++)
     {
-        float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix + tr_matrix.GetColumn(3)) * geometry_scaling;
+        float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix_transposed /*+ tr_matrix.GetColumn(3)*/) * geometry_scaling;
         if (geometry_scaling != 1)
             transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
         else

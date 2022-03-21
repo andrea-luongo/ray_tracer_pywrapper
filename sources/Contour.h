@@ -10,6 +10,25 @@
 #include <set>
 
 
+struct ContourSelfIntersectionPoint
+{
+	float3 hit_point;
+	float t_hit;
+	int idx_0;
+	int idx_1;
+	ContourSelfIntersectionPoint(float3 p, float t, int i0, int i1)
+	{
+		hit_point = p;
+		t_hit = t;
+		idx_0 = i0;
+		idx_1 = i1;
+	}
+	bool operator< (const ContourSelfIntersectionPoint& p)
+	{
+		return t_hit < p.t_hit;
+	}
+};
+
 class Contour : public Primitive
 {
 public:
@@ -29,7 +48,7 @@ public:
 	RAYTRACERDLL_API bool Contains(Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API static int EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
-	//RAYTRACERDLL_API Contour RemoveAlignedSegments(float epsilon);
+	RAYTRACERDLL_API std::vector<ContourSelfIntersectionPoint> RemoveSelfIntersections();
 	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
 };
 RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Contour const& c);

@@ -349,6 +349,21 @@ std::ostream& operator<<(std::ostream& os, Segment const& s)
 	return os;
 };
 
+bool Segment::IntersectSegment(Segment& const s, float3& hit_point, float& t_hit)
+{
+	float3 ray_dir = v1 - v0;
+	float3 ray_o = v0;
+	Ray ray(ray_o, ray_dir, 0, 1, 0, 0);
+	RayIntersectionInfo ray_info;
+	bool hit = s.Intersect(ray, ray_info);
+	if (hit)
+	{
+		t_hit = (*ray_info.GetHits())[0];
+		hit_point = ray_o + t_hit * ray_dir;
+	}
+	return hit;
+}
+
 bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 {
 	bool result = false;
@@ -360,7 +375,6 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 	}
 	return result;
 }
-
 
 std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments)
 {

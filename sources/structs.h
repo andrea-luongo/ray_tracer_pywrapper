@@ -169,6 +169,7 @@ public:
 	RAYTRACERDLL_API float3 operator[](int i) const;
 	RAYTRACERDLL_API void FlipSegment() { float3 tmp = v0; v0 = v1; v1 = tmp; };
 	RAYTRACERDLL_API static Segment FlipSegment(Segment& const s) { return Segment(s.v1, s.v0); };
+	RAYTRACERDLL_API bool IntersectSegment(Segment& const s, float3& hit_point, float& t_hit);
 
 	RAYTRACERDLL_API static std::vector<std::vector<std::shared_ptr<Segment>>> SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments);
 private:
