@@ -145,9 +145,10 @@ Contour Contour::OffsetContour(float offset)
 	return Contour(new_segments, contour_normal);
 }
 
-std::vector<ContourSelfIntersectionPoint> Contour::RemoveSelfIntersections()
+bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours)
 {
 	std::vector<ContourSelfIntersectionPoint> contour_intersection_points;
+	bool is_self_intersecting = false;
 	for (int i = 0; i < segments.size() - 2; i++)
 	{
 		std::shared_ptr<Segment> s_i = segments[i];
@@ -168,7 +169,25 @@ std::vector<ContourSelfIntersectionPoint> Contour::RemoveSelfIntersections()
 		std::sort(segment_intersection_points.begin(), segment_intersection_points.end());
 		contour_intersection_points.insert(contour_intersection_points.end(), segment_intersection_points.begin(), segment_intersection_points.end());
 	}
-	return contour_intersection_points;
+
+	if (contour_intersection_points.size() > 0)
+	{
+		is_self_intersecting = true;
+		std::vector<std::shared_ptr<Segment>> starting_loop;
+		std::vector<std::shared_ptr<Segment>> ending_loop;
+		ContourSelfIntersectionPoint p_start = contour_intersection_points[0];
+		if (p_start.idx_0 == 0)
+		{
+			starting_loop.push_back(std::make_shared<Segment>(p_start.hit_point, segments[p_start.idx_0]->v1));
+		}
+		else
+		{
+
+		}
+	}
+
+
+	return is_self_intersecting;
 
 }
 
