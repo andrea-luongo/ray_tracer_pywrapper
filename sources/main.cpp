@@ -351,7 +351,6 @@ PyBindContour::PyBindContour(std::vector<float>& vertices, py::array_t<float> n)
     bool verbose = true;
     float3 normal(n.at(0), n.at(1), n.at(2));
     try {
-        //std::vector<std::shared_ptr<Segment>> primitives((int)(vertices.size() / 6));
         std::vector<std::shared_ptr<Segment>> primitives;
         for (int i = 0; i < (int)(vertices.size() / 6); i++)
         {
@@ -361,10 +360,8 @@ PyBindContour::PyBindContour(std::vector<float>& vertices, py::array_t<float> n)
             {
                 continue;
             }
-            //primitives[i] = std::shared_ptr<Segment>(new Segment(p0, p1));
             primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
         }
-        //std::cout << "BUILT PRIMITIVES" << std::endl;
         contour = std::make_shared<Contour>(primitives, normal);
     }
     catch (const std::exception& exc)
@@ -467,16 +464,33 @@ PyBindContour PyBindContour::OffsetContour(float offset)
     return PyBindContour(offset_contour);
 }
 
+std::vector<PyBindContour> PyBindContour::RemoveSelfIntersections()
+{
+    std::vector<std::shared_ptr<Contour>> new_contours;
+    bool self_interset = contour->RemoveSelfIntersections(new_contours);
+    std::vector<PyBindContour> result;
+    if (self_interset)
+    {
+        for(auto c : new_contours)
+            result.push_back(PyBindContour(*c));;
+    }
+    else
+    {
+        result.push_back(PyBindContour(*contour));
+    }
+
+    return result;
+}
+
+
 std::vector<py::array_t<float>> PyBindContour::GetSegments()
 {
 
     std::vector<py::array_t<float>> result(contour->segments.size() * 2);
-    //std::cout << result.size() << std::endl;
     for (int i = 0; i < contour->segments.size(); i++)
     {
         float3 p0 = (*contour->segments[i])[0];
         float3 p1 = (*contour->segments[i])[1];
-        //std::cout << p0 << " " << p1 << std::endl;
         result[i*2] = (reinterpret_float3(p0));
         result[i*2+1] = (reinterpret_float3(p1));
     }
@@ -494,6 +508,11 @@ PyBindContourTree::PyBindContourTree(std::vector<PyBindContour>& py_contours)
     }
     contour_tree = std::make_shared<ContourTree>(contours);
 };
+
+PyBindContourTree::PyBindContourTree(ContourTree& c)
+{
+    contour_tree = std::make_shared<ContourTree>(c);
+}
 
 py::array_t<float> PyBindContourTree::GetBBoxMin()
 {
@@ -568,6 +587,29 @@ std::vector< std::vector<std::vector<py::array_t<float>>>> PyBindContourTree::Mu
     return reinterpreted_contour_tree_hit_points;
 };
 
+PyBindContourTree PyBindContourTree::OffsetContourTree(float offset)
+{
+    ContourTree result = contour_tree->OffsetContourTree(offset);
+    return PyBindContourTree(result);
+}
+
+std::vector<py::array_t<float>> PyBindContourTree::GetAllSegments()
+{
+
+    std::vector<py::array_t<float>> result;
+    for (auto c : contour_tree->contours)
+    {
+        for (int i = 0; i < c->segments.size(); i++)
+        {
+            float3 p0 = (*c->segments[i])[0];
+            float3 p1 = (*c->segments[i])[1];
+            result.push_back(reinterpret_float3(p0));
+            result.push_back(reinterpret_float3(p1));
+        }
+
+    }
+    return result;
+}
 
 
 PYBIND11_MODULE(rayTracerPyWrapper, m) {
@@ -620,6 +662,7 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contour.def("Intersect", &PyBindContour::Intersect);
     contour.def("MultiRayAllIntersects", &PyBindContour::MultiRayAllIntersects);
     contour.def("OffsetContour", &PyBindContour::OffsetContour);
+    contour.def("RemoveSelfIntersections", &PyBindContour::RemoveSelfIntersections);
     contour.def("GetSegments", &PyBindContour::GetSegments);
 
     py::class_<PyBindContourTree> contourtree(m, "PyBindContourTree");
@@ -628,9 +671,11 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contourtree.def("AllIntersects", &PyBindContourTree::AllIntersects);
     contourtree.def("AnyIntersect", &PyBindContourTree::AnyIntersect);
     contourtree.def("Intersect", &PyBindContourTree::Intersect);
+    contourtree.def("OffsetContourTree", &PyBindContourTree::OffsetContourTree);
     contourtree.def("MultiRayAllIntersects", &PyBindContourTree::MultiRayAllIntersects);
     contourtree.def("GetBBoxMin", &PyBindContourTree::GetBBoxMin);
     contourtree.def("GetBBoxMax", &PyBindContourTree::GetBBoxMax);
+    contourtree.def("GetAllSegments", &PyBindContourTree::GetAllSegments);
 
     py::class_<PyBindRay> ray(m, "PyBindRay");
     ray.def(py::init<py::array_t<float>, py::array_t<float>, float, float, int, int>());

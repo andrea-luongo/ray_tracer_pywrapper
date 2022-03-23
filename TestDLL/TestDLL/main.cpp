@@ -170,7 +170,7 @@ void test_contour_intersection()
 
 void test_geometry_precision()
 {
-	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/coso.obj");
+	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/coso2.obj");
 	std::vector<float3> vertices;
 	float3 b_min, b_max;
 	float geometry_scaling = 10000;
@@ -189,11 +189,11 @@ void test_geometry_precision()
 
 	BVH bvh(primitives, SplitMethod::EqualCounts, 255);
 	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
-	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 5.00000000e-01); 
+	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 2.50000000); 
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -3500, 0);
+	float3 plane_x0(0, -23500, 0);
 	float3 plane_n(0, 1, 0);
 
 	Plane plane(plane_x0, plane_n);
@@ -229,31 +229,37 @@ void test_geometry_precision()
 	float epsilon = 0.0002 * geometry_scaling;
 	clock_t tStart = clock();
 	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, true);
-	int total = 0;
-	for (auto s : sorted_segments)
-	{
-		total += s.size();
-		for (auto ss : s)
-			std::cout << "[" << ss->v0 << "] [" << ss->v1 << "]" << std::endl;
-	}
-	std::cout << "total contours " << sorted_segments.size() << std::endl;
-	std::cout << "sorted segments " << total << std::endl;
+
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	std::vector<std::shared_ptr<Contour>> sorted_contours(sorted_segments.size());
 	for (int i = 0; i < sorted_segments.size(); i++) {
 		sorted_contours[i] = std::make_shared<Contour>(sorted_segments[i], plane.GetNormal());
 	}
+	for (auto s : sorted_contours)
+	{
+		std::cout << "SORTED CONTOUR" << std::endl;
+		for (auto ss : s->segments)
+			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+	}
 
 	std::vector<std::shared_ptr<Contour>> offset_sorted_contours(sorted_segments.size());
 	for (int i = 0; i < sorted_segments.size(); i++) {
-		offset_sorted_contours[i] = std::make_shared<Contour>(sorted_contours[i]->OffsetContour(-0.35*geometry_scaling));
+		offset_sorted_contours[i] = std::make_shared<Contour>(sorted_contours[i]->OffsetContour(-1.05*geometry_scaling));
+		std::cout << "OFFSET CONTOUR" << std::endl;
 		for (auto s : offset_sorted_contours[i]->segments)
 		{
-			std::cout << "[" << s->v0 << "] [" << s->v1 << "]" << std::endl;
+			std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
 		}
 	}
-	auto tmp = offset_sorted_contours[0]->RemoveSelfIntersections();
+	std::vector<std::shared_ptr<Contour>> new_contours;
+	bool does_intersect = offset_sorted_contours[0]->RemoveSelfIntersections(new_contours);
+	for (auto s : new_contours)
+	{
+		std::cout << "NEW CONTOUR" << std::endl;
+		for (auto ss : s->segments)
+			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+	}
 	//ContourTree ct(sorted_contours);
 
 	//float laser_width = 600;
