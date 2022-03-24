@@ -242,7 +242,8 @@ bool Segment::Intersect(Ray& ray, RayIntersectionInfo& info)
 	double3 cross_dir_s = double3::cross(ray.GetDirection(), s);
 	double3 cross_e_dir = double3::cross(e, ray.GetDirection());
 	double x = double3::length(cross_dir_s);
-	double t = double3::length(double3::cross(e, s)) / x;
+	//double t = double3::length(double3::cross(e, s)) / x;
+	double t = double3::dot(double3::cross(e, s), cross_dir_s) / (x*x);
 	double u = double3::length(cross_e_dir) / x * sign(double3::dot(cross_dir_s, cross_e_dir));
 	if (ray.GetMax() > t && t > ray.GetMin() && 1 > u && u >= 0.0f)
 	{
@@ -262,7 +263,8 @@ bool Segment::AnyIntersect(Ray& ray)
 	double3 cross_dir_s = double3::cross(ray.GetDirection(), s);
 	double3 cross_e_dir = double3::cross(e, ray.GetDirection());
 	double x = double3::length(cross_dir_s);
-	double t = double3::length(double3::cross(e, s)) / x;
+	//double t = double3::length(double3::cross(e, s)) / x;
+	double t = double3::dot(double3::cross(e, s), cross_dir_s) / (x * x);
 	double u = double3::length(cross_e_dir) / x * sign(double3::dot(cross_dir_s, cross_e_dir));
 	if (ray.GetMax() > t && t > ray.GetMin() && 1 > u && u >= 0.0f)
 	{
@@ -280,7 +282,8 @@ bool Segment::AllIntersect(Ray& ray, RayIntersectionInfo& info)
 	double3 cross_dir_s = double3::cross(ray.GetDirection(), s);
 	double3 cross_e_dir = double3::cross(e, ray.GetDirection());
 	double x = double3::length(cross_dir_s);
-	double t = double3::length(double3::cross(e, s)) / x;
+	//double t = double3::length(double3::cross(e, s)) / x;
+	double t = double3::dot(double3::cross(e, s), cross_dir_s) / (x * x);
 	double u = double3::length(cross_e_dir) / x * sign(double3::dot(cross_dir_s, cross_e_dir));
 	if (ray.GetMax() > t && t > ray.GetMin() && 1.0-epsilon > u && u >= 0.0f)
 	{

@@ -170,7 +170,7 @@ void test_contour_intersection()
 
 void test_geometry_precision()
 {
-	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/coso2.obj");
+	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/Bunny-LowPoly.obj");
 	std::vector<float3> vertices;
 	float3 b_min, b_max;
 	float geometry_scaling = 10000;
@@ -189,12 +189,13 @@ void test_geometry_precision()
 
 	BVH bvh(primitives, SplitMethod::EqualCounts, 255);
 	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
-	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 2.50000000); 
+	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 5.36298790e+01); 
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -23500, 0);
+	float3 plane_x0(0, -271298, 0); 
 	float3 plane_n(0, 1, 0);
+	float laser_width_microns = 600;
 
 	Plane plane(plane_x0, plane_n);
 	PlaneIntersectionInfo info;
@@ -245,7 +246,7 @@ void test_geometry_precision()
 
 	std::vector<std::shared_ptr<Contour>> offset_sorted_contours(sorted_segments.size());
 	for (int i = 0; i < sorted_segments.size(); i++) {
-		offset_sorted_contours[i] = std::make_shared<Contour>(sorted_contours[i]->OffsetContour(-1.05*geometry_scaling));
+		offset_sorted_contours[i] = std::make_shared<Contour>(sorted_contours[i]->OffsetContour(-laser_width_microns / 1000.0 * 0.5 *geometry_scaling));
 		std::cout << "OFFSET CONTOUR" << std::endl;
 		for (auto s : offset_sorted_contours[i]->segments)
 		{
@@ -260,7 +261,15 @@ void test_geometry_precision()
 		for (auto ss : s->segments)
 			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 	}
-	//ContourTree ct(sorted_contours);
+
+	ContourTree sorted_tree(sorted_contours);
+	ContourTree offset_tree = sorted_tree.OffsetContourTree(laser_width_microns / 1000.0 * 0.5 * geometry_scaling);
+	for (auto s : offset_tree.contours)
+	{
+		std::cout << "OFFSET TREE CONTOUR" << std::endl;
+		for (auto ss : s->segments)
+			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+	}
 
 	//float laser_width = 600;
 	//auto intersection_points = ct.MultiRayAllIntersects(laser_width * geometry_scaling,

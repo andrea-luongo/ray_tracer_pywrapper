@@ -117,6 +117,8 @@ int Contour::EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b
 
 Contour Contour::OffsetContour(float offset)
 {
+	float minimum_angle = 0.2;
+	float minimum_area = offset;
 	std::vector<float3> new_vertices(segments.size());
 	std::vector<std::shared_ptr<Segment>> new_segments(segments.size());
 	for (int idx = 0; idx < segments.size(); idx++)
@@ -127,11 +129,26 @@ Contour Contour::OffsetContour(float offset)
 			s_prev = *segments[segments.size()-1];
 		else
 			s_prev = *segments[idx-1];
-		float3 s_normal = float3::cross((s_cur[1] - s_cur[0]), contour_normal).normalize();
-		float3 s_prev_normal = float3::cross((s_prev[1] - s_prev[0]), contour_normal).normalize();
+		float3 s_cur_side = s_cur[1] - s_cur[0];
+		float3 s_prev_side = s_prev[1] - s_prev[0];
+		float area = float3::cross(s_cur_side, s_prev_side).length() * 0.5;
+		float3 s_normal = float3::cross(s_cur_side, contour_normal).normalize();
+		float3 s_prev_normal = float3::cross(s_prev_side, contour_normal).normalize();
 		float half_angle = 0.5 * (acosf(float3::dot(s_normal, s_prev_normal)));
 		float3 half_normal = (s_normal + s_prev_normal).normalize();
 		float3 v = s_cur[0] + offset / cosf(half_angle) * half_normal;
+		if ((area < minimum_area || M_PI - 2 * half_angle < minimum_angle) && offset < 0)
+		{
+			if (s_cur_side.length() < s_prev_side.length())
+			{
+				v = -s_cur_side.length() * sinf(half_angle) * half_normal + s_cur[0];
+			}
+			else
+			{
+				v = -s_prev_side.length() * sinf(half_angle) * half_normal + s_cur[0];
+			}
+		}
+
 		new_vertices[idx] = v;
 		if (idx > 0)
 		{
@@ -156,6 +173,7 @@ bool Contour::FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& c
 		{
 			if (i == 0 && j == segments.size() - 1)
 				continue;
+
 			std::shared_ptr<Segment> s_j = segments[j];
 			float3 hit_point;
 			float t_hit;
@@ -252,7 +270,7 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 		ContourSelfIntersectionPoint P = intersection_points[p_idx];
 		bool skip_loop = false;
 		bool loop_closed = false;
-		bool skip_dict_check = false;
+		bool skip_dict_check = true;
 		float3 v0 = segments[P.idx_0]->v0;
 		float3 v1 = P.hit_point;
 		int current_idx = P.idx_1;
