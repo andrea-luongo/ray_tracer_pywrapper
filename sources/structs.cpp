@@ -465,7 +465,7 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	std::shared_ptr<Segment> end_1 = (*(s1.end() - 1));
 	Segment start_1_flipped = Segment::FlipSegment(*start_1);
 	Segment end_1_flipped = Segment::FlipSegment(*end_1);
-	float alignment_epsilon = 1e-4;
+	float alignment_epsilon = 1e-2;
 	if (Segment::CompareSegments(*end_0, *start_1, epsilon))
 	{
 		end_0->v1 = start_1->v0;
