@@ -304,7 +304,7 @@ std::vector<py::array_t<float>> PyBindBVH::PlaneAllIntersectsHits(PyBindPlane& p
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
     return info.GetHits();
 }
-std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling)
+std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length)
 {
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
     Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
@@ -333,13 +333,41 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         }
         segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
     }
-    float epsilon = 0.0002 * geometry_scaling;
+    float epsilon = 0.001 * geometry_scaling;
+    float alignment_epsilon = 1e-2;
     bool remove_aligned_segments = true;
-    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments);
-    std::vector<PyBindContour> sorted_contours(sorted_segments.size());
+    std::cout << segment_primitives.size() << std::endl;
+    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon); 
+    
+    //for (int i = 0; i < sorted_segments.size(); i++) {
+    //    std::cout << "%SORTED CONTOUR" << std::endl;
+    //    std::cout << sorted_segments[i].size() << std::endl;
+    //    std::cout << "p1=[";
+    //    for (auto ss : sorted_segments[i])
+    //        std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+    //    std::cout << "];" << std::endl;;
+    //}
+
+    std::vector<PyBindContour> sorted_contours;
     for (int i = 0; i < sorted_segments.size(); i++) {
         Contour c(sorted_segments[i], plane.plane->GetNormal());
-        sorted_contours[i] = PyBindContour(c);
+        if (!c.is_valid)
+            continue;
+
+        std::cout << "%SORTED CONTOUR" << std::endl;
+        std::cout << "p1=[";
+        for (auto ss : c.segments)
+            std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+        std::cout << "];" << std::endl;;
+
+        c.RemoveShortSegments(segment_min_length);
+        std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+        std::cout << "p2=[";
+        for (auto ss : c.segments)
+            std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+        std::cout << "];" << std::endl;
+        sorted_contours.push_back(PyBindContour(c));
+
     }
     return sorted_contours;
 }

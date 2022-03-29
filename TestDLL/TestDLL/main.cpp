@@ -121,6 +121,7 @@ void test_contour_intersection()
 {
 	int  decimals = 4;
 	float vertices_scale = pow(10, decimals);
+	int laser_width_microns = 600 * vertices_scale;
 	std::vector<float> points_a = {
 -12690.139, 1500.0, -5127.15, -11071.033, 1500.0, 6393.376, -11071.033, 1500.0, 6393.3765, -10785.309, 1500.0, 8426.41, -9167.514, 1500.0, 7162.4487, 0.0, 1500.0, 0.0, -10785.309, 1500.0, 8426.41, -9167.513, 1500.0, 7162.4487, 7263.993, 1500.0, -7931.5215, -12690.139, 1500.0, -5127.15, 10785.309, 1500.0, -8426.41, 7263.9917, 1500.0, -7931.521, 1903.5205, 1500.0, 769.07227, 12690.139, 1500.0, 5127.15, 0.0, 1500.0, 0.0, 1903.521, 1500.0, 769.07245, 11071.033, 1500.0, -6393.3765, 10785.309, 1500.0, -8426.41, 12690.139, 1500.0, 5127.15, 11071.033, 1500.0, -6393.376
 	};
@@ -137,7 +138,9 @@ void test_contour_intersection()
 	float geometry_scaling = 10000;
 	float epsilon = 0.0002 * geometry_scaling;
 	clock_t tStart = clock();
-	auto sorted_segments = Segment::SortSegments(primitives_a, epsilon, true);
+	float alignment_epsilon = 1e-2;
+	float min_length = laser_width_microns / 1000.0 * 0.5;
+	auto sorted_segments = Segment::SortSegments(primitives_a, epsilon, true, alignment_epsilon);
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	/////////////////////BUILD Contour
@@ -157,7 +160,7 @@ void test_contour_intersection()
 
 	std::cout << "Intersecting Contour" << std::endl;
 
-	int laser_width_microns = 600 * vertices_scale;
+	
 	float rot_angle = 0;
 	auto contour_hits = contour_tree.MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, true);
 
@@ -194,7 +197,7 @@ void test_geometry_precision()
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -529720, 0);
+	float3 plane_x0(0, -469720, 0);
 	float3 plane_n(0, 1, 0);
 	float laser_width_microns = 600;
 
@@ -228,32 +231,51 @@ void test_geometry_precision()
 	}
 
 	std::cout << "sorting Contour" << std::endl;
-	float epsilon = 0.0002 * geometry_scaling;
+	float epsilon = 0.001 * geometry_scaling;
 	clock_t tStart = clock();
-	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, true);
+	bool check_alignment = true;
+	float alignment_epsilon = 1e-2;
+	float min_length = laser_width_microns * geometry_scaling / 1000.0 * 0.5;
+
+	std::cout << segment_primitives.size() << std::endl;
+	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon);
 
 	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
-	std::vector<std::shared_ptr<Contour>> sorted_contours(sorted_segments.size());
+	std::cout << "Cleaning Contour" << std::endl;
+	tStart = clock();
+	std::vector<std::shared_ptr<Contour>> sorted_contours;
 	for (int i = 0; i < sorted_segments.size(); i++) {
-		sorted_contours[i] = std::make_shared<Contour>(sorted_segments[i], plane.GetNormal());
+		if (sorted_segments[i].size() >=3)
+			sorted_contours.push_back(std::make_shared<Contour>(sorted_segments[i], plane.GetNormal()));
 	}
-	//for (auto s : sorted_contours)
-	//{
-	//	std::cout << "SORTED CONTOUR" << std::endl;
-	//	for (auto ss : s->segments)
-	//		std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-	//}
+	for (int idx=0; idx< sorted_contours.size(); idx++)
+	{
+		auto s = sorted_contours[idx];
+		std::cout << s->segments.size() << std::endl;
+		std::cout << "%SORTED CONTOUR" << std::endl;
+		std::cout << "p1=[";
+		for (auto ss : s->segments)
+			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+		std::cout << "];" << std::endl;;
 
-	std::vector<std::shared_ptr<Contour>> offset_sorted_contours(sorted_segments.size());
-	for (int i = 0; i < sorted_segments.size(); i++) {
-		offset_sorted_contours[i] = std::make_shared<Contour>(sorted_contours[i]->OffsetContour(-laser_width_microns / 1000.0 * 0.5 *geometry_scaling));
-		//std::cout << "OFFSET CONTOUR" << std::endl;
-		//for (auto s : offset_sorted_contours[i]->segments)
-		//{
-		//	std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
-		//}
+		s->RemoveShortSegments(min_length);
+		std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+		std::cout << "p2=[";
+		for (auto ss : s->segments)
+			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+		std::cout << "];" << std::endl;
 	}
+	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//std::vector<std::shared_ptr<Contour>> offset_sorted_contours(sorted_contours.size());
+	//for (int i = 0; i < sorted_contours.size(); i++) {
+	//	offset_sorted_contours[i] = std::make_shared<Contour>(sorted_contours[i]->OffsetContour(-laser_width_microns / 1000.0 * 0.5 *geometry_scaling));
+	//	//std::cout << "OFFSET CONTOUR" << std::endl;
+	//	//for (auto s : offset_sorted_contours[i]->segments)
+	//	//{
+	//	//	std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
+	//	//}
+	//}
 	//std::vector<std::shared_ptr<Contour>> new_contours;
 	//bool does_intersect = offset_sorted_contours[0]->RemoveSelfIntersections(new_contours);
 	//for (auto s : new_contours)

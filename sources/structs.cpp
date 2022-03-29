@@ -379,7 +379,7 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 	return result;
 }
 
-std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments)
+std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon)
 {
 	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
 	if (segments.size() == 1)
@@ -391,8 +391,8 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		int half_idx = int(segments.size() * 0.5);
 		std::vector<std::shared_ptr<Segment>> left_segments(segments.begin(), segments.begin() + half_idx);
 		std::vector<std::shared_ptr<Segment>> right_segments(segments.begin() + half_idx, segments.end());
-		auto left_loop = Segment::SortSegments(left_segments, epsilon, remove_aligned_segments);
-		auto right_loop = Segment::SortSegments(right_segments, epsilon, remove_aligned_segments);
+		auto left_loop = Segment::SortSegments(left_segments, epsilon, remove_aligned_segments, alignment_epsilon);
+		auto right_loop = Segment::SortSegments(right_segments, epsilon, remove_aligned_segments, alignment_epsilon);
 		std::vector<int> left_merged_idxs;
 		std::vector<int> right_merged_idxs;
 		//check if left loops can be connected with right loops
@@ -403,7 +403,7 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 				if (std::find(right_merged_idxs.begin(), right_merged_idxs.end(), r_idx) != right_merged_idxs.end())
 					continue;
 				
-				bool is_merged = Segment::MergeSegments(left_loop[l_idx], right_loop[r_idx], epsilon, remove_aligned_segments);
+				bool is_merged = Segment::MergeSegments(left_loop[l_idx], right_loop[r_idx], epsilon, remove_aligned_segments, alignment_epsilon);
 				if (is_merged)
 				{
 					left_merged_idxs.push_back(l_idx);
@@ -424,7 +424,7 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		{
 			for (int idx_2 = idx_1+1; idx_2 < left_loop.size(); idx_2++)
 			{
-				bool is_merged = Segment::MergeSegments(left_loop[idx_2], left_loop[idx_1], epsilon, remove_aligned_segments);
+				bool is_merged = Segment::MergeSegments(left_loop[idx_2], left_loop[idx_1], epsilon, remove_aligned_segments, alignment_epsilon);
 				if (is_merged)
 				{
 					merged_idxs.push_back(idx_1);
@@ -443,20 +443,21 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 	return sorted_segments;
 }
 
-bool Segment::CheckAlignment(Segment& s0, Segment& s1, float const epsilon)
+bool Segment::CheckAlignment(Segment& s0, Segment& s1, float const angle_epsilon)
 {
-	float3 s_0_dir = (s0.v1 - s0.v0).normalize();
-	float3 s_1_dir = (s1.v1 - s1.v0).normalize();
-	float dot_pr = abs(float3::dot(s_0_dir, s_1_dir));
-	bool is_aligned = false;
-	if (dot_pr > 1 - epsilon)
+	float3 s_0_dir = (s0.v1 - s0.v0);
+	float3 s_1_dir = (s1.v1 - s1.v0);
+	float dot_pr = abs(float3::dot(s_0_dir.normalize(), s_1_dir.normalize()));
+	bool to_merge = false;
+	if (dot_pr > 1 - angle_epsilon)
 	{
-		is_aligned = true;
+		to_merge = true;
 	}
-	return is_aligned;
+
+	return to_merge;
 }
 
-bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, bool remove_aligned_segments)
+bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon)
 {
 	bool is_merged = false;
 	std::shared_ptr<Segment> start_0 = (*s0.begin());
@@ -465,7 +466,7 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	std::shared_ptr<Segment> end_1 = (*(s1.end() - 1));
 	Segment start_1_flipped = Segment::FlipSegment(*start_1);
 	Segment end_1_flipped = Segment::FlipSegment(*end_1);
-	float alignment_epsilon = 1e-2;
+	/*float alignment_epsilon = 1e-2;*/
 	if (Segment::CompareSegments(*end_0, *start_1, epsilon))
 	{
 		end_0->v1 = start_1->v0;

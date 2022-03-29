@@ -50,6 +50,8 @@ public:
 	RAYTRACERDLL_API static int EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API Contour OffsetContour(float offset);
 	RAYTRACERDLL_API bool RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours);
+	RAYTRACERDLL_API void RemoveAlignedSegments(float alignment_epsilon);
+	RAYTRACERDLL_API void RemoveShortSegments(float min_length);
 	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
 private:
 	RAYTRACERDLL_API bool FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& contour_intersection_points, std::map<int, std::vector<ContourSelfIntersectionPoint>>& contour_intersection_dict);

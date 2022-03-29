@@ -85,7 +85,7 @@ public:
     bool AllIntersects(PyBindRay& ray, PyBindRayInfo& info);
     bool PlaneAllIntersects(PyBindPlane& plane, PyBindPlaneInfo& info);
     std::vector<py::array_t<float>> PlaneAllIntersectsHits(PyBindPlane& plane, PyBindPlaneInfo& info);
-    std::vector<PyBindContour> PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling);
+    std::vector<PyBindContour> PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length);
 };
 
 class PyBindContour {
