@@ -371,7 +371,7 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 {
 	bool result = false;
 	float3 s_dist = float3::abs(s0.v1 - s1.v0);
-	if (s_dist.length() <= epsilon)
+	if (s_dist.length() < epsilon)
 	{
 		result = true;
 		//s0.v1 = s1.v0;
@@ -439,6 +439,19 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 				continue;
 			sorted_segments.push_back(left_loop[l_idx]);
 		}
+
+	/*	int sorted_segments_size = 0;
+		for (auto ss : sorted_segments)
+			sorted_segments_size += ss.size();
+		if (segments.size() != sorted_segments_size)
+		{
+			std::cout << "SORTING DIFFERENT SIZE! " << segments.size() << " " << sorted_segments_size << std::endl;
+		}
+		else
+		{
+			std::cout << "SORTING SAME SIZE! " << segments.size() << " " << sorted_segments_size << std::endl;
+
+		}*/
 	}
 	return sorted_segments;
 }

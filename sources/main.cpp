@@ -307,7 +307,9 @@ std::vector<py::array_t<float>> PyBindBVH::PlaneAllIntersectsHits(PyBindPlane& p
 std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length)
 {
 
-    bool verbose = true;
+    bool verbose = false;
+    if (plane.plane->GetX() == float3(0, -439720, 0))
+        verbose = true;
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
     Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
@@ -330,24 +332,34 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         std::cout << "Trasnformed hits" << std::endl;
     }
     std::vector<std::shared_ptr<Segment>> segment_primitives;
+    int discarded_segments = 0;
     for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
     {
         float3 p0 = transformed_hits[i * 2];
         float3 p1 = transformed_hits[i * 2 + 1];
         if (float3::length(p0 - p1) == 0)
         {
+            discarded_segments++;
             continue;
         }
         segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
     }
     if (verbose)
     {
-        std::cout << "created primitives" << std::endl;
+        std::cout << "discarded segments: " << discarded_segments << std::endl;
+
+        std::cout << "created primitives " << segment_primitives.size() << std::endl;
     }
     float epsilon = 0.001 * geometry_scaling;
-    float alignment_epsilon = 1e-2;
-    bool remove_aligned_segments = true;
-    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon); 
+    float alignment_epsilon = 1e-3;
+    bool remove_aligned_segments = false;
+    //if (verbose)
+    //{
+    //    std::cout << "PRIMITIVES" << std::endl;
+    //    for (auto s : segment_primitives)
+    //        std::cout << s->v0 << " " << s->v1 << std::endl;
+    //}
+    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon);
     if (verbose)
     {
         int total_sorted = 0;
@@ -368,32 +380,39 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         if (verbose)
         {
             std::cout << "created contour" << std::endl;
-        }
-        if (plane.plane->GetX() == float3(0, -439720, 0))
-        {
             std::cout << "%SORTED CONTOUR" << std::endl;
             std::cout << "p1=[";
             for (auto ss : c.segments)
                 std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
             std::cout << "];" << std::endl;;
-
         }
 
-        c.RemoveShortSegments(segment_min_length);
+        c.RemoveAlignedSegments(alignment_epsilon);
+        if (!c.is_valid)
+            continue;
         if (verbose)
         {
-            std::cout << "removed short primitives" << std::endl;
-        }
-        if (plane.plane->GetX() == float3(0, -439720, 0))
-        {
-            std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+            std::cout << "removed aligned primitives" << std::endl;
+            std::cout << "%REMOVED ALIGNED CONTOUR" << std::endl;
             std::cout << "p2=[";
             for (auto ss : c.segments)
                 std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
             std::cout << "];" << std::endl;
-
         }
-    
+
+        c.RemoveShortSegments(segment_min_length);
+        if (!c.is_valid)
+            continue;
+        if (verbose)
+        {
+            std::cout << "removed short primitives" << std::endl;
+            std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+            std::cout << "p3=[";
+            for (auto ss : c.segments)
+                std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+            std::cout << "];" << std::endl;
+        }
+
         sorted_contours.push_back(PyBindContour(c));
 
     }

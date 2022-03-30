@@ -150,13 +150,13 @@ void test_contour_intersection()
 	std::vector<std::shared_ptr<Contour>> sorted_contours(sorted_segments.size());
 	for (int i = 0; i < sorted_segments.size(); i++)
 		sorted_contours[i] = std::shared_ptr<Contour>(new Contour(primitives_a, n));
-	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	/////////////////////BUILD ContourTree
 	std::cout << "Building Tree Contour" << std::endl;
 	tStart = clock();
 	ContourTree contour_tree({ sorted_contours });
-	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
 	std::cout << "Intersecting Contour" << std::endl;
 
@@ -188,10 +188,7 @@ void test_geometry_precision()
 	float3 plane_x0(0, -439720, 0);
 	float3 plane_n(0, 1e-4, 0);
 	float laser_width_microns = 600;
-	float epsilon = 0.001 * geometry_scaling;
 	clock_t tStart = clock();
-	bool check_alignment = true;
-	float alignment_epsilon = 1e-2;
 	float min_length = laser_width_microns * geometry_scaling / 1000.0 * 0.5;
 
 	std::vector<std::shared_ptr<Primitive>> primitives;
@@ -226,22 +223,30 @@ void test_geometry_precision()
 
 	//std::vector<Segment> segment_primitives((int)(transformed_hits.size() / 2));
 	std::vector<std::shared_ptr<Segment>> segment_primitives;
+	int discarded_segments = 0;
 	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
 	{
 		float3 p0 = transformed_hits[i * 2];
 		float3 p1 = transformed_hits[i * 2 + 1];
 		if (float3::length(p0 - p1) == 0)
 		{
+			discarded_segments++;
 			continue;
 		}
 
 		segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
 	}
-	std::cout << "created primitives" << std::endl;
-	//std::cout << "sorting Contour" << std::endl;
+	std::cout << "discarded segments: " << discarded_segments << std::endl;
+	std::cout << "created primitives " << segment_primitives.size() << std::endl;
+	//std::cout << "PRIMITIVES" << std::endl;
+	//for (auto s : segment_primitives)
+	//	std::cout << s->v0 << " " << s->v1 << std::endl;
 	tStart = clock();
 
-	std::cout << segment_primitives.size() << std::endl;
+	float epsilon = 0.001 * geometry_scaling;
+	bool check_alignment = true;
+	float alignment_epsilon = 1e-3;
+
 	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon);
 	int total_sorted = 0;
 	for (auto ss : sorted_segments)
@@ -271,10 +276,26 @@ void test_geometry_precision()
 			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 		std::cout << "];" << std::endl;;
 
+
+
+		//c.RemoveAlignedSegments(alignment_epsilon);
+		//if (!c.is_valid)
+		//	continue;
+	/*	std::cout << "removed aligned primitives" << std::endl;
+		std::cout << "%REMOVED ALIGNED CONTOUR" << std::endl;
+		std::cout << "p2=[";
+		for (auto ss : c.segments)
+			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+		std::cout << "];" << std::endl;*/
+
+
+
 		c.RemoveShortSegments(min_length);
+		if (!c.is_valid)
+			continue;
 		std::cout << "removed short primitives" << std::endl;
 		std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
-		std::cout << "p2=[";
+		std::cout << "p3=[";
 		for (auto ss : c.segments)
 			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 		std::cout << "];" << std::endl;

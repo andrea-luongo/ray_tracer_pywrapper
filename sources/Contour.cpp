@@ -13,10 +13,8 @@ Contour::Contour()
 
 Contour::Contour(const std::vector<std::shared_ptr<Segment>>& p, const float3 n) : segments(p), contour_normal(n)
 {
-	if (segments.size() < 3) {
-		is_valid = false;
+	if (!CheckValidity())
 		return;
-	}
 	//bvh = new BVH({segments.begin(), segments.end()}, SplitMethod::EqualCounts, 255);
 	ComputeBBox();
 }
@@ -25,6 +23,16 @@ void Contour::ComputeBBox()
 {
 	bvh = new BVH({ segments.begin(), segments.end() }, SplitMethod::EqualCounts, 255);
 	bbox = bvh->getBVHBBox();
+}
+
+bool Contour::CheckValidity()
+{
+	if (segments.size() < 3 || !(segments[0]->v0 == (*(segments.end() - 1))->v1))
+		is_valid = false;
+	else
+		is_valid = true;
+
+	return is_valid;
 }
 
 bool Contour::Intersect(Ray& ray, RayIntersectionInfo& info)
@@ -196,6 +204,7 @@ void Contour::RemoveAlignedSegments(float alignment_epsilon)
 		new_segments.pop_back();
 	}
 	segments = new_segments;
+	CheckValidity();
 	ComputeBBox();
 }
 
@@ -231,6 +240,7 @@ void Contour::RemoveShortSegments(float min_length)
 	}
 
 	segments = new_segments;
+	CheckValidity();
 	ComputeBBox();
 }
 
