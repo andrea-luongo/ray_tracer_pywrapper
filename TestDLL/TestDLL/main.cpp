@@ -180,6 +180,19 @@ void test_geometry_precision()
 	float geometry_scaling = 10000;
 	bool swap_yz = true;
 	load_obj(filename, geometry_scaling, swap_yz, vertices, b_min, b_max);
+	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
+	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 6.04720039e+01); 
+	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
+	float4 r3(0., 0., 0., 1.);
+	Matrix4x4 t_matrix(r0, r1, r2, r3);
+	float3 plane_x0(0, -439720, 0);
+	float3 plane_n(0, 1e-4, 0);
+	float laser_width_microns = 600;
+	float epsilon = 0.001 * geometry_scaling;
+	clock_t tStart = clock();
+	bool check_alignment = true;
+	float alignment_epsilon = 1e-2;
+	float min_length = laser_width_microns * geometry_scaling / 1000.0 * 0.5;
 
 	std::vector<std::shared_ptr<Primitive>> primitives;
 	for (int i = 0; i < (int)(vertices.size() / 3); i++)
@@ -192,28 +205,23 @@ void test_geometry_precision()
 	}
 
 	BVH bvh(primitives, SplitMethod::EqualCounts, 255);
-	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
-	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 6.04720039e+01); 
-	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
-	float4 r3(0., 0., 0., 1.);
-	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -469720, 0);
-	float3 plane_n(0, 1, 0);
-	float laser_width_microns = 600;
+
+	std::cout << plane_x0 << " " << plane_n << " " << t_matrix << " " << geometry_scaling << " " << min_length << std::endl;
 
 	Plane plane(plane_x0, plane_n);
 	PlaneIntersectionInfo info;
 	bool result = bvh.plane_all_intersects(plane, info);
 
 	std::vector<float3> hits = *info.GetHits();
+	std::cout << "hits: " << hits.size() << std::endl;
 	std::vector<float3> transformed_hits(hits.size());
 	for (int idx = 0; idx < hits.size(); idx++)
 	{
 		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * t_matrix.Transpose()) * geometry_scaling;
 		transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
 	}
-
-	std::cout << "number of segments " << hits.size() / 2 << std::endl;
+	std::cout << "Trasnformed hits" << std::endl;
+	//std::cout << "number of segments " << hits.size() / 2 << std::endl;
 
 
 	//std::vector<Segment> segment_primitives((int)(transformed_hits.size() / 2));
@@ -229,44 +237,53 @@ void test_geometry_precision()
 
 		segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
 	}
-
-	std::cout << "sorting Contour" << std::endl;
-	float epsilon = 0.001 * geometry_scaling;
-	clock_t tStart = clock();
-	bool check_alignment = true;
-	float alignment_epsilon = 1e-2;
-	float min_length = laser_width_microns * geometry_scaling / 1000.0 * 0.5;
+	std::cout << "created primitives" << std::endl;
+	//std::cout << "sorting Contour" << std::endl;
+	tStart = clock();
 
 	std::cout << segment_primitives.size() << std::endl;
 	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon);
+	int total_sorted = 0;
+	for (auto ss : sorted_segments)
+		total_sorted += ss.size();
+	std::cout << "sorted segments: " << total_sorted << std::endl;
+	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 
-	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
-
-	std::cout << "Cleaning Contour" << std::endl;
+	std::cout << "sorted primitives" << std::endl;
 	tStart = clock();
 	std::vector<std::shared_ptr<Contour>> sorted_contours;
-	for (int i = 0; i < sorted_segments.size(); i++) {
-		if (sorted_segments[i].size() >=3)
-			sorted_contours.push_back(std::make_shared<Contour>(sorted_segments[i], plane.GetNormal()));
-	}
-	for (int idx=0; idx< sorted_contours.size(); idx++)
+	//for (int i = 0; i < sorted_segments.size(); i++) {
+	//	if (sorted_segments[i].size() >=3)
+	//		sorted_contours.push_back(std::make_shared<Contour>(sorted_segments[i], plane.GetNormal()));
+	//}
+	for (int idx=0; idx< sorted_segments.size(); idx++)
 	{
-		auto s = sorted_contours[idx];
-		std::cout << s->segments.size() << std::endl;
+		Contour c(sorted_segments[idx], plane.GetNormal());
+		if (!c.is_valid)
+			continue;
+
+		std::cout << "created contour" << std::endl;
+
+		//std::cout << c.segments.size() << std::endl;
 		std::cout << "%SORTED CONTOUR" << std::endl;
 		std::cout << "p1=[";
-		for (auto ss : s->segments)
+		for (auto ss : c.segments)
 			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 		std::cout << "];" << std::endl;;
 
-		s->RemoveShortSegments(min_length);
+		c.RemoveShortSegments(min_length);
+		std::cout << "removed short primitives" << std::endl;
 		std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
 		std::cout << "p2=[";
-		for (auto ss : s->segments)
+		for (auto ss : c.segments)
 			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 		std::cout << "];" << std::endl;
+
+
+		sorted_contours.push_back(std::make_shared<Contour>(c));
+
 	}
-	printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
+	//printf("Time taken: %fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC);
 	//std::vector<std::shared_ptr<Contour>> offset_sorted_contours(sorted_contours.size());
 	//for (int i = 0; i < sorted_contours.size(); i++) {
 	//	offset_sorted_contours[i] = std::make_shared<Contour>(sorted_contours[i]->OffsetContour(-laser_width_microns / 1000.0 * 0.5 *geometry_scaling));
@@ -285,8 +302,8 @@ void test_geometry_precision()
 	//		std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 	//}
 
-	ContourTree sorted_tree(sorted_contours);
-	ContourTree offset_tree = sorted_tree.OffsetContourTree(laser_width_microns / 1000.0 * 0.5 * geometry_scaling);
+	//ContourTree sorted_tree(sorted_contours);
+	//ContourTree offset_tree = sorted_tree.OffsetContourTree(laser_width_microns / 1000.0 * 0.5 * geometry_scaling);
 	
 	//for (auto s : offset_tree.contours)
 	//{

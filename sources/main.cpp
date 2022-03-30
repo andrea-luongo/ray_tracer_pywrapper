@@ -306,22 +306,29 @@ std::vector<py::array_t<float>> PyBindBVH::PlaneAllIntersectsHits(PyBindPlane& p
 }
 std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length)
 {
+
+    bool verbose = true;
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
     Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
 
     std::vector<float3> hits = *(info.planeInfo->GetHits());
+
+    std::cout << "hits: " << hits.size() << std::endl;
     std::vector<float3> transformed_hits(hits.size());
     for (int idx = 0; idx < hits.size(); idx++)
     {
-        float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix_transposed /*+ tr_matrix.GetColumn(3)*/) * geometry_scaling;
+        float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix_transposed) * geometry_scaling;
         if (geometry_scaling != 1)
             transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
         else
             transformed_hits[idx] = float3(t_hit[0], t_hit[1], t_hit[2]);
 
     }
-
+    if (verbose)
+    {
+        std::cout << "Trasnformed hits" << std::endl;
+    }
     std::vector<std::shared_ptr<Segment>> segment_primitives;
     for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
     {
@@ -333,39 +340,60 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         }
         segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
     }
+    if (verbose)
+    {
+        std::cout << "created primitives" << std::endl;
+    }
     float epsilon = 0.001 * geometry_scaling;
     float alignment_epsilon = 1e-2;
     bool remove_aligned_segments = true;
-    std::cout << segment_primitives.size() << std::endl;
     auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon); 
-    
-    //for (int i = 0; i < sorted_segments.size(); i++) {
-    //    std::cout << "%SORTED CONTOUR" << std::endl;
-    //    std::cout << sorted_segments[i].size() << std::endl;
-    //    std::cout << "p1=[";
-    //    for (auto ss : sorted_segments[i])
-    //        std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-    //    std::cout << "];" << std::endl;;
-    //}
+    if (verbose)
+    {
+        int total_sorted = 0;
+        for (auto ss : sorted_segments)
+            total_sorted += ss.size();
+        std::cout << "sorted segments: " << total_sorted << std::endl;
+    }
+    if (verbose)
+    {
+        std::cout << "sorted primitives" << std::endl;
+    }
 
     std::vector<PyBindContour> sorted_contours;
     for (int i = 0; i < sorted_segments.size(); i++) {
         Contour c(sorted_segments[i], plane.plane->GetNormal());
         if (!c.is_valid)
             continue;
+        if (verbose)
+        {
+            std::cout << "created contour" << std::endl;
+        }
+        if (plane.plane->GetX() == float3(0, -439720, 0))
+        {
+            std::cout << "%SORTED CONTOUR" << std::endl;
+            std::cout << "p1=[";
+            for (auto ss : c.segments)
+                std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+            std::cout << "];" << std::endl;;
 
-        std::cout << "%SORTED CONTOUR" << std::endl;
-        std::cout << "p1=[";
-        for (auto ss : c.segments)
-            std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-        std::cout << "];" << std::endl;;
+        }
 
         c.RemoveShortSegments(segment_min_length);
-        std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
-        std::cout << "p2=[";
-        for (auto ss : c.segments)
-            std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-        std::cout << "];" << std::endl;
+        if (verbose)
+        {
+            std::cout << "removed short primitives" << std::endl;
+        }
+        if (plane.plane->GetX() == float3(0, -439720, 0))
+        {
+            std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+            std::cout << "p2=[";
+            for (auto ss : c.segments)
+                std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+            std::cout << "];" << std::endl;
+
+        }
+    
         sorted_contours.push_back(PyBindContour(c));
 
     }
