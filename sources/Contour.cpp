@@ -15,14 +15,27 @@ Contour::Contour(const std::vector<std::shared_ptr<Segment>>& p, const float3 n)
 {
 	if (!CheckValidity())
 		return;
+	ComputeContourOrientation();
 	//bvh = new BVH({segments.begin(), segments.end()}, SplitMethod::EqualCounts, 255);
 	ComputeBBox();
 }
 
 void Contour::ComputeBBox()
 {
+	if (is_valid)
+	{
 	bvh = new BVH({ segments.begin(), segments.end() }, SplitMethod::EqualCounts, 255);
 	bbox = bvh->getBVHBBox();
+	}
+}
+
+void Contour::UpdateSegments(std::vector<std::shared_ptr<Segment>> new_segments)
+{
+	segments = new_segments;
+	if (!CheckValidity())
+		return;
+	ComputeContourOrientation();
+	ComputeBBox();
 }
 
 bool Contour::CheckValidity()
@@ -33,6 +46,21 @@ bool Contour::CheckValidity()
 		is_valid = true;
 
 	return is_valid;
+}
+
+void Contour::ComputeContourOrientation()
+{
+	double total = 0;
+	double tmp_scale = 1;
+	for (auto s_cur : segments)
+	{
+		double x = (s_cur->v1.x - s_cur->v0.x);
+		double y = (s_cur->v1.z + s_cur->v0.z);
+		double cur_value = x * y;
+
+		total += cur_value;
+	}
+	contour_orientation = total >= 0;
 }
 
 bool Contour::Intersect(Ray& ray, RayIntersectionInfo& info)
@@ -203,9 +231,10 @@ void Contour::RemoveAlignedSegments(float alignment_epsilon)
 		new_segments[0] = (s_new);
 		new_segments.pop_back();
 	}
-	segments = new_segments;
+	UpdateSegments(new_segments);
+	/*segments = new_segments;
 	CheckValidity();
-	ComputeBBox();
+	ComputeBBox();*/
 }
 
 void Contour::RemoveShortSegments(float min_length)
@@ -218,7 +247,7 @@ void Contour::RemoveShortSegments(float min_length)
 		std::shared_ptr<Segment> s_prev = *(new_segments.end() - 1);
 		float3 s_cur_dir = (s_cur->v1 - s_cur->v0);
 		float3 s_prev_dir = (s_prev->v1 - s_prev->v0);
-		if (s_cur_dir.length() < min_length)
+		if (s_cur_dir.length() + s_prev_dir.length() < min_length)
 		{
 			std::shared_ptr<Segment> s_new = std::make_shared<Segment>(s_prev->v0, s_cur->v1);
 			new_segments[new_segments.size() - 1] = s_new;
@@ -228,20 +257,20 @@ void Contour::RemoveShortSegments(float min_length)
 			new_segments.push_back(s_cur);
 		}
 	}
-	std::shared_ptr<Segment> s_cur = new_segments[0];
-	std::shared_ptr<Segment> s_prev = *(new_segments.end() - 1);
-	float3 s_cur_dir = (s_cur->v1 - s_cur->v0);
-	float3 s_prev_dir = (s_prev->v1 - s_prev->v0);
-	if (s_cur_dir.length() < min_length)
+	std::shared_ptr<Segment> s_first = new_segments[0];
+	std::shared_ptr<Segment> s_last = *(new_segments.end() - 1);
+	float3 s_first_dir = (s_first->v1 - s_first->v0);
+	float3 s_last_dir = (s_last->v1 - s_last->v0);
+	if (s_first_dir.length()  + s_last_dir.length() < min_length)
 	{
-		std::shared_ptr<Segment> s_new = std::make_shared<Segment>(s_prev->v0, s_cur->v1);
+		std::shared_ptr<Segment> s_new = std::make_shared<Segment>(s_last->v0, s_first->v1);
 		new_segments[0] = (s_new);
 		new_segments.pop_back();
 	}
-
-	segments = new_segments;
-	CheckValidity();
-	ComputeBBox();
+	UpdateSegments(new_segments);
+	//segments = new_segments;
+	//CheckValidity();
+	//ComputeBBox();
 }
 
 bool Contour::FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& contour_intersection_points, std::map<int, std::vector<ContourSelfIntersectionPoint>>& contour_intersection_dict)
@@ -277,7 +306,7 @@ bool Contour::FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& c
 }
 
 
-bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours)
+bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours, bool keep_clockwise)
 {
 	std::vector<ContourSelfIntersectionPoint> intersection_points;
 	std::map<int, std::vector<ContourSelfIntersectionPoint>> intersections_dict;
@@ -285,7 +314,7 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 
 	if (is_self_intersecting)
 	{
-		float3 contour_orientation = float3::normalize(float3::cross(segments[1]->v1- segments[1]->v0, segments[0]->v1 - segments[0]->v0));
+		//float3 contour_orientation = float3::normalize(float3::cross(segments[1]->v1- segments[1]->v0, segments[0]->v1 - segments[0]->v0));
 		// check all intersection loops except the first reverse one
 		for (int p_idx = 0; p_idx < intersection_points.size(); p_idx++)
 		{
@@ -333,7 +362,7 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 					skip_dict_check = true;
 				}
 				loop.push_back(std::make_shared<Segment>(v0, v1));
-				if (loop.size() == 2)
+			/*	if (loop.size() == 2)
 				{
 					float3 loop_orientation = float3::normalize(float3::cross(loop[1]->v1 - loop[1]->v0, loop[0]->v1 - loop[0]->v0));
 					if (float3::dot(contour_orientation, loop_orientation) < 0)
@@ -341,10 +370,14 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 						skip_loop = true;
 						break;
 					}
-				}
+				}*/
 			}
-			if (!skip_loop)
-				new_contours.push_back(std::make_shared<Contour>(loop, contour_normal));
+			/*if (!skip_loop)
+				new_contours.push_back(std::make_shared<Contour>(loop, contour_normal));*/
+			std::shared_ptr<Contour> new_contour = std::make_shared<Contour>(loop, contour_normal);
+			if (keep_clockwise == new_contour->contour_orientation)
+				new_contours.push_back(new_contour);
+
 		}
 		// check first reversed loop
 		std::vector<std::shared_ptr<Segment>> loop;
@@ -379,20 +412,23 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 				skip_dict_check = true;
 			}
 			loop.push_back(std::make_shared<Segment>(v0, v1));
-			if (loop.size() == 2)
-			{
-				float3 loop_orientation = float3::normalize(float3::cross(loop[1]->v1 - loop[1]->v0, loop[0]->v1 - loop[0]->v0));
-				if (float3::dot(contour_orientation, loop_orientation) < 0)
-				{
-					skip_loop = true;
-					break;
-				}
-			}
+			//if (loop.size() == 2)
+			//{
+			//	float3 loop_orientation = float3::normalize(float3::cross(loop[1]->v1 - loop[1]->v0, loop[0]->v1 - loop[0]->v0));
+			//	if (float3::dot(contour_orientation, loop_orientation) < 0)
+			//	{
+			//		skip_loop = true;
+			//		break;
+			//	}
+			//}
 			if (current_idx == P.idx_0)
 				loop_closed = true;
 		}
-		if (!skip_loop)
-			new_contours.push_back(std::make_shared<Contour>(loop, contour_normal));
+		//if (!skip_loop)
+		//	new_contours.push_back(std::make_shared<Contour>(loop, contour_normal));
+		std::shared_ptr<Contour> new_contour = std::make_shared<Contour>(loop, contour_normal);
+		if (keep_clockwise == new_contour->contour_orientation)
+			new_contours.push_back(new_contour);
 	}
 
 	return is_self_intersecting;
@@ -869,14 +905,16 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 {
 	std::vector<std::shared_ptr<Contour>> offset_contours;
 	std::vector<std::shared_ptr<ContourNode>> root_descendants = tree_root->GetDescendants();
-	bool to_print = false;
+	bool to_print = true;
 	for (int i = 0; i < root_descendants.size(); i++) {
 		Contour offset_c;
 		if (to_print)
 		{
+			if (root_descendants[i]->contour->segments[0]->v0 == float3(-23984, 165000 ,- 155481))
+				bool ocio = true;
 			std::cout << i << " " << root_descendants[i]->depth << std::endl;
-			std::cout << "SORTED CONTOUR" << std::endl;
-			std::cout << "[";
+			std::cout << "%SORTED CONTOUR" << std::endl;
+			std::cout << "p1=[";
 			for (auto ss : root_descendants[i]->contour->segments)
 				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 			std::cout << "];" << std::endl;;
@@ -891,8 +929,8 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 		}
 		if (to_print)
 		{
-			std::cout << "OFFSET CONTOUR" << std::endl;
-			std::cout << "[";
+			std::cout << "%OFFSET CONTOUR" << std::endl;
+			std::cout << "p2=[";
 			for (auto s : offset_c.segments)
 			{
 				std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
@@ -900,17 +938,18 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 			std::cout << "];" << std::endl;;
 		}
 		std::vector<std::shared_ptr<Contour>> new_contours;
-		bool self_intersect = offset_c.RemoveSelfIntersections(new_contours);
+		bool self_intersect = offset_c.RemoveSelfIntersections(new_contours, root_descendants[i]->contour->contour_orientation);
 		if (self_intersect)
 		{
 
 			offset_contours.insert(offset_contours.end(), new_contours.begin(), new_contours.end());
 			if (to_print)
 			{
-				std::cout << "Offset no intersection" << std::endl;
+				std::cout << "%Offset no intersection" << std::endl;
+				int counter = 3;
 				for (auto s : new_contours)
 				{
-					std::cout << "[";
+					std::cout << "p" << counter++ << "=[";
 					for (auto ss : s->segments)
 						std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 					std::cout << "];" << std::endl;;

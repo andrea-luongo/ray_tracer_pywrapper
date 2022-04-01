@@ -400,7 +400,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
             std::cout << "];" << std::endl;
         }
 
-        c.RemoveShortSegments(segment_min_length);
+      /*  c.RemoveShortSegments(segment_min_length);
         if (!c.is_valid)
             continue;
         if (verbose)
@@ -411,7 +411,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
             for (auto ss : c.segments)
                 std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
             std::cout << "];" << std::endl;
-        }
+        }*/
 
         sorted_contours.push_back(PyBindContour(c));
 
