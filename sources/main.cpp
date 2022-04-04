@@ -309,7 +309,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
 
     bool verbose = false;
     if (plane.plane->GetX() == float3(0, -439720, 0))
-        verbose = true;
+        verbose = false;
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
     Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
@@ -353,13 +353,14 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
     float epsilon = 0.001 * geometry_scaling;
     float alignment_epsilon = 1e-3;
     bool remove_aligned_segments = false;
+    bool remove_short_segments = false;
     //if (verbose)
     //{
     //    std::cout << "PRIMITIVES" << std::endl;
     //    for (auto s : segment_primitives)
     //        std::cout << s->v0 << " " << s->v1 << std::endl;
     //}
-    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon);
+    auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, segment_min_length);
     if (verbose)
     {
         int total_sorted = 0;
@@ -387,6 +388,19 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
             std::cout << "];" << std::endl;;
         }
 
+        c.RemoveShortSegments(segment_min_length);
+        if (!c.is_valid)
+            continue;
+        if (verbose)
+        {
+            std::cout << "removed short primitives" << std::endl;
+            std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+            std::cout << "p2=[";
+            for (auto ss : c.segments)
+                std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+            std::cout << "];" << std::endl;
+        }
+
         c.RemoveAlignedSegments(alignment_epsilon);
         if (!c.is_valid)
             continue;
@@ -394,24 +408,12 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         {
             std::cout << "removed aligned primitives" << std::endl;
             std::cout << "%REMOVED ALIGNED CONTOUR" << std::endl;
-            std::cout << "p2=[";
+            std::cout << "p3=[";
             for (auto ss : c.segments)
                 std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
             std::cout << "];" << std::endl;
         }
 
-      /*  c.RemoveShortSegments(segment_min_length);
-        if (!c.is_valid)
-            continue;
-        if (verbose)
-        {
-            std::cout << "removed short primitives" << std::endl;
-            std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
-            std::cout << "p3=[";
-            for (auto ss : c.segments)
-                std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-            std::cout << "];" << std::endl;
-        }*/
 
         sorted_contours.push_back(PyBindContour(c));
 
@@ -542,7 +544,7 @@ PyBindContour PyBindContour::OffsetContour(float offset)
 std::vector<PyBindContour> PyBindContour::RemoveSelfIntersections()
 {
     std::vector<std::shared_ptr<Contour>> new_contours;
-    bool self_interset = contour->RemoveSelfIntersections(new_contours);
+    bool self_interset = contour->RemoveSelfIntersections(new_contours, contour->contour_orientation);
     std::vector<PyBindContour> result;
     if (self_interset)
     {

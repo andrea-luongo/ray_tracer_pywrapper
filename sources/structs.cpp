@@ -379,7 +379,7 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 	return result;
 }
 
-std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon)
+std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon, bool remove_short_segments, float const min_segment_length)
 {
 	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
 	if (segments.size() == 1)
@@ -391,8 +391,8 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		int half_idx = int(segments.size() * 0.5);
 		std::vector<std::shared_ptr<Segment>> left_segments(segments.begin(), segments.begin() + half_idx);
 		std::vector<std::shared_ptr<Segment>> right_segments(segments.begin() + half_idx, segments.end());
-		auto left_loop = Segment::SortSegments(left_segments, epsilon, remove_aligned_segments, alignment_epsilon);
-		auto right_loop = Segment::SortSegments(right_segments, epsilon, remove_aligned_segments, alignment_epsilon);
+		auto left_loop = Segment::SortSegments(left_segments, epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, min_segment_length);
+		auto right_loop = Segment::SortSegments(right_segments, epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, min_segment_length);
 		std::vector<int> left_merged_idxs;
 		std::vector<int> right_merged_idxs;
 		//check if left loops can be connected with right loops
@@ -403,7 +403,7 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 				if (std::find(right_merged_idxs.begin(), right_merged_idxs.end(), r_idx) != right_merged_idxs.end())
 					continue;
 				
-				bool is_merged = Segment::MergeSegments(left_loop[l_idx], right_loop[r_idx], epsilon, remove_aligned_segments, alignment_epsilon);
+				bool is_merged = Segment::MergeSegments(left_loop[l_idx], right_loop[r_idx], epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, min_segment_length);
 				if (is_merged)
 				{
 					left_merged_idxs.push_back(l_idx);
@@ -424,7 +424,7 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		{
 			for (int idx_2 = idx_1+1; idx_2 < left_loop.size(); idx_2++)
 			{
-				bool is_merged = Segment::MergeSegments(left_loop[idx_2], left_loop[idx_1], epsilon, remove_aligned_segments, alignment_epsilon);
+				bool is_merged = Segment::MergeSegments(left_loop[idx_2], left_loop[idx_1], epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, min_segment_length);
 				if (is_merged)
 				{
 					merged_idxs.push_back(idx_1);
@@ -470,7 +470,20 @@ bool Segment::CheckAlignment(Segment& s0, Segment& s1, float const angle_epsilon
 	return to_merge;
 }
 
-bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon)
+bool Segment::CheckMinLength(Segment& s0, Segment& s1, float const min_segment_length)
+{
+	float3 s_0_dir = (s0.v1 - s0.v0);
+	float3 s_1_dir = (s1.v1 - s1.v0);
+	bool to_merge = false;
+	if (s_0_dir.length() + s_1_dir.length() < min_segment_length)
+	{
+		to_merge = true;
+	}
+
+	return to_merge;
+}
+
+bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon, bool remove_short_segments, float const min_segment_length)
 {
 	bool is_merged = false;
 	std::shared_ptr<Segment> start_0 = (*s0.begin());
@@ -484,7 +497,7 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	{
 		end_0->v1 = start_1->v0;
 		end_0->ComputeBBox();
-		if (remove_aligned_segments && CheckAlignment(*end_0, *start_1, alignment_epsilon))
+		if ((remove_aligned_segments && CheckAlignment(*end_0, *start_1, alignment_epsilon)) || (remove_short_segments && CheckMinLength(*end_0, *start_1, min_segment_length)))
 		{
 			
 			end_0->v1 = start_1->v1;
@@ -501,7 +514,7 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	{
 		end_1->v1 = start_0->v0;
 		end_1->ComputeBBox();
-		if (remove_aligned_segments && CheckAlignment(*end_1, *start_0, alignment_epsilon))
+		if ((remove_aligned_segments && CheckAlignment(*end_1, *start_0, alignment_epsilon)) || (remove_short_segments && CheckMinLength(*end_1, *start_0, min_segment_length)))
 		{
 			start_0->v0 = end_1->v0;
 			start_0->ComputeBBox();
@@ -520,7 +533,7 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 		std::rotate(s1.begin(), s1.end() - 1, s1.end());
 		for (auto s : s1)
 			s->FlipSegment();
-		if (remove_aligned_segments && CheckAlignment(*end_0, end_1_flipped, alignment_epsilon))
+		if ((remove_aligned_segments && CheckAlignment(*end_0, end_1_flipped, alignment_epsilon)) || (remove_short_segments && CheckMinLength(*end_0, end_1_flipped, min_segment_length)))
 		{
 			end_0->v1 = end_1_flipped.v1;
 			end_0->ComputeBBox();
@@ -540,7 +553,7 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 		for (auto s : s1)
 			s->FlipSegment();
 
-		if (remove_aligned_segments && CheckAlignment(start_1_flipped, *start_0, alignment_epsilon))
+		if ((remove_aligned_segments && CheckAlignment(start_1_flipped, *start_0, alignment_epsilon)) || (remove_short_segments && CheckMinLength(start_1_flipped, *start_0, min_segment_length)))
 		{
 			start_0->v0 = start_1_flipped.v0;
 			start_0->ComputeBBox();
@@ -553,16 +566,13 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 		is_merged = true;
 	}
 	//check if start and end are aligned, if yes, remove last segment
-	if (remove_aligned_segments)
+	if (is_merged && s0.size() > 1 && (*s0.begin())->v0 == (*(s0.end() - 1))->v1)
 	{
-		if (is_merged && s0.size() > 1 && (*s0.begin())->v0 == (*(s0.end() - 1))->v1)
+		if ((remove_aligned_segments && CheckAlignment(*(*s0.begin()), *(*(s0.end() - 1)), alignment_epsilon)) || (remove_short_segments && CheckMinLength(*(*s0.begin()), *(*(s0.end() - 1)), min_segment_length)))
 		{
-			if (CheckAlignment(*(*s0.begin()), *(*(s0.end() - 1)), alignment_epsilon))
-			{
 				(*s0.begin())->v0 = (*(s0.end() - 1))->v0;
 				(*s0.begin())->ComputeBBox();
 				s0.pop_back();
-			}
 		}
 	}
 	return is_merged;

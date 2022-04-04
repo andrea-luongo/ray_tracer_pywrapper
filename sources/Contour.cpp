@@ -905,7 +905,7 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 {
 	std::vector<std::shared_ptr<Contour>> offset_contours;
 	std::vector<std::shared_ptr<ContourNode>> root_descendants = tree_root->GetDescendants();
-	bool to_print = true;
+	bool to_print = false;
 	for (int i = 0; i < root_descendants.size(); i++) {
 		Contour offset_c;
 		if (to_print)

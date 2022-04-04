@@ -171,12 +171,13 @@ public:
 	RAYTRACERDLL_API static Segment FlipSegment(Segment& const s) { return Segment(s.v1, s.v0); };
 	RAYTRACERDLL_API bool IntersectSegment(Segment& const s, float3& hit_point, float& t_hit);
 
-	RAYTRACERDLL_API static std::vector<std::vector<std::shared_ptr<Segment>>> SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon);
+	RAYTRACERDLL_API static std::vector<std::vector<std::shared_ptr<Segment>>> SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon, bool remove_short_segments, float const min_segment_length);
 private:
 
 	RAYTRACERDLL_API bool static CompareSegments(Segment& s0, Segment& s1, float const epsilon);
-	RAYTRACERDLL_API bool static CheckAlignment(Segment& s0, Segment& s1, float const epsilon);
-	RAYTRACERDLL_API bool static MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon);
+	RAYTRACERDLL_API bool static CheckAlignment(Segment& s0, Segment& s1, float const alignment_epsilon);
+	RAYTRACERDLL_API bool static CheckMinLength(Segment& s0, Segment& s1, float const min_segment_length);
+	RAYTRACERDLL_API bool static MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vector<std::shared_ptr<Segment>>& s1, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon, bool remove_short_segments, float const min_segment_length);
 };
 RAYTRACERDLL_API std::ostream& operator<<(std::ostream& os, Segment const& s);
 
