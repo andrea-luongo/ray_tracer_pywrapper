@@ -28,6 +28,13 @@ struct ContourSelfIntersectionPoint
 	{
 		return t_hit < p.t_hit;
 	}
+	bool operator== (const ContourSelfIntersectionPoint& p)
+	{
+		bool result = true;
+		if (hit_point != p.hit_point || t_hit != p.t_hit || idx_0 != p.idx_0 || idx_1 != p.idx_1)
+			result = false;
+		return result;
+	}
 };
 
 class Contour : public Primitive
