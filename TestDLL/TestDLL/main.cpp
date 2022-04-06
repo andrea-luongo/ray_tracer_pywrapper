@@ -258,8 +258,11 @@ void test_geometry_precision()
 	for (int idx=0; idx< sorted_segments_not_removed.size(); idx++)
 	{
 		Contour c(sorted_segments_not_removed[idx], plane.GetNormal());
-		if (!c.is_valid)
+		std::cout << "contour idx " << idx << std::endl;
+		if (!c.is_valid) {
+			std::cout << "Discarded" << std::endl;
 			continue;
+		}
 
 		//std::cout << "%created contour" << std::endl;
 		//if (print_segments)
@@ -282,20 +285,24 @@ void test_geometry_precision()
 				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 			std::cout << "];" << std::endl;
 		}*/
-		if (!c.is_valid)
+		if (!c.is_valid) {
+			std::cout << "Discarded" << std::endl;
 			continue;
+		}
 
 		c.RemoveAlignedSegments(alignment_epsilon);
-		if (print_segments)
-		{
-			std::cout << "% " << idx << " REMOVED SHORT and ALIGNED CONTOUR after sorting" << std::endl;
-			std::cout << "p3=[";
-			for (auto ss : c.segments)
-				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-			std::cout << "];" << std::endl;
-		}
-		if (!c.is_valid)
+		//if (print_segments)
+		//{
+		//	std::cout << "% " << idx << " REMOVED SHORT and ALIGNED CONTOUR after sorting" << std::endl;
+		//	std::cout << "p3=[";
+		//	for (auto ss : c.segments)
+		//		std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+		//	std::cout << "];" << std::endl;
+		//}
+		if (!c.is_valid) {
+			std::cout << "Discarded" << std::endl;
 			continue;
+		}
 
 		sorted_contours_not_removed.push_back(std::make_shared<Contour>(c));
 
