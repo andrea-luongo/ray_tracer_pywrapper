@@ -163,18 +163,240 @@ void test_contour_intersection()
 
 	float rot_angle = 0;
 	auto contour_hits = contour_tree.MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, true);
-
-	Contour offset_contour = sorted_contours[0]->OffsetContour(-2 * vertices_scale);
+	Contour offset_contour;
+	bool is_valid= sorted_contours[0]->OffsetContour(-2 * vertices_scale, offset_contour);
 	std::cout << offset_contour << std::endl;
 	//auto contour_hits_2 = contour_tree.MultiRayAllIntersects(laser_width_microns, 1.0, 0.0, rot_angle, rot, true);
 	std::cout << "DONE\n";
 
 };
 
+std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x4& tr_matrix, float const geometry_scaling, float const segment_min_length)
+{
+	PlaneIntersectionInfo info;
+	float epsilon = 0.001 * geometry_scaling;
+	float alignment_epsilon = 1e-3;
+	bool check_alignment = true;
+	bool check_min_length = false;
+	bool print_segments = false;
+	bool result = bvh.plane_all_intersects(plane, info);
+
+	std::vector<float3> hits = *info.GetHits();
+	std::cout << "%hits: " << hits.size() << std::endl;
+	std::vector<float3> transformed_hits(hits.size());
+	for (int idx = 0; idx < hits.size(); idx++)
+	{
+		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix.Transpose()) * geometry_scaling;
+		transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
+	}
+	std::cout << "%Trasnformed hits" << std::endl;
+
+	std::vector<std::shared_ptr<Segment>> segment_primitives;
+	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
+	{
+		float3 p0 = transformed_hits[i * 2];
+		float3 p1 = transformed_hits[i * 2 + 1];
+		if (float3::length(p0 - p1) == 0)
+		{
+			continue;
+		}
+
+		segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
+	}
+	std::cout << "%created primitives " << segment_primitives.size() << std::endl;
+
+	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon, check_min_length, segment_min_length);
+	std::vector<std::shared_ptr<Contour>> sorted_contours;
+	int discarded_contours = 0;
+	int contour_counter = 0;
+	for (int idx = 0; idx < sorted_segments.size(); idx++)
+	{
+		Contour c(sorted_segments[idx], plane.GetNormal());
+		if (print_segments)
+		{
+			std::cout << "%contour idx " << idx << std::endl;
+			std::cout << "%SORTED CONTOUR" << std::endl;
+			std::cout << "p1=[";
+			for (auto ss : c.segments)
+				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+			std::cout << "];" << std::endl;;
+		}
+		if (!c.is_valid) {
+			if (print_segments)
+			{
+				std::cout << "%Discarded" << std::endl;
+			}
+			discarded_contours++;
+			continue;
+		}
+		if (c.segments[0]->v0.x == 12770)
+			int a = 0;
+		c.RemoveShortSegments(segment_min_length);
+		if (true)
+		{
+			std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+			std::cout << "a" << contour_counter++ << "=[";
+			for (auto ss : c.segments)
+				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+			std::cout << "];" << std::endl;
+		}
+		if (!c.is_valid) {
+			if (print_segments)
+			{
+				std::cout << "%Discarded" << std::endl;
+			}
+			discarded_contours++;
+			continue;
+		}
+
+		/*c.RemoveAlignedSegments(alignment_epsilon);
+		if (!c.is_valid) {
+			if (print_segments)
+			{
+				std::cout << "%Discarded" << std::endl;
+			}
+			discarded_contours++;
+			continue;
+		}
+		if (print_segments)
+		{
+			std::cout << "%REMOVED ALIGNED CONTOUR" << std::endl;
+			std::cout << "a" << contour_counter++ << "=[";
+			for (auto ss : c.segments)
+				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+			std::cout << "];" << std::endl;
+		}*/
+
+		sorted_contours.push_back(std::make_shared<Contour>(c));
+
+	}
+	std::cout << "aligned_contours={";
+	for (int idx = 0; idx < contour_counter; idx++)
+		std::cout << "a" << idx << ", ";
+	std::cout << "};" << std::endl;;
+	std::cout << "%Discarded contours: " << discarded_contours << std::endl;
+	return sorted_contours;
+}
+
+
+std::vector<std::shared_ptr<Contour>> PlaneAllIntersectsContours(BVH& bvh, Plane& plane, Matrix4x4& tr_matrix, float const geometry_scaling, float const segment_min_length)
+{
+
+	bool verbose = false;
+	PlaneIntersectionInfo info;
+	Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
+	bool result = bvh.plane_all_intersects(plane, info);
+
+	std::vector<float3> hits = *info.GetHits();
+
+	std::cout << "%hits: " << hits.size() << std::endl;
+	std::vector<float3> transformed_hits(hits.size());
+	for (int idx = 0; idx < hits.size(); idx++)
+	{
+		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix_transposed) * geometry_scaling;
+		if (geometry_scaling != 1)
+			transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
+		else
+			transformed_hits[idx] = float3(t_hit[0], t_hit[1], t_hit[2]);
+
+	}
+	if (verbose)
+	{
+		std::cout << "%Trasnformed hits" << std::endl;
+	}
+	std::vector<std::shared_ptr<Segment>> segment_primitives;
+
+	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
+	{
+		float3 p0 = transformed_hits[i * 2];
+		float3 p1 = transformed_hits[i * 2 + 1];
+		if (float3::length(p0 - p1) == 0)
+		{
+			continue;
+		}
+		segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
+	}
+	if (verbose)
+	{
+		std::cout << "%created primitives " << segment_primitives.size() << std::endl;
+	}
+	float epsilon = 0.001 * geometry_scaling;
+	float alignment_epsilon = 1e-3;
+	bool remove_aligned_segments = false;
+	bool remove_short_segments = false;
+
+	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, segment_min_length);
+	std::cout << "Sorted Segments " << sorted_segments.size() << std::endl;
+
+
+	std::vector<std::shared_ptr<Contour>> sorted_contours;
+	int discarded_contours = 0;
+	for (int i = 0; i < sorted_segments.size(); i++) 
+	{
+		Contour c(sorted_segments[i], plane.GetNormal());
+		if (verbose)
+		{
+			std::cout << "%contour idx " << i << std::endl;
+			std::cout << "%SORTED CONTOUR" << std::endl;
+			std::cout << "p1=[";
+			for (auto ss : c.segments)
+				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+			std::cout << "];" << std::endl;;
+		}
+		if (!c.is_valid) {
+			std::cout << "%Discarded" << std::endl;
+			discarded_contours++;
+			continue;
+		}
+		if (c.segments[0]->v0.x == 12770)
+			int a = 0;
+		c.RemoveShortSegments(segment_min_length);
+		if (verbose)
+		{
+			//std::cout << "removed short primitives" << std::endl;
+			std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
+			std::cout << "p2=[";
+			for (auto ss : c.segments)
+				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+			std::cout << "];" << std::endl;
+		}
+		if (!c.is_valid) {
+			std::cout << "%Discarded" << std::endl;
+			discarded_contours++;
+			continue;
+		}
+
+		c.RemoveAlignedSegments(alignment_epsilon);
+		if (verbose)
+		{
+			//std::cout << "removed aligned primitives" << std::endl;
+			std::cout << "%REMOVED ALIGNED CONTOUR" << std::endl;
+			std::cout << "p3=[";
+			for (auto ss : c.segments)
+				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+			std::cout << "];" << std::endl;
+		}
+		if (!c.is_valid) {
+			std::cout << "%Discarded" << std::endl;
+			discarded_contours++;
+			continue;
+		}
+
+
+		sorted_contours.push_back(std::make_shared<Contour>(c));
+
+	}
+	std::cout << "%Discarded contours: " << discarded_contours << std::endl;
+	return sorted_contours;
+};
+
+
+
 void test_geometry_precision()
 {
 	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/Bunny-LowPoly.obj");
-	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
+	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
+	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/circles.obj");
 	std::vector<float3> vertices;
 	float3 b_min, b_max;
 	float geometry_scaling = 10000;
@@ -185,13 +407,16 @@ void test_geometry_precision()
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, 450279, 0);
+	float3 plane_x0(0, -379720, 0);
 	float3 plane_n(0, 1e-4, 0);
-	float laser_width_microns = 600;
-	clock_t tStart = clock();
-	//float min_length = laser_width_microns * geometry_scaling / 1000.0 * 0.5;
-
-	//std::cout << min_length << " " << laser_width_microns * geometry_scaling * 1e-3 * 0.5 << std::endl;
+	float laser_width_microns = 200;
+	float epsilon = 0.001 * geometry_scaling;
+	float alignment_epsilon = 1e-3;
+	bool check_alignment = false;
+	bool check_min_length = false;
+	bool print_segments = true;
+	float min_length = (laser_width_microns * 1e-3 * 0.5) * geometry_scaling * 1 * 0.1;
+	float contour_offset = laser_width_microns / 1000.0 * 0.5 * geometry_scaling;
 
 	std::vector<std::shared_ptr<Primitive>> primitives;
 	for (int i = 0; i < (int)(vertices.size() / 3); i++)
@@ -207,187 +432,42 @@ void test_geometry_precision()
 
 
 	Plane plane(plane_x0, plane_n);
-	PlaneIntersectionInfo info;
-	bool result = bvh.plane_all_intersects(plane, info);
 
-	std::vector<float3> hits = *info.GetHits();
-	std::cout << "%hits: " << hits.size() << std::endl;
-	std::vector<float3> transformed_hits(hits.size());
-	for (int idx = 0; idx < hits.size(); idx++)
-	{
-		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * t_matrix.Transpose()) * geometry_scaling;
-		transformed_hits[idx] = float3(int(t_hit[0]), int(t_hit[1]), int(t_hit[2]));
-	}
-	std::cout << "%Trasnformed hits" << std::endl;
-	//std::cout << "number of segments " << hits.size() / 2 << std::endl;
-
-
-	//std::vector<Segment> segment_primitives((int)(transformed_hits.size() / 2));
-	std::vector<std::shared_ptr<Segment>> segment_primitives;
-	int discarded_segments = 0;
-	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
-	{
-		float3 p0 = transformed_hits[i * 2];
-		float3 p1 = transformed_hits[i * 2 + 1];
-		if (float3::length(p0 - p1) == 0)
-		{
-			discarded_segments++;
-			continue;
-		}
-
-		segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
-	}
-	std::cout << "%discarded segments: " << discarded_segments << std::endl;
-	std::cout << "%created primitives " << segment_primitives.size() << std::endl;
-	//std::cout << "PRIMITIVES" << std::endl;
-	//for (auto s : segment_primitives)
-	//	std::cout << s->v0 << " " << s->v1 << std::endl;
-
-	float epsilon = 0.001 * geometry_scaling;
-	bool check_alignment = false;
-	bool check_min_length = false;
-	float alignment_epsilon = 1e-3;
-	bool print_segments = true;
-	float min_length = (laser_width_microns * 1e-3 * 0.5) * geometry_scaling * 1;
-
-	std::cout << plane_x0 << " " << plane_n << " " << t_matrix << " " << geometry_scaling << " " << min_length << std::endl;
-	tStart = clock();
-	auto sorted_segments_not_removed = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon, check_min_length, min_length);
-	std::vector<std::shared_ptr<Contour>> sorted_contours_not_removed;
-
-	for (int idx=0; idx< sorted_segments_not_removed.size(); idx++)
-	{
-		Contour c(sorted_segments_not_removed[idx], plane.GetNormal());
-		std::cout << "contour idx " << idx << std::endl;
-		if (!c.is_valid) {
-			std::cout << "Discarded" << std::endl;
-			continue;
-		}
-
-		//std::cout << "%created contour" << std::endl;
-		//if (print_segments)
-		//{
-		//	std::cout << "%SORTED CONTOUR" << std::endl;
-		//	std::cout << "p1=[";
-		//	for (auto ss : c.segments)
-		//		std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-		//	std::cout << "];" << std::endl;;
-		//}
-	
-
-		c.RemoveShortSegments(min_length);
-	/*	if (print_segments)
-		{
-			std::cout << "%removed short primitives" << std::endl;
-			std::cout << "%REMOVED SHORT CONTOUR" << std::endl;
-			std::cout << "p2=[";
-			for (auto ss : c.segments)
-				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-			std::cout << "];" << std::endl;
-		}*/
-		if (!c.is_valid) {
-			std::cout << "Discarded" << std::endl;
-			continue;
-		}
-
-		c.RemoveAlignedSegments(alignment_epsilon);
-		//if (print_segments)
-		//{
-		//	std::cout << "% " << idx << " REMOVED SHORT and ALIGNED CONTOUR after sorting" << std::endl;
-		//	std::cout << "p3=[";
-		//	for (auto ss : c.segments)
-		//		std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-		//	std::cout << "];" << std::endl;
-		//}
-		if (!c.is_valid) {
-			std::cout << "Discarded" << std::endl;
-			continue;
-		}
-
-		sorted_contours_not_removed.push_back(std::make_shared<Contour>(c));
-
-	}
-	double time_1 = (double)(clock() - tStart) / CLOCKS_PER_SEC;
-	printf("Time taken, alignment and short after sorting: %fs %fs\n", time_1);
-
-	//check_alignment = true;
-	//check_min_length = true;
-	//tStart = clock();
-	//auto sorted_segments_removed = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon, check_min_length, min_length);
-	//
-	//std::vector<std::shared_ptr<Contour>> sorted_contours_removed;
-
-	//for (int idx = 0; idx < sorted_segments_removed.size(); idx++)
+	//std::vector<std::shared_ptr<Contour>> sorted_contours = PlaneAllIntersectsContours(bvh, plane, t_matrix, geometry_scaling, min_length);
+	//std::cout << "BUILDING TREE CONTOURS 1" << std::endl;
+	//	ContourTree sorted_tree(sorted_contours);
+	//for (int idx = 0; idx < 1000; idx++)
 	//{
-	//	Contour c(sorted_segments_removed[idx], plane.GetNormal());
-	//	if (!c.is_valid)
-	//		continue;
-	//
-	//	if (print_segments)
-	//	{
-	//		std::cout << "% " << idx <<" REMOVED SHORT while sorting and aligned after" << std::endl;
-	//		std::cout << "c1=[";
-	//		for (auto ss : c.segments)
-	//			std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-	//		std::cout << "];" << std::endl;
-	//	}
-	//	if (!c.is_valid)
-	//		continue;
-
-	//	sorted_contours_removed.push_back(std::make_shared<Contour>(c));
+	//	ContourTree sorted_tree(sorted_contours);
 
 	//}
-	//double time_2 = (double)(clock() - tStart) / CLOCKS_PER_SEC;
 
-	//printf("Time taken, alignment and short during sorting: %fs %fs\n", time_2);
-	/*
-	check_alignment = true;
-	check_min_length = false;
-	tStart = clock();
-	auto sorted_segments_removed_2 = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon, check_min_length, min_length);
-
-	std::vector<std::shared_ptr<Contour>> sorted_contours_removed_2;
-
-	for (int idx = 0; idx < sorted_segments_removed_2.size(); idx++)
-	{
-		Contour c(sorted_segments_removed_2[idx], plane.GetNormal());
-		if (!c.is_valid)
-			continue;
-		c.RemoveShortSegments(min_length);
-		
-		if (!c.is_valid)
-			continue;
-
-		c.RemoveAlignedSegments(alignment_epsilon);
-		if (print_segments)
-		{
-			std::cout << "% " << idx << " REMOVED SHORT while sorting and aligned after" << std::endl;
-			std::cout << "d1=[";
-			for (auto ss : c.segments)
-				std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
-			std::cout << "];" << std::endl;
-		}
-		if (!c.is_valid)
-			continue;
-
-		sorted_contours_removed_2.push_back(std::make_shared<Contour>(c));
-
-	}
-	double time_3 = (double)(clock() - tStart) / CLOCKS_PER_SEC;
-	printf("Time taken, alignment during sorting + short and alignment after sorting: %fs %fs\n", time_3);*/
-
-	ContourTree sorted_tree(sorted_contours_not_removed);
-	ContourTree offset_tree = sorted_tree.OffsetContourTree(laser_width_microns / 1000.0 * 0.5 * geometry_scaling);
+	//ContourTree offset_tree = sorted_tree.OffsetContourTree(contour_offset);
 	
-	//for (auto s : offset_tree.contours)
+	std::vector<std::shared_ptr<Contour>> sorted_contours2 = OldMethod(bvh, plane, t_matrix, geometry_scaling, min_length);
+	std::cout << "%BUILDING TREE CONTOURS 2" << std::endl;
+	ContourTree sorted_tree2(sorted_contours2);
+	ContourTree offset_tree2 = sorted_tree2.OffsetContourTree(contour_offset);
+	//for (int idx = 0; idx < 1000; idx++)
 	//{
-	//	std::cout << "OFFSET TREE CONTOUR" << std::endl;
+	//	ContourTree sorted_tree2(sorted_contours2);
+
+	//}
+
+	
+
+	//int idx = 0;
+	//for (auto s : offset_tree2.contours)
+	//{
+	//	std::cout << "%OFFSET TREE CONTOUR" << std::endl;
+	//	std::cout << "c" << idx << "= [";
 	//	for (auto ss : s->segments)
 	//		std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+	//	std::cout << "];" << std::endl;;
 	//}
 
 	//float laser_width = 600;
-	//auto intersection_points = ct.MultiRayAllIntersects(laser_width * geometry_scaling,
+	//auto intersection_points = offset_tree2.MultiRayAllIntersects(laser_width * geometry_scaling,
 	//	1, 0, 0, true);
 
 	std::cout << "SUCCESS" << std::endl;

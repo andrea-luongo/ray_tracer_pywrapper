@@ -107,7 +107,7 @@ public:
     bool AnyIntersect(PyBindRay& ray);
     bool AllIntersects(PyBindRay& ray, PyBindRayInfo& info);
     std::vector<std::vector<py::array_t<float>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle, bool verbose = false);
-    PyBindContour OffsetContour(float offset);
+    py::tuple OffsetContour(float offset);
     std::vector<PyBindContour> RemoveSelfIntersections();
     std::vector<py::array_t<float>> GetSegments();
 
