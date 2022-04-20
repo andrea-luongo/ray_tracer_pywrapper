@@ -204,18 +204,18 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 	float3 bmin = bbox.GetpMin();
 	//std::cout << "%bbox center " << 0.5f * ( bbox.GetpMax() + bbox.GetpMin()) << std::endl;
 	//std::cout << "%new bbox center " << 0.5f * (new_bbox.GetpMax() + new_bbox.GetpMin()) << std::endl;
-	if (offset < 0)
-	{
-		if (new_bmax.x >= bmax.x || new_bmax.z >= bmax.z || new_bmin.x <= bmin.x || new_bmin.z <= bmin.z) {
-			is_valid = false;
-		}
-	}
-	else
-	{
-		if (new_bmax.x <= bmax.x || new_bmax.z <= bmax.z || new_bmin.x >= bmin.x || new_bmin.z >= bmin.z) {
-			is_valid = false;
-		}
-	}
+	//if (offset < 0)
+	//{
+	//	if (new_bmax.x >= bmax.x || new_bmax.z >= bmax.z || new_bmin.x <= bmin.x || new_bmin.z <= bmin.z) {
+	//		is_valid = false;
+	//	}
+	//}
+	//else
+	//{
+	//	if (new_bmax.x <= bmax.x || new_bmax.z <= bmax.z || new_bmin.x >= bmin.x || new_bmin.z >= bmin.z) {
+	//		is_valid = false;
+	//	}
+	//}
 	return is_valid;
 }
 
@@ -929,12 +929,13 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 {
 	std::vector<std::shared_ptr<Contour>> offset_contours;
 	std::vector<std::shared_ptr<ContourNode>> root_descendants = tree_root->GetDescendants();
-	bool to_print = false;
+	bool to_print = true;
 	int new_contour_counter = 0;
 	int offset_contour_counter = 0;
+	int original_contour_counter = 0;
 	for (int i = 0; i < root_descendants.size(); i++) {
 		Contour offset_c;
-		bool is_offset_valid;
+		bool is_offset_valid = false;
 		//std::cout <<"%contour idx " << i << " " << root_descendants[i]->depth << std::endl;
 		//if (to_print)
 		//{
@@ -948,13 +949,23 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 		//		std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 		//	std::cout << "];" << std::endl;;
 		//}
-		if (root_descendants[i]->depth % 2 == 1)
-		{
+	/*	if (root_descendants[i]->depth % 2 == 1)
+		{*/
 			is_offset_valid = root_descendants[i]->contour->OffsetContour(-offset, offset_c);
-		}
-		else
+		//}
+		//else
+		//{
+		//	is_offset_valid = root_descendants[i]->contour->OffsetContour(offset, offset_c);
+		//}
+		if (to_print)
 		{
-			is_offset_valid = root_descendants[i]->contour->OffsetContour(offset, offset_c);
+			std::cout << "%ORIGINAL CONTOUR" << std::endl;
+			std::cout << "or" << original_contour_counter++ << "= [";
+			for (auto s : root_descendants[i]->contour->segments)
+			{
+				std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
+			}
+			std::cout << "];" << std::endl;;
 		}
 		if (to_print)
 		{
@@ -974,7 +985,7 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 			{
 
 				offset_contours.insert(offset_contours.end(), new_contours.begin(), new_contours.end());
-				if (to_print)
+			/*	if (to_print)
 				{
 					std::cout << "%Offset no intersection" << std::endl;
 					for (auto s : new_contours)
@@ -984,12 +995,12 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 							std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 						std::cout << "];" << std::endl;;
 					}
-				}
+				}*/
 			}
 			else
 			{
 				offset_contours.push_back(std::make_shared<Contour>(offset_c));
-				if (to_print)
+			/*	if (to_print)
 				{
 					std::cout << "%Offset no intersection" << std::endl;
 
@@ -997,7 +1008,7 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 					for (auto ss : offset_c.segments)
 						std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
 					std::cout << "];" << std::endl;;
-				}
+				}*/
 			}
 		}
 		else
@@ -1010,6 +1021,10 @@ ContourTree ContourTree::OffsetContourTree(float offset)
 	}
 	if (to_print)
 	{
+		std::cout << "original_contours={";
+		for (int idx = 0; idx < original_contour_counter; idx++)
+			std::cout << "or" << idx << ", ";
+		std::cout << "};" << std::endl;;
 		std::cout << "offset_contours={";
 		for (int idx = 0; idx < offset_contour_counter; idx++)
 			std::cout << "o" << idx << ", ";
