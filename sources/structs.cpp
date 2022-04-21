@@ -239,6 +239,10 @@ bool Segment::Intersect(Ray& ray, RayIntersectionInfo& info)
 {
 	double3 s = v1 - v0;
 	double3 e = v0 - ray.GetOrigin();
+	double epsilon = 1e-4;
+	double dot_product = double3::dot(double3::normalize(s), double3::normalize(ray.GetDirection()));
+	if (abs(dot_product) > 1 - epsilon)
+		return false;
 	double3 cross_dir_s = double3::cross(ray.GetDirection(), s);
 	double3 cross_e_dir = double3::cross(e, ray.GetDirection());
 	double x = double3::length(cross_dir_s);

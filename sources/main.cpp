@@ -684,10 +684,14 @@ std::vector< std::vector<std::vector<py::array_t<float>>>> PyBindContourTree::Mu
     return reinterpreted_contour_tree_hit_points;
 };
 
-PyBindContourTree PyBindContourTree::OffsetContourTree(float offset)
+py::tuple PyBindContourTree::OffsetContourTree(float offset)
 {
-    ContourTree result = contour_tree->OffsetContourTree(offset);
-    return PyBindContourTree(result);
+    ContourTree tree;
+    bool succesful_offset = contour_tree->OffsetContourTree(offset, tree);
+    //return PyBindContourTree(result);
+    //std::cout << "succesful offset " << succesful_offset << std::endl;
+    PyBindContourTree pytree(tree);
+    return py::make_tuple(succesful_offset, pytree);
 }
 
 std::vector<py::array_t<float>> PyBindContourTree::GetAllSegments()

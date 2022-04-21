@@ -130,6 +130,7 @@ public:
     bool Intersect(PyBindRay& ray, PyBindRayInfo& info);
     bool AnyIntersect(PyBindRay& ray);
     bool AllIntersects(PyBindRay& ray, PyBindRayInfo& info);
-    PyBindContourTree OffsetContourTree(float offset);
+    //PyBindContourTree OffsetContourTree(float offset);
+    py::tuple OffsetContourTree(float offset);
     std::vector< std::vector<std::vector<py::array_t<float>>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle, bool verbose = false);
 };

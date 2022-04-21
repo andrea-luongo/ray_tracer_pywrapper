@@ -64,8 +64,8 @@ public:
 	RAYTRACERDLL_API void RemoveAlignedSegments(float alignment_epsilon);
 	RAYTRACERDLL_API void RemoveShortSegments(float min_length);
 	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
-private:
 	RAYTRACERDLL_API bool FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& contour_intersection_points, std::map<int, std::vector<ContourSelfIntersectionPoint>>& contour_intersection_dict);
+private:
 	RAYTRACERDLL_API void ComputeContourOrientation();
 
 
@@ -123,12 +123,14 @@ public:
 
 public:
 	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
+	RAYTRACERDLL_API ContourTree();
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API std::vector<std::vector<std::vector<float3>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
 	RAYTRACERDLL_API BBox GetBBox();
-	RAYTRACERDLL_API ContourTree OffsetContourTree(float offset);
+	//RAYTRACERDLL_API ContourTree OffsetContourTree(float offset);
+	RAYTRACERDLL_API bool OffsetContourTree(float offset, ContourTree& new_tree);
 private:
 	RAYTRACERDLL_API void BuildTree();
 	RAYTRACERDLL_API void CheckChildren(std::shared_ptr<ContourNode> n, std::vector<std::shared_ptr<ContourNode>> children);

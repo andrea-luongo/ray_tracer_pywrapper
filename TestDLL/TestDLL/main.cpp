@@ -396,6 +396,7 @@ void test_geometry_precision()
 {
 	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/Bunny-LowPoly.obj");
 	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
+	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/coso.obj");
 	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/circles.obj");
 	std::vector<float3> vertices;
 	float3 b_min, b_max;
@@ -407,9 +408,9 @@ void test_geometry_precision()
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -379720, 0);
+	float3 plane_x0(0, -529720, 0);
 	float3 plane_n(0, 1e-4, 0);
-	float laser_width_microns = 1000;
+	float laser_width_microns = 50;
 	float epsilon = 0.001 * geometry_scaling;
 	float alignment_epsilon = 1e-3;
 	bool check_alignment = false;
@@ -447,7 +448,8 @@ void test_geometry_precision()
 	std::vector<std::shared_ptr<Contour>> sorted_contours2 = OldMethod(bvh, plane, t_matrix, geometry_scaling, min_length);
 	std::cout << "%BUILDING TREE CONTOURS 2" << std::endl;
 	ContourTree sorted_tree2(sorted_contours2);
-	ContourTree offset_tree2 = sorted_tree2.OffsetContourTree(contour_offset);
+	ContourTree offset_tree2;
+	bool succesful_offset = sorted_tree2.OffsetContourTree(contour_offset, offset_tree2);
 	//for (int idx = 0; idx < 1000; idx++)
 	//{
 	//	ContourTree sorted_tree2(sorted_contours2);
