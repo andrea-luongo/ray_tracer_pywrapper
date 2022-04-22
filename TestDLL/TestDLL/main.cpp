@@ -394,8 +394,8 @@ std::vector<std::shared_ptr<Contour>> PlaneAllIntersectsContours(BVH& bvh, Plane
 
 void test_geometry_precision()
 {
-	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/Bunny-LowPoly.obj");
-	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
+	std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/Bunny-LowPoly.obj");
+	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/EiffelTower_fixed.obj");
 	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/coso.obj");
 	//std::string filename("C:/Users/aluo/Documents/Repositories/3DOpenSource_development/resources/circles.obj");
 	std::vector<float3> vertices;
@@ -404,13 +404,13 @@ void test_geometry_precision()
 	bool swap_yz = true;
 	load_obj(filename, geometry_scaling, swap_yz, vertices, b_min, b_max);
 	float4 r0(9.99999975e-05, 0.00000000e+00, 0.00000000e+00, 0.00000000e+00);
-	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 6.04720039e+01);
+	float4 r1(0.00000000e+00, 9.99999975e-05, 0.00000000e+00, 5.36298790e+01);
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -529720, 0);
+	float3 plane_x0(0, -451298, 0);
 	float3 plane_n(0, 1e-4, 0);
-	float laser_width_microns = 50;
+	float laser_width_microns = 10000;
 	float epsilon = 0.001 * geometry_scaling;
 	float alignment_epsilon = 1e-3;
 	bool check_alignment = false;

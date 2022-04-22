@@ -155,7 +155,7 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 {
 	bool is_valid = true;
 	float minimum_angle = 0.2;
-	float minimum_area = offset;
+	float minimum_area = 0.25*(offset*offset) * M_PI;
 	std::vector<float3> new_vertices(segments.size());
 	std::vector<std::shared_ptr<Segment>> new_segments(segments.size());
 	for (int idx = 0; idx < segments.size(); idx++)
@@ -173,8 +173,32 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 		float3 s_prev_normal = float3::cross(s_prev_side, contour_normal).normalize();
 		float half_angle = 0.5 * (acosf(float3::dot(s_normal, s_prev_normal)));
 		float3 half_normal = (s_normal + s_prev_normal).normalize();
-		float3 v = s_cur[0] + offset / cosf(half_angle) * half_normal;
-		if ((area < minimum_area || M_PI - 2 * half_angle < minimum_angle) && offset < 0)
+		float new_offset = offset / cosf(half_angle);
+		float3 v = s_cur[0] + new_offset * half_normal;
+		if (offset < 0)
+		{
+			bool to_correct = false;
+			if (M_PI - 2 * half_angle < minimum_angle)
+			{
+				to_correct = true;
+			}
+			else if ( area < minimum_area && fabsf(new_offset) > fabsf(2.5 * offset))
+			{
+				to_correct = true;
+			}
+			if (to_correct)
+			{
+				if (s_cur_side.length() < s_prev_side.length())
+				{
+					v = -s_cur_side.length() * sinf(half_angle) * half_normal + s_cur[0];
+				}
+				else
+				{
+					v = -s_prev_side.length() * sinf(half_angle) * half_normal + s_cur[0];
+				}
+			}
+		}
+		/*if ((M_PI - 2 * half_angle < minimum_angle) && offset < 0)
 		{
 			if (s_cur_side.length() < s_prev_side.length())
 			{
@@ -184,39 +208,55 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 			{
 				v = -s_prev_side.length() * sinf(half_angle) * half_normal + s_cur[0];
 			}
-		}
+		}*/
 
 		new_vertices[idx] = v;
 		if (idx > 0)
 		{
-			new_segments[idx] = std::shared_ptr<Segment>(new Segment(new_vertices[idx - 1], v));
+			new_segments[idx-1] = std::shared_ptr<Segment>(new Segment(new_vertices[idx - 1], v));
 		}
 		if (idx == segments.size()-1)
 		{
-			new_segments[0] = std::shared_ptr<Segment>(new Segment(v, new_vertices[0]));
+			new_segments[idx] = std::shared_ptr<Segment>(new Segment(v, new_vertices[0]));
 		}
 	}
 	new_c = Contour(new_segments, contour_normal);
 	if (contour_orientation > 0)
 	{
-		BBox new_bbox = new_c.GetBBox();
-		float3 new_bmax = new_bbox.GetpMax();
-		float3 new_bmin = new_bbox.GetpMin();
-		float3 bmax = bbox.GetpMax();
-		float3 bmin = bbox.GetpMin();
-		float diagonal_length = bbox.Diagonal().length();
 
-		float half_angle = M_PI / 4.0;
-		float3 min_half_normal = float3(-1, 0, -1).normalize();
-		float3 max_half_normal = float3(1, 0, 1).normalize();
-		float3 offset_max = bmax + offset / cosf(half_angle) * max_half_normal;
-		float3 offset_min = bmin + offset / cosf(half_angle) * min_half_normal;
-		//if (diagonal_length < 2 * offset)
-		//	is_valid = false;
-		if (offset_min.x >= offset_max.x || offset_min.z >= offset_max.z)
+		Segment s_old = *segments[0];
+		Segment s_new = *new_segments[0];
+		
+		float3 s_old_side = s_old[1] - s_old[0];
+		float3 s_new_side = s_new[1] - s_new[0];
+	
+		float3 s_old_normal = float3::cross(s_old_side, contour_normal).normalize();
+		float3 s_new_normal = float3::cross(s_new_side, contour_normal).normalize();
+		float dot_product = float3::dot(s_old_normal, s_new_normal);
+		if (dot_product < 0.0)
 		{
 			is_valid = false;
 		}
+
+
+		//BBox new_bbox = new_c.GetBBox();
+		//float3 new_bmax = new_bbox.GetpMax();
+		//float3 new_bmin = new_bbox.GetpMin();
+		//float3 bmax = bbox.GetpMax();
+		//float3 bmin = bbox.GetpMin();
+		//float diagonal_length = bbox.Diagonal().length();
+
+		//float half_angle = M_PI / 4.0;
+		//float3 min_half_normal = float3(-1, 0, -1).normalize();
+		//float3 max_half_normal = float3(1, 0, 1).normalize();
+		//float3 offset_max = bmax + offset / cosf(half_angle) * max_half_normal;
+		//float3 offset_min = bmin + offset / cosf(half_angle) * min_half_normal;
+		////if (diagonal_length < 2 * offset)
+		////	is_valid = false;
+		//if (offset_min.x >= offset_max.x || offset_min.z >= offset_max.z)
+		//{
+		//	is_valid = false;
+		//}
 		/*if (new_bmax.x >= bmax.x || new_bmax.z >= bmax.z || new_bmin.x <= bmin.x || new_bmin.z <= bmin.z) {
 			is_valid = false;
 		}*/
@@ -365,7 +405,8 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 	bool is_self_intersecting = FindSelfIntersections(intersection_points, intersections_dict);
 	bool intersections_succesfully_removed = true;
 	//return !is_self_intersecting;
-
+	if (segments[0]->v0.x == -170498)
+		int tmp = 0;
 	if (is_self_intersecting)
 	{
 		int total_segments = 0;
@@ -375,7 +416,7 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 			std::vector<std::shared_ptr<Segment>> loop;
 			ContourSelfIntersectionPoint P_start = intersection_points[p_idx];
 			ContourSelfIntersectionPoint P_current = P_start;
-			int end_idx = P_start.idx_1;
+			int end_idx = P_current.idx_1;
 			bool skip_loop = false;
 			bool loop_closed = false;
 			bool skip_dict_check = false;
@@ -419,9 +460,14 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 					P_current = intersection_points[current_p_idx];
 					v1 = P_current.hit_point;
 					current_idx = P_current.idx_1;
-					if (current_p_idx == intersection_points.size() - 1 || intersections_dict[current_idx].size() == 1 || P_current.idx_0 != intersection_points[current_p_idx + 1].idx_0)
+					if (current_p_idx == intersection_points.size() - 1 || intersections_dict[current_idx].size() == 1 )
 					{
 						skip_dict_check = true;
+					}
+					else if (intersections_dict[current_idx].size() > 1 && P_current.idx_1 != intersection_points[current_p_idx + 1].idx_0)
+					{
+						skip_dict_check = true;
+						current_p_idx += intersections_dict[current_idx].size() - 1;
 					}
 				}
 
@@ -437,14 +483,20 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 		std::vector<std::shared_ptr<Segment>> loop;
 		int p_idx = 0;
 		int current_p_idx = p_idx;
-		ContourSelfIntersectionPoint P = intersection_points[p_idx];
+		ContourSelfIntersectionPoint P_start = intersection_points[p_idx];
+		ContourSelfIntersectionPoint P_current = P_start;
+		int end_idx = P_start.idx_0;
 		bool skip_loop = false;
 		bool loop_closed = false;
-		bool skip_dict_check = true;
-		float3 v0 = segments[P.idx_0]->v0;
-		float3 v1 = P.hit_point;
-		int current_idx = P.idx_1;
+		bool skip_dict_check = false;
+		float3 v0 = segments[P_current.idx_0]->v0;
+		float3 v1 = P_current.hit_point;
+		int current_idx = P_current.idx_1;
 		loop.push_back(std::make_shared<Segment>(v0, v1));
+		if (current_p_idx == intersection_points.size() - 1 || intersections_dict[current_idx].size() == 1 || P_current.idx_1 != intersection_points[current_p_idx + 1].idx_0)
+		{
+			skip_dict_check = true;
+		}
 		while (!loop_closed)
 		{
 			v0 = v1;
@@ -454,22 +506,32 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 				current_idx = current_idx < segments.size() - 1 ? current_idx + 1 : 0;
 				skip_dict_check = false;
 			}
-			else if (intersections_dict[current_idx].size() == 1 || loop_closed)
+			/*else if (intersections_dict[current_idx].size() == 1 || loop_closed)
 			{
 				v1 = intersections_dict[current_idx][0].hit_point;
 				current_idx = intersections_dict[current_idx][0].idx_1;
 				skip_dict_check = true;
-			}
+			}*/
 			else
 			{
 				current_p_idx = current_p_idx < intersection_points.size() - 1 ? current_p_idx + 1 : 0;
-				v1 = intersection_points[current_p_idx].hit_point;
-				current_idx = intersection_points[current_p_idx].idx_1;
-				skip_dict_check = true;
+				P_current = intersection_points[current_p_idx];
+				v1 = P_current.hit_point;
+				current_idx = P_current.idx_1;
+				//skip_dict_check = true;
+				if (current_p_idx == intersection_points.size() - 1 || intersections_dict[current_idx].size() == 1)
+				{
+					skip_dict_check = true;
+				}
+				else if (intersections_dict[current_idx].size() > 1 && P_current.idx_0 != intersection_points[current_p_idx + 1].idx_0)
+				{
+					skip_dict_check = true;
+					current_p_idx += intersections_dict[current_idx].size() - 1;
+				}
 			}
 			loop.push_back(std::make_shared<Segment>(v0, v1));
 
-			if (current_idx == P.idx_0)
+			if (current_idx == end_idx)
 				loop_closed = true;
 		}
 		std::shared_ptr<Contour> new_contour = std::make_shared<Contour>(loop, contour_normal);
