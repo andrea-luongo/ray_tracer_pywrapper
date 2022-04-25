@@ -408,7 +408,7 @@ void test_geometry_precision()
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -451298, 0);
+	float3 plane_x0(0, -531298, 0);
 	float3 plane_n(0, 1e-4, 0);
 	float laser_width_microns = 10000;
 	float epsilon = 0.001 * geometry_scaling;
