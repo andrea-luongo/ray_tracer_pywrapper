@@ -19,6 +19,15 @@ struct ContourSelfIntersectionPoint
 	int idx_1;
 	int id;
 
+	ContourSelfIntersectionPoint()
+	{
+		hit_point = float3();
+		t_hit = -1;
+		idx_0 = -1;
+		idx_1 = -1;
+		id = -1;
+	}
+
 	ContourSelfIntersectionPoint(float3 p, float t, int i0, int i1, int i)
 	{
 		hit_point = p;

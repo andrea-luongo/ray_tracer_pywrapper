@@ -689,7 +689,7 @@ py::tuple PyBindContourTree::OffsetContourTree(float offset)
     ContourTree tree;
     bool succesful_offset = contour_tree->OffsetContourTree(offset, tree);
     //return PyBindContourTree(result);
-    //std::cout << "succesful offset " << succesful_offset << std::endl;
+    std::cout << "succesful offset " << succesful_offset << std::endl;
     PyBindContourTree pytree(tree);
     return py::make_tuple(succesful_offset, pytree);
 }
