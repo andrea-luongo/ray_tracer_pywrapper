@@ -60,7 +60,7 @@ void Contour::ComputeContourOrientation()
 
 		total += cur_value;
 	}
-	contour_orientation = total >= 0;
+	contour_orientation = (total >= 0);
 }
 
 bool Contour::Intersect(Ray& ray, RayIntersectionInfo& info)
@@ -221,7 +221,7 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 		}
 	}
 	new_c = Contour(new_segments, contour_normal);
-	if (contour_orientation > 0)
+	if (contour_orientation >= 0)
 	{
 
 		Segment s_old = *segments[0];
@@ -350,14 +350,19 @@ void Contour::RemoveShortSegments(float min_length)
 	//ComputeBBox();
 }
 
-bool Contour::FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& contour_intersection_points, std::map<int, std::vector<ContourSelfIntersectionPoint>>& contour_intersection_dict)
+bool Contour::FindSelfIntersections(std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>& contour_intersection_points, std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>>& contour_intersection_dict)
 {
 	bool is_self_intersecting = false;
 	int id_counter = 0;
+
+	auto compare_pointer = [](std::shared_ptr<ContourSelfIntersectionPoint> a, std::shared_ptr<ContourSelfIntersectionPoint> b) {
+		return *a < *b;
+	};
+
 	for (int i = 0; i < segments.size() - 2; i++)
 	{
 		std::shared_ptr<Segment> s_i = segments[i];
-		std::vector<ContourSelfIntersectionPoint> segment_intersection_points;
+		std::vector<std::shared_ptr<ContourSelfIntersectionPoint>> segment_intersection_points;
 		for (int j = i + 2; j < segments.size(); j++)
 		{
 			if (i == 0 && j == segments.size() - 1)
@@ -368,17 +373,17 @@ bool Contour::FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& c
 			float t_hit;
 			if (s_i->IntersectSegment(*s_j, hit_point, t_hit))
 			{
-				ContourSelfIntersectionPoint P(hit_point, t_hit, i, j, id_counter++);
+				std::shared_ptr<ContourSelfIntersectionPoint> P = std::make_shared<ContourSelfIntersectionPoint>(hit_point, t_hit, i, j, id_counter++);
 				segment_intersection_points.push_back(P);
 				contour_intersection_dict[i].push_back(P);
-				P.t_hit = (P.hit_point - s_j->v0).length() / (s_j->v1 - s_j->v0).length();
+				P->t_hit = (P->hit_point - s_j->v0).length() / (s_j->v1 - s_j->v0).length();
 				contour_intersection_dict[j].push_back(P);
-				std::sort(contour_intersection_dict[j].begin(), contour_intersection_dict[j].end());
-				std::sort(contour_intersection_dict[i].begin(), contour_intersection_dict[i].end());
+				std::sort(contour_intersection_dict[j].begin(), contour_intersection_dict[j].end(), compare_pointer);
+				std::sort(contour_intersection_dict[i].begin(), contour_intersection_dict[i].end(), compare_pointer);
 			}
 
 		}
-		std::sort(segment_intersection_points.begin(), segment_intersection_points.end());
+		std::sort(segment_intersection_points.begin(), segment_intersection_points.end(), compare_pointer);
 		contour_intersection_points.insert(contour_intersection_points.end(), segment_intersection_points.begin(), segment_intersection_points.end());
 	}
 	if (contour_intersection_points.size() > 0)
@@ -402,8 +407,8 @@ bool Contour::FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& c
 //TODO to fix this function
 bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours, bool keep_clockwise)
 {
-	std::vector<ContourSelfIntersectionPoint> intersection_points;
-	std::map<int, std::vector<ContourSelfIntersectionPoint>> intersections_dict;
+	std::vector<std::shared_ptr<ContourSelfIntersectionPoint>> intersection_points;
+	std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>> intersections_dict;
 	bool is_self_intersecting = FindSelfIntersections(intersection_points, intersections_dict);
 	bool intersections_succesfully_removed = true;
 	//return !is_self_intersecting;
@@ -418,15 +423,16 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 			std::vector<std::shared_ptr<Segment>> loop;
 			int current_p_idx = p_idx;
 			int next_p_idx = 0;
-			ContourSelfIntersectionPoint P_start = intersection_points[current_p_idx];
-			ContourSelfIntersectionPoint P_current = P_start;
-			int end_idx = P_current.idx_1;
+			std::shared_ptr<ContourSelfIntersectionPoint> P_start = intersection_points[current_p_idx];
+			std::shared_ptr<ContourSelfIntersectionPoint> P_current = intersection_points[current_p_idx];
+			int end_idx = P_current->idx_1;
 			bool skip_loop = false;
 			bool loop_closed = false;
 			bool skip_dict_check = false;
-			float3 v0 = P_current.hit_point;
+			float3 v0 = P_current->hit_point;
 			float3 v1;
-			int current_idx = P_current.idx_0;
+			int current_idx = P_current->idx_0;
+			P_current->e0_traversed = true;
 
 			auto it = std::find(intersections_dict[current_idx].begin(), intersections_dict[current_idx].end(), P_current);
 			if (it != intersections_dict[current_idx].end())
@@ -438,16 +444,28 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 			{
 				v1 = segments[current_idx]->v1;
 				current_idx = current_idx < segments.size() - 1 ? current_idx + 1 : 0;
-				P_current = ContourSelfIntersectionPoint();
+				P_current = std::make_shared<ContourSelfIntersectionPoint>();
 			}
 			else
 			{
 				P_current = intersections_dict[current_idx][current_p_idx + 1];
-				v1 = P_current.hit_point;
-				if (current_idx == P_current.idx_0)
-					current_idx = P_current.idx_1;
-				else
-					current_idx = P_current.idx_0;
+				v1 = P_current->hit_point;
+				if (current_idx == P_current->idx_0)
+				{
+					current_idx = P_current->idx_1;
+					if (P_current->e1_traversed)
+						continue;
+					else
+						P_current->e1_traversed = true;
+				}
+				else 
+				{
+					current_idx = P_current->idx_0;
+					if (P_current->e0_traversed)
+						continue;
+					else
+						P_current->e0_traversed = true;
+				}
 
 
 				it = std::find(intersections_dict[current_idx].begin(), intersections_dict[current_idx].end(), P_current);
@@ -462,19 +480,15 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 				}
 			}
 
-
-
 			loop.push_back(std::make_shared<Segment>(v0, v1));
 			while (!loop_closed)
 			{
 				v0 = v1;
-				//if (current_idx == end_idx)
 				if (P_current == P_start)
 				{
 					loop_closed = true;
-					v1 = P_start.hit_point;
-					current_idx = P_start.idx_1;
-					//loop.push_back(std::make_shared<Segment>(v0, v1));
+					v1 = P_start->hit_point;
+					current_idx = P_start->idx_1;
 					break;
 				}
 				if (intersections_dict.count(current_idx) == 0 || skip_dict_check)
@@ -482,24 +496,10 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 					v1 = segments[current_idx]->v1;
 					current_idx = current_idx < segments.size() - 1 ? current_idx + 1 : 0;
 					skip_dict_check = false;
-					P_current = ContourSelfIntersectionPoint();
+					P_current = std::make_shared<ContourSelfIntersectionPoint>();
 				}
 				else
 				{
-					//current_p_idx = current_p_idx < intersection_points.size() - 1 ? current_p_idx + 1 : 0;
-					//P_current = intersection_points[current_p_idx];
-					//v1 = P_current.hit_point;
-					//current_idx = P_current.idx_1;
-					//if (current_p_idx == intersection_points.size() - 1 || intersections_dict[current_idx].size() == 1 )
-					//{
-					//	skip_dict_check = true;
-					//}
-					//else if (intersections_dict[current_idx].size() > 1 && P_current.idx_1 != intersection_points[current_p_idx + 1].idx_0)
-					//{
-					//	skip_dict_check = true;
-					//	current_p_idx += intersections_dict[current_idx].size() - 1;
-					//}
-
 					it = std::find(intersections_dict[current_idx].begin(), intersections_dict[current_idx].end(), P_current);
 					if (it != intersections_dict[current_idx].end())
 						next_p_idx = it - intersections_dict[current_idx].begin() + 1;
@@ -507,11 +507,24 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 						next_p_idx = 0;
 
 					P_current = intersections_dict[current_idx][next_p_idx];
-					v1 = P_current.hit_point;
-					if (current_idx == P_current.idx_0)
-						current_idx = P_current.idx_1;
+					v1 = P_current->hit_point;
+
+					if (current_idx == P_current->idx_0)
+					{
+						current_idx = P_current->idx_1;
+						if (P_current->e1_traversed)
+							loop_closed = true;
+						else
+							P_current->e1_traversed = true;
+					}
 					else
-						current_idx = P_current.idx_0;
+					{
+						current_idx = P_current->idx_0;
+						if (P_current->e0_traversed)
+							loop_closed = true;
+						else
+							P_current->e0_traversed = true;
+					}
 
 					it = std::find(intersections_dict[current_idx].begin(), intersections_dict[current_idx].end(), P_current);
 					if (it != intersections_dict[current_idx].end())
@@ -539,16 +552,17 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 		int p_idx = 0;
 		int current_p_idx = p_idx;
 		int next_p_idx = 0;
-		ContourSelfIntersectionPoint P_start = intersection_points[current_p_idx];
-		ContourSelfIntersectionPoint P_current = P_start;
-		int end_idx = P_start.idx_0;
+		std::shared_ptr<ContourSelfIntersectionPoint> P_start = intersection_points[current_p_idx];
+		std::shared_ptr<ContourSelfIntersectionPoint> P_current = intersection_points[current_p_idx];
+		int end_idx = P_start->idx_0;
 		bool skip_loop = false;
 		bool loop_closed = false;
 		bool skip_dict_check = false;
 		//float3 v0 = segments[P_current.idx_0]->v0;
-		float3 v0 = P_current.hit_point;
+		float3 v0 = P_current->hit_point;
 		float3 v1;
-		int current_idx = P_current.idx_1;
+		int current_idx = P_current->idx_1;
+		P_current->e1_traversed = true;
 		
 		auto it = std::find(intersections_dict[current_idx].begin(), intersections_dict[current_idx].end(), P_current);
 		if (it != intersections_dict[current_idx].end())
@@ -564,11 +578,23 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 		else
 		{
 			P_current = intersections_dict[current_idx][current_p_idx + 1];
-			v1 = P_current.hit_point;
-			if (current_idx == P_current.idx_0)
-				current_idx = P_current.idx_1;
+			v1 = P_current->hit_point;
+			if (current_idx == P_current->idx_0)
+			{
+				current_idx = P_current->idx_1;
+				if (P_current->e1_traversed)
+					loop_closed = true;
+				else
+					P_current->e1_traversed = true;
+			}
 			else
-				current_idx = P_current.idx_0;
+			{
+				current_idx = P_current->idx_0;
+				if (P_current->e0_traversed)
+					loop_closed = true;
+				else
+					P_current->e0_traversed = true;
+			}
 
 			it = std::find(intersections_dict[current_idx].begin(), intersections_dict[current_idx].end(), P_current);
 			if (it != intersections_dict[current_idx].end())
@@ -582,11 +608,6 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 			}
 		}
 
-		//if (current_p_idx == intersection_points.size() - 1 || intersections_dict[current_idx].size() == 1 || P_current.idx_1 != intersection_points[current_p_idx + 1].idx_0)
-		//{
-		//	skip_dict_check = true;
-		//}
-
 		while (!loop_closed)
 		{
 			loop.push_back(std::make_shared<Segment>(v0, v1));
@@ -595,7 +616,7 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 			{
 				v1 = segments[current_idx]->v1;
 				current_idx = current_idx < segments.size() - 1 ? current_idx + 1 : 0;
-				P_current = ContourSelfIntersectionPoint();
+				P_current = std::make_shared<ContourSelfIntersectionPoint>();
 				skip_dict_check = false;
 			}
 			else
@@ -608,11 +629,23 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 					next_p_idx = 0;
 
 				P_current = intersections_dict[current_idx][next_p_idx];
-				v1 = P_current.hit_point;
-				if (current_idx == P_current.idx_0)
-					current_idx = P_current.idx_1;
+				v1 = P_current->hit_point;
+				if (current_idx == P_current->idx_0)
+				{
+					current_idx = P_current->idx_1;
+					if (P_current->e1_traversed)
+						loop_closed = true;
+					else
+						P_current->e1_traversed = true;
+				}
 				else
-					current_idx = P_current.idx_0;
+				{
+					current_idx = P_current->idx_0;
+					if (P_current->e0_traversed)
+						loop_closed = true;
+					else
+						P_current->e0_traversed = true;
+				}
 
 				it = std::find(intersections_dict[current_idx].begin(), intersections_dict[current_idx].end(), P_current);
 				if (it != intersections_dict[current_idx].end())
@@ -624,23 +657,13 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 				{
 					skip_dict_check = true;
 				}
-
-				//skip_dict_check = true;
-				//if (current_p_idx == intersection_points.size() - 1 || intersections_dict[current_idx].size() == 1)
-				//{
-				//	skip_dict_check = true;
-				//}
-				//else if (intersections_dict[current_idx].size() > 1 && P_current.idx_1 != intersection_points[current_p_idx + 1].idx_0)
-				////else if (intersections_dict[current_idx].size() > 1 && P_current.idx_0 != intersection_points[current_p_idx + 1].idx_0)
-				//{
-				//	skip_dict_check = true;
-				//	current_p_idx += intersections_dict[current_idx].size() - 1;
-				//}
 			}
-			//loop.push_back(std::make_shared<Segment>(v0, v1));
 
 			if (P_current == P_start)
+			{
 				loop_closed = true;
+				loop.push_back(std::make_shared<Segment>(v0, v1));
+			}
 		}
 		std::shared_ptr<Contour> new_contour = std::make_shared<Contour>(loop, contour_normal);
 		if (keep_clockwise == new_contour->contour_orientation)

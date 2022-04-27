@@ -18,6 +18,8 @@ struct ContourSelfIntersectionPoint
 	int idx_0;
 	int idx_1;
 	int id;
+	bool e0_traversed = false;
+	bool e1_traversed = false;
 
 	ContourSelfIntersectionPoint()
 	{
@@ -81,7 +83,7 @@ public:
 	RAYTRACERDLL_API void RemoveAlignedSegments(float alignment_epsilon);
 	RAYTRACERDLL_API void RemoveShortSegments(float min_length);
 	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
-	RAYTRACERDLL_API bool FindSelfIntersections(std::vector<ContourSelfIntersectionPoint>& contour_intersection_points, std::map<int, std::vector<ContourSelfIntersectionPoint>>& contour_intersection_dict);
+	RAYTRACERDLL_API bool FindSelfIntersections(std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>& contour_intersection_points, std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>>& contour_intersection_dict);
 private:
 	RAYTRACERDLL_API void ComputeContourOrientation();
 
