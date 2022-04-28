@@ -14,7 +14,8 @@
 struct ContourSelfIntersectionPoint
 {
 	float3 hit_point;
-	float t_hit;
+	float t_hit_0;
+	float t_hit_1;
 	int idx_0;
 	int idx_1;
 	int id;
@@ -24,28 +25,30 @@ struct ContourSelfIntersectionPoint
 	ContourSelfIntersectionPoint()
 	{
 		hit_point = float3();
-		t_hit = -1;
+		t_hit_0 = -1;
+		t_hit_1 = -1;
 		idx_0 = -1;
 		idx_1 = -1;
 		id = -1;
 	}
 
-	ContourSelfIntersectionPoint(float3 p, float t, int i0, int i1, int i)
+	ContourSelfIntersectionPoint(float3 p, float t0, float t1, int i0, int i1, int i)
 	{
 		hit_point = p;
-		t_hit = t;
+		t_hit_0 = t0;
+		t_hit_1 = t1;
 		idx_0 = i0;
 		idx_1 = i1;
 		id = i;
 		
 	}
-	bool operator< (const ContourSelfIntersectionPoint& p)
-	{
-		//if (idx_0 == p.idx_0)
-			return t_hit < p.t_hit;
-	/*	else
-			return idx_0 < p.idx_0;*/
-	}
+	//bool operator< (const ContourSelfIntersectionPoint& p)
+	//{
+	//	//if (idx_0 == p.idx_0)
+	//		return t_hit < p.t_hit;
+	///*	else
+	//		return idx_0 < p.idx_0;*/
+	//}
 	bool operator== (const ContourSelfIntersectionPoint& p)
 	{
 		//bool result = true;

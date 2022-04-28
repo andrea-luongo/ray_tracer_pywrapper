@@ -355,35 +355,63 @@ bool Contour::FindSelfIntersections(std::vector<std::shared_ptr<ContourSelfInter
 	bool is_self_intersecting = false;
 	int id_counter = 0;
 
-	auto compare_pointer = [](std::shared_ptr<ContourSelfIntersectionPoint> a, std::shared_ptr<ContourSelfIntersectionPoint> b) {
-		return *a < *b;
-	};
+	
 
 	for (int i = 0; i < segments.size() - 2; i++)
 	{
+		auto compare_t_hit_0 = [i](std::shared_ptr<ContourSelfIntersectionPoint> a, std::shared_ptr<ContourSelfIntersectionPoint> b) {
+			float a_t_hit, b_t_hit;
+			if (i == a->idx_0)
+				a_t_hit = a->t_hit_0;
+			else
+				a_t_hit = a->t_hit_1;
+			if (i == b->idx_0)
+				b_t_hit = b->t_hit_0;
+			else
+				b_t_hit = b->t_hit_1;
+			return a_t_hit < b_t_hit;
+		};
+		
 		std::shared_ptr<Segment> s_i = segments[i];
 		std::vector<std::shared_ptr<ContourSelfIntersectionPoint>> segment_intersection_points;
+
+
 		for (int j = i + 2; j < segments.size(); j++)
 		{
 			if (i == 0 && j == segments.size() - 1)
 				continue;
 
+
+
+			auto compare_t_hit_1 = [j](std::shared_ptr<ContourSelfIntersectionPoint> a, std::shared_ptr<ContourSelfIntersectionPoint> b) {
+				float a_t_hit, b_t_hit;
+				if (j == a->idx_0)
+					a_t_hit = a->t_hit_0;
+				else
+					a_t_hit = a->t_hit_1;
+				if (j == b->idx_0)
+					b_t_hit = b->t_hit_0;
+				else
+					b_t_hit = b->t_hit_1;
+				return a_t_hit < b_t_hit;
+			};
+
 			std::shared_ptr<Segment> s_j = segments[j];
 			float3 hit_point;
-			float t_hit;
-			if (s_i->IntersectSegment(*s_j, hit_point, t_hit))
+			float t_hit_0;
+			if (s_i->IntersectSegment(*s_j, hit_point, t_hit_0))
 			{
-				std::shared_ptr<ContourSelfIntersectionPoint> P = std::make_shared<ContourSelfIntersectionPoint>(hit_point, t_hit, i, j, id_counter++);
+				float t_hit_1 = (hit_point - s_j->v0).length() / (s_j->v1 - s_j->v0).length();
+				std::shared_ptr<ContourSelfIntersectionPoint> P = std::make_shared<ContourSelfIntersectionPoint>(hit_point, t_hit_0, t_hit_1, i, j, id_counter++);
 				segment_intersection_points.push_back(P);
 				contour_intersection_dict[i].push_back(P);
-				P->t_hit = (P->hit_point - s_j->v0).length() / (s_j->v1 - s_j->v0).length();
 				contour_intersection_dict[j].push_back(P);
-				std::sort(contour_intersection_dict[j].begin(), contour_intersection_dict[j].end(), compare_pointer);
-				std::sort(contour_intersection_dict[i].begin(), contour_intersection_dict[i].end(), compare_pointer);
+				std::sort(contour_intersection_dict[i].begin(), contour_intersection_dict[i].end(), compare_t_hit_0);
+				std::sort(contour_intersection_dict[j].begin(), contour_intersection_dict[j].end(), compare_t_hit_1);
 			}
 
 		}
-		std::sort(segment_intersection_points.begin(), segment_intersection_points.end(), compare_pointer);
+		std::sort(segment_intersection_points.begin(), segment_intersection_points.end(), compare_t_hit_0);
 		contour_intersection_points.insert(contour_intersection_points.end(), segment_intersection_points.begin(), segment_intersection_points.end());
 	}
 	if (contour_intersection_points.size() > 0)
@@ -1164,7 +1192,7 @@ bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
 	bool succesful_offset = true;
 	std::vector<std::shared_ptr<Contour>> offset_contours;
 	std::vector<std::shared_ptr<ContourNode>> root_descendants = tree_root->GetDescendants();
-	bool to_print = true;
+	bool to_print = false;
 	int new_contour_counter = 0;
 	int offset_contour_counter = 0;
 	int original_contour_counter = 0;
