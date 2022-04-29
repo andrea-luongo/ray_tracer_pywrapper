@@ -153,8 +153,7 @@
       <AdditionalDependencies>C:\ProgramData\Anaconda3\envs\3DOpenSource\libs\python37.lib;rayTracerDLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>xcopy /y /d "$(SolutionDir)x64\Release\*" "$(SolutionDir)..\..\3DOpenSource_development\external_libraries\rayTracerPyWrapper"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>xcopy /y /d "$(SolutionDir)..\rayTracerDLL\x64\Release\*.dll" "$(OutDir)"</Command>
@@ -162,6 +161,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\sources\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\sources\pystructs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
