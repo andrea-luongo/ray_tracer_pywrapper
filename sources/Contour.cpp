@@ -156,8 +156,10 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 	bool is_valid = true;
 	float minimum_angle = 0.2;
 	float minimum_area = 0.25*(offset*offset) * M_PI;
-	std::vector<float3> new_vertices(segments.size());
-	std::vector<std::shared_ptr<Segment>> new_segments(segments.size());
+	//std::vector<float3> new_vertices(segments.size());
+	std::vector<float3> new_vertices;
+	//std::vector<std::shared_ptr<Segment>> new_segments(segments.size());
+	std::vector<std::shared_ptr<Segment>> new_segments;
 	for (int idx = 0; idx < segments.size(); idx++)
 	{
 		Segment s_cur = *segments[idx];
@@ -171,18 +173,27 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 		float area = float3::cross(s_cur_side, s_prev_side).length() * 0.5;
 		float3 s_normal = float3::cross(s_cur_side, contour_normal).normalize();
 		float3 s_prev_normal = float3::cross(s_prev_side, contour_normal).normalize();
-		float half_angle = 0.5 * (acosf(float3::dot(s_normal, s_prev_normal)));
+		float dot_product = float3::dot(s_normal, s_prev_normal);
+
+		float half_angle = 0.5 * (acosf(dot_product));
 		float3 half_normal = (s_normal + s_prev_normal).normalize();
-		float new_offset = offset / cosf(half_angle);
+		float cos_half_angle = cosf(half_angle);
+		float new_offset = offset / cos_half_angle;
+		if (dot_product == -1) 
+		{
+			new_offset = offset;
+			half_normal = s_normal;
+		}
+
 		float3 v = s_cur[0] + new_offset * half_normal;
 		if (offset < 0)
 		{
 			bool to_correct = false;
-			if (M_PI - 2 * half_angle < minimum_angle)
+			if (M_PI - half_angle < minimum_angle / 2)
 			{
 				to_correct = true;
 			}
-			else if ( area < minimum_area && fabsf(new_offset) > fabsf(2.5 * offset))
+			else if ( area < minimum_area && fabsf(new_offset) > fabsf(1.5 * offset))
 			{
 				to_correct = true;
 			}
@@ -209,15 +220,19 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 				v = -s_prev_side.length() * sinf(half_angle) * half_normal + s_cur[0];
 			}
 		}*/
-
-		new_vertices[idx] = v;
+		if (isnan(v.x) || isnan(v.y) || isnan(v.z))
+			continue;
+		//new_vertices[idx] = v;
+		new_vertices.push_back(v);
 		if (idx > 0)
 		{
-			new_segments[idx-1] = std::shared_ptr<Segment>(new Segment(new_vertices[idx - 1], v));
+			//new_segments[idx-1] = std::shared_ptr<Segment>(new Segment(new_vertices[idx - 1], v));
+			new_segments.push_back(std::shared_ptr<Segment>(new Segment(*(new_vertices.end() -2), v)));
 		}
 		if (idx == segments.size()-1)
 		{
-			new_segments[idx] = std::shared_ptr<Segment>(new Segment(v, new_vertices[0]));
+			//new_segments[idx] = std::shared_ptr<Segment>(new Segment(v, new_vertices[0]));
+			new_segments.push_back(std::shared_ptr<Segment>(new Segment(v, *new_vertices.begin())));
 		}
 	}
 	new_c = Contour(new_segments, contour_normal);
@@ -284,6 +299,9 @@ void Contour::RemoveAlignedSegments(float alignment_epsilon)
 	{
 		std::shared_ptr<Segment> s_cur = segments[i];
 		std::shared_ptr<Segment> s_prev = *(new_segments.end() - 1);
+
+		if (s_cur->v0 == float3(7729.00000, 205000.000, -151286.000) && s_cur->v1 == float3(7729.00000, 205000.000, -147215.000))
+			int debug = 0;
 		float3 s_0_dir = (s_cur->v1 - s_cur->v0);
 		float3 s_1_dir = (s_prev->v1 - s_prev->v0);
 		float dot_pr = abs(float3::dot(s_0_dir.normalize(), s_1_dir.normalize()));
@@ -298,6 +316,8 @@ void Contour::RemoveAlignedSegments(float alignment_epsilon)
 		}
 	}
 	std::shared_ptr<Segment> s_cur = new_segments[0];
+	if (s_cur->v0 == float3(7729.0, 205000.0, -151286.0) && s_cur->v1 == float3(7729.0, 205000.0, -147215.0))
+		int debug = 0;
 	std::shared_ptr<Segment> s_prev = *(new_segments.end() - 1);
 	float3 s_cur_dir = (s_cur->v1 - s_cur->v0);
 	float3 s_prev_dir = (s_prev->v1 - s_prev->v0);
@@ -328,6 +348,10 @@ void Contour::RemoveShortSegments(float min_length)
 		{
 			std::shared_ptr<Segment> s_new = std::make_shared<Segment>(s_prev->v0, s_cur->v1);
 			new_segments[new_segments.size() - 1] = s_new;
+		}
+		else if (s_cur_dir.length() == 0.0)
+		{
+			continue;
 		}
 		else
 		{
@@ -433,16 +457,14 @@ bool Contour::FindSelfIntersections(std::vector<std::shared_ptr<ContourSelfInter
 }
 
 //TODO to fix this function
-bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours, bool keep_clockwise)
+bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>& intersection_points, std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>>& intersections_dict, bool keep_clockwise)
 {
-	std::vector<std::shared_ptr<ContourSelfIntersectionPoint>> intersection_points;
-	std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>> intersections_dict;
-	bool is_self_intersecting = FindSelfIntersections(intersection_points, intersections_dict);
+	//std::vector<std::shared_ptr<ContourSelfIntersectionPoint>> intersection_points;
+	//std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>> intersections_dict;
+	//bool is_self_intersecting = FindSelfIntersections(intersection_points, intersections_dict);
 	bool intersections_succesfully_removed = true;
-	//return !is_self_intersecting;
-	if (segments[0]->v0.x == -170498)
-		int tmp = 0;
-	if (is_self_intersecting)
+
+	if (intersection_points.size() > 0)
 	{
 		int total_segments = 0;
 		// check all intersection loops except the first reverse one
@@ -708,6 +730,8 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 	{
 		new_contours.push_back(std::make_shared<Contour>(segments, contour_normal));
 	}
+	if (new_contours.size() == 0)
+		intersections_succesfully_removed = false;
 	return intersections_succesfully_removed;
 }
 
@@ -1192,7 +1216,14 @@ bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
 	bool succesful_offset = true;
 	std::vector<std::shared_ptr<Contour>> offset_contours;
 	std::vector<std::shared_ptr<ContourNode>> root_descendants = tree_root->GetDescendants();
+#if defined _DEBUG
+	//debug
+	bool to_print = true;
+#else
+	//release
 	bool to_print = false;
+#endif
+
 	int new_contour_counter = 0;
 	int offset_contour_counter = 0;
 	int original_contour_counter = 0;
@@ -1217,12 +1248,14 @@ bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
 			}
 			std::cout << "];" << std::endl;;
 		}
-
+		std::vector<std::shared_ptr<ContourSelfIntersectionPoint>> intersection_points;
+		std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>> intersections_dict;
+		bool is_self_intersecting = offset_c.FindSelfIntersections(intersection_points, intersections_dict);
 		//TODO to fix this part
-		if (is_offset_valid)
+		if (is_offset_valid || is_self_intersecting )
 		{
 			std::vector<std::shared_ptr<Contour>> new_contours;
-			bool intersections_removed = offset_c.RemoveSelfIntersections(new_contours, root_descendants[i]->contour->contour_orientation);
+			bool intersections_removed = offset_c.RemoveSelfIntersections(new_contours, intersection_points, intersections_dict, root_descendants[i]->contour->contour_orientation);
 			if (intersections_removed)
 			{
 

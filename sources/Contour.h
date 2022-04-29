@@ -82,10 +82,10 @@ public:
 	RAYTRACERDLL_API bool Contains(Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API static int EvaluateContoursRelationship(Contour& contour_a, Contour& contour_b, float& t_hit);
 	RAYTRACERDLL_API bool OffsetContour(float offset, Contour& new_c);
-	RAYTRACERDLL_API bool RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours, bool keep_clockwise);
 	RAYTRACERDLL_API void RemoveAlignedSegments(float alignment_epsilon);
 	RAYTRACERDLL_API void RemoveShortSegments(float min_length);
 	RAYTRACERDLL_API std::vector<std::vector<float3>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle_deg, bool verbose);
+	RAYTRACERDLL_API bool RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new_contours, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>& intersection_points, std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>>& intersections_dict, bool keep_clockwise);
 	RAYTRACERDLL_API bool FindSelfIntersections(std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>& contour_intersection_points, std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>>& contour_intersection_dict);
 private:
 	RAYTRACERDLL_API void ComputeContourOrientation();

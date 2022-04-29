@@ -564,9 +564,12 @@ py::tuple PyBindContour::OffsetContour(float offset)
 std::vector<PyBindContour> PyBindContour::RemoveSelfIntersections()
 {
     std::vector<std::shared_ptr<Contour>> new_contours;
-    bool self_interset = contour->RemoveSelfIntersections(new_contours, contour->contour_orientation);
+    std::vector<std::shared_ptr<ContourSelfIntersectionPoint>> intersection_points;
+    std::map<int, std::vector<std::shared_ptr<ContourSelfIntersectionPoint>>> intersections_dict;
+    bool is_self_intersecting = contour->FindSelfIntersections(intersection_points, intersections_dict);
+    bool self_intersect = contour->RemoveSelfIntersections(new_contours, intersection_points, intersections_dict, contour->contour_orientation);
     std::vector<PyBindContour> result;
-    if (self_interset)
+    if (self_intersect)
     {
         for(auto c : new_contours)
             result.push_back(PyBindContour(*c));;
