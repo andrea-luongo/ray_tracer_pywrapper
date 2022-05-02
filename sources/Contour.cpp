@@ -236,6 +236,7 @@ bool Contour::OffsetContour(float offset, Contour& new_c)
 		}
 	}
 	new_c = Contour(new_segments, contour_normal);
+	is_valid = new_c.CheckValidity();
 	if (contour_orientation >= 0)
 	{
 
@@ -591,7 +592,7 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 				loop.push_back(std::make_shared<Segment>(v0, v1));
 			}
 			std::shared_ptr<Contour> new_contour = std::make_shared<Contour>(loop, contour_normal);
-			if (keep_clockwise == new_contour->contour_orientation)
+			if (new_contour->CheckValidity() && keep_clockwise == new_contour->contour_orientation )
 			{
 				total_segments += loop.size();
 				new_contours.push_back(new_contour);
@@ -716,7 +717,7 @@ bool Contour::RemoveSelfIntersections(std::vector<std::shared_ptr<Contour>>& new
 			}
 		}
 		std::shared_ptr<Contour> new_contour = std::make_shared<Contour>(loop, contour_normal);
-		if (keep_clockwise == new_contour->contour_orientation)
+		if (new_contour->CheckValidity() && keep_clockwise == new_contour->contour_orientation)
 		{
 			total_segments += loop.size();
 			new_contours.push_back(new_contour);
@@ -1111,6 +1112,15 @@ std::vector<std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects
 	{
 
 		float3 bbox_min = bvh->getBVHBBox().GetpMin();
+#if defined _DEBUG
+		if (bbox_min == float3(-81183, 205000, -121430) || bbox_min == float3(133250 ,205000 ,79614)) {
+			verbose = true;
+		}
+		else
+		{
+			verbose = false;
+		}
+#endif
 		float3 bbox_max = bvh->getBVHBBox().GetpMax();
 		float3 bbox_center = 0.5f * (bbox_min + bbox_max);
 		float bbox_width = (bbox_max.x - bbox_min.x);
@@ -1128,6 +1138,7 @@ std::vector<std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects
 		float3 ray_origin(ray_origin_x, ray_origin_y, ray_origin_z);
 		if (verbose)
 		{
+		std::cout << "bvh idx " << bvh_idx << std::endl;
 		std::cout << "bbox " << bbox_min << " " << bbox_max << std::endl;
 		std::cout << "rot angle rad " << rot_angle << std::endl;
 		std::cout << "bbox max length " << bbox_max_width << std::endl;
@@ -1189,8 +1200,7 @@ std::vector<std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects
 			}
 			if (verbose)
 			{
-				std::cout << "bvh idx " << bvh_idx << std::endl;
-				std::cout << "ind hit points length " << contour_tree_hit_points.size() << std::endl;
+				std::cout << "ind hit points length " << contour_hit_points.size() << std::endl;
 			}
 			contour_tree_hit_points[bvh_idx++] = contour_hit_points;
 		}
@@ -1305,6 +1315,30 @@ bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
 		std::cout << "};" << std::endl;;
 	}
 	new_tree = ContourTree(offset_contours);
+
+	//if (to_print)
+	//{
+	//	int bvh_idx = 0;
+
+	//	for (auto bvh : new_tree.internal_bvhs)
+	//	{
+	//		std::cout << "bvh" << bvh_idx++ << "=[";
+	//		for (std::shared_ptr<Primitive> b : bvh->primitives)
+	//		{
+	//			std::shared_ptr<Contour> c = std::dynamic_pointer_cast<Contour>(b);
+	//			for (std::shared_ptr<Segment> s : c->segments)
+	//			{
+	//				std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
+	//			}
+	//			std::cout << "];" << std::endl;;
+	//			//break;
+	//		}
+	//	}
+	//	std::cout << "bvh_contours={";
+	//	for (int idx = 0; idx < bvh_idx; idx++)
+	//		std::cout << "bvh" << idx << ", ";
+	//	std::cout << "};" << std::endl;;
+	//}
 	return succesful_offset;
 
 }

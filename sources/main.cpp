@@ -314,7 +314,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
 
     std::vector<float3> hits = *(info.planeInfo->GetHits());
 
-    std::cout << "%hits: " << hits.size() << std::endl;
+    //std::cout << "%hits: " << hits.size() << std::endl;
     std::vector<float3> transformed_hits(hits.size());
     for (int idx = 0; idx < hits.size(); idx++)
     {
@@ -356,7 +356,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
     //        std::cout << s->v0 << " " << s->v1 << std::endl;
     //}
     auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, segment_min_length);
-    std::cout << "%Sorted Segments " << sorted_segments.size() << std::endl;
+    //std::cout << "%Sorted Segments " << sorted_segments.size() << std::endl;
     //if (verbose)
     //{
     //    int total_sorted = 0;
@@ -434,7 +434,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         sorted_contours.push_back(PyBindContour(c));
 
     }
-    std::cout << "Discarded contours: " << discarded_contours << std::endl;
+    //std::cout << "Discarded contours: " << discarded_contours << std::endl;
     return sorted_contours;
 }
 
@@ -471,7 +471,7 @@ PyBindContour::PyBindContour(Contour &c)
 
 bool PyBindContour::IsValid()
 {
-    return contour->is_valid;
+    return contour->CheckValidity();
 }
 
 py::tuple PyBindContour::IsContained(PyBindContour& contour_b)

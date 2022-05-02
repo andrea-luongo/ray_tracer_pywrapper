@@ -388,6 +388,10 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
 	if (segments.size() == 1)
 	{
+		if (segments[0]->v0 == float3(-78812, 187500, 96997))
+		{
+			int ocio = 1;
+		}
 		sorted_segments.push_back(segments);
 	}
 	else

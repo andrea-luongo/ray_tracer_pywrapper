@@ -60,12 +60,12 @@ struct LinearBVHNode
 class BVH
 {
 private:
-	std::vector<std::shared_ptr<Primitive>> primitives;
 	const int maxPrimsInNode;
 	const SplitMethod splitMethod;
 	LinearBVHNode* nodes = nullptr;
 
 public:
+	std::vector<std::shared_ptr<Primitive>> primitives;
 	RAYTRACERDLL_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrimsInNode=255);
 	RAYTRACERDLL_API bool intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool any_intersect(Ray& ray);
