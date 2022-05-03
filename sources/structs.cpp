@@ -503,29 +503,24 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	/*float alignment_epsilon = 1e-2;*/
 	if (Segment::CompareSegments(*end_0, *start_1, epsilon))
 	{
-		end_0->v1 = start_1->v0;
-		end_0->ComputeBBox();
+		end_0->SetV1(start_1->v0);
 		if ((remove_aligned_segments && CheckAlignment(*end_0, *start_1, alignment_epsilon)) || (remove_short_segments && CheckMinLength(*end_0, *start_1, min_segment_length)))
 		{
-			
-			end_0->v1 = start_1->v1;
-			end_0->ComputeBBox();
+			end_0->SetV1(start_1->v1);
 			s0.insert(s0.end(), s1.begin() + 1, s1.end());
 		}
 		else
 		{
-		s0.insert(s0.end(), s1.begin(), s1.end());
+			s0.insert(s0.end(), s1.begin(), s1.end());
 		}
 		is_merged = true;
 	}
 	else if (Segment::CompareSegments(*end_1, *start_0, epsilon))
 	{
-		end_1->v1 = start_0->v0;
-		end_1->ComputeBBox();
+		end_1->SetV1(start_0->v0);
 		if ((remove_aligned_segments && CheckAlignment(*end_1, *start_0, alignment_epsilon)) || (remove_short_segments && CheckMinLength(*end_1, *start_0, min_segment_length)))
-		{
-			start_0->v0 = end_1->v0;
-			start_0->ComputeBBox();
+		{	
+			start_0->SetV0(end_1->v0);
 			s0.insert(s0.begin(), s1.begin(), s1.end() - 1);
 		}
 		else
@@ -536,15 +531,14 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	}
 	else if (Segment::CompareSegments(*end_0, end_1_flipped, epsilon))
 	{
-		end_0->v1 = end_1_flipped.v0;
-		end_0->ComputeBBox();
+
+		end_0->SetV1(end_1_flipped.v0);
 		std::rotate(s1.begin(), s1.end() - 1, s1.end());
 		for (auto s : s1)
 			s->FlipSegment();
 		if ((remove_aligned_segments && CheckAlignment(*end_0, end_1_flipped, alignment_epsilon)) || (remove_short_segments && CheckMinLength(*end_0, end_1_flipped, min_segment_length)))
 		{
-			end_0->v1 = end_1_flipped.v1;
-			end_0->ComputeBBox();
+			end_0->SetV1(end_1_flipped.v1);
 			s0.insert(s0.end(), s1.begin() + 1, s1.end());
 		}
 		else
@@ -555,16 +549,14 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 	}
 	else if (Segment::CompareSegments(start_1_flipped, *start_0, epsilon))
 	{
-		start_1->v0 = start_0->v0;
-		start_1->ComputeBBox();
+		start_1->SetV0(start_0->v0);
 		std::rotate(s1.begin(), s1.end() - 1, s1.end());
 		for (auto s : s1)
 			s->FlipSegment();
 
 		if ((remove_aligned_segments && CheckAlignment(start_1_flipped, *start_0, alignment_epsilon)) || (remove_short_segments && CheckMinLength(start_1_flipped, *start_0, min_segment_length)))
 		{
-			start_0->v0 = start_1_flipped.v0;
-			start_0->ComputeBBox();
+			start_0->SetV0(start_1_flipped.v0);
 			s0.insert(s0.begin(), s1.begin(), s1.end() - 1);
 		}
 		else

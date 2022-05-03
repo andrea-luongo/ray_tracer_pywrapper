@@ -1112,15 +1112,6 @@ std::vector<std::vector<std::vector<float3>>> ContourTree::MultiRayAllIntersects
 	{
 
 		float3 bbox_min = bvh->getBVHBBox().GetpMin();
-#if defined _DEBUG
-		if (bbox_min == float3(-81183, 205000, -121430) || bbox_min == float3(133250 ,205000 ,79614)) {
-			verbose = true;
-		}
-		else
-		{
-			verbose = false;
-		}
-#endif
 		float3 bbox_max = bvh->getBVHBBox().GetpMax();
 		float3 bbox_center = 0.5f * (bbox_min + bbox_max);
 		float bbox_width = (bbox_max.x - bbox_min.x);

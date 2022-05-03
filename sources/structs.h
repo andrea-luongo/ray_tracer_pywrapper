@@ -160,6 +160,9 @@ public:
 public:
 	RAYTRACERDLL_API Segment() {};
 	RAYTRACERDLL_API Segment(const float3& p0, const float3& p1);
+	RAYTRACERDLL_API void SetV0(float3 p) { v0 = p; ComputeBBox(); };
+	RAYTRACERDLL_API void SetV1(float3 p) { v1 = p; ComputeBBox(); };
+
 	RAYTRACERDLL_API void ComputeBBox();
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
