@@ -66,7 +66,8 @@ private:
 
 public:
 	std::vector<std::shared_ptr<Primitive>> primitives;
-	RAYTRACERDLL_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrimsInNode=255);
+	RAYTRACERDLL_API BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrims =255);
+	RAYTRACERDLL_API ~BVH() {  };
 	RAYTRACERDLL_API bool intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool any_intersect(Ray& ray);
 	RAYTRACERDLL_API bool all_intersects(Ray& ray, RayIntersectionInfo& info);
