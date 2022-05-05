@@ -375,10 +375,14 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 {
 	bool result = false;
 	float3 s_dist = float3::abs(s0.v1 - s1.v0);
-	if (s_dist.length() < epsilon)
+	//if (s_dist.length() < epsilon)
+	//{
+	//	result = true;
+	//	//s0.v1 = s1.v0;
+	//}
+	if (s_dist.x < epsilon && s_dist.y < epsilon && s_dist.z < epsilon)
 	{
 		result = true;
-		//s0.v1 = s1.v0;
 	}
 	return result;
 }
@@ -482,6 +486,7 @@ bool Segment::CheckMinLength(Segment& s0, Segment& s1, float const min_segment_l
 {
 	float3 s_0_dir = (s0.v1 - s0.v0);
 	float3 s_1_dir = (s1.v1 - s1.v0);
+
 	bool to_merge = false;
 	if (s_0_dir.length() + s_1_dir.length() < min_segment_length)
 	{

@@ -345,7 +345,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
     {
         std::cout << "%created primitives " << segment_primitives.size() << std::endl;
     }
-    float epsilon = 0.0002 * geometry_scaling;
+    float epsilon = 0.00005 * geometry_scaling;
     float alignment_epsilon = 1e-3;
     bool remove_aligned_segments = true;
     bool remove_short_segments = false;
