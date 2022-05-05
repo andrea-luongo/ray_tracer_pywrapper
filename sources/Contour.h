@@ -63,13 +63,18 @@ class Contour : public Primitive
 {
 public:
 	std::vector<std::shared_ptr<Segment>> segments;
-	BVH* bvh = nullptr;
+	//BVH* bvh = nullptr;
+	std::shared_ptr<BVH> bvh;
 	bool is_valid = true;
 	float3 contour_normal;
 	bool contour_orientation;
 
 public:
 	RAYTRACERDLL_API Contour();
+	RAYTRACERDLL_API ~Contour()
+	{
+	
+	};
 	RAYTRACERDLL_API Contour(const std::vector<std::shared_ptr<Segment>>& p, const float3 n);
 	RAYTRACERDLL_API void ComputeBBox();
 	RAYTRACERDLL_API void UpdateSegments(std::vector<std::shared_ptr<Segment>> new_segments);
@@ -138,7 +143,7 @@ public:
 	std::vector<std::shared_ptr<Contour>> contours;
 	std::shared_ptr<ContourNode> tree_root;
 	BBox bbox;
-	BVH* root_bvh;
+	std::shared_ptr<BVH> root_bvh;
 	std::vector<std::shared_ptr<BVH>> tree_global_bvsh;
 	std::vector<std::shared_ptr<BVH>> internal_bvhs;
 	int node_id_counter = 0;
@@ -146,6 +151,11 @@ public:
 public:
 	RAYTRACERDLL_API ContourTree(std::vector<std::shared_ptr<Contour>> c);
 	RAYTRACERDLL_API ContourTree();
+	RAYTRACERDLL_API ~ContourTree()
+	{
+		
+	}
+	;
 	RAYTRACERDLL_API bool Intersect(Ray& ray, RayIntersectionInfo& info);
 	RAYTRACERDLL_API bool AnyIntersect(Ray& ray);
 	RAYTRACERDLL_API bool AllIntersect(Ray& ray, RayIntersectionInfo& info);

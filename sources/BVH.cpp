@@ -1,7 +1,7 @@
 #include "BVH.h"
 #include <algorithm>
 
-BVH::BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrimsInNode): maxPrimsInNode(std::min(255, maxPrimsInNode)), primitives(p), splitMethod(splitMethod)
+BVH::BVH(const std::vector<std::shared_ptr<Primitive>>& p, SplitMethod splitMethod, int maxPrims): maxPrimsInNode(std::min(255, maxPrims)), primitives(p), splitMethod(splitMethod)
 {
 	if (primitives.size() == 0)
 		return;

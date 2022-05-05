@@ -24,8 +24,10 @@ void Contour::ComputeBBox()
 {
 	if (is_valid)
 	{
-	bvh = new BVH({ segments.begin(), segments.end() }, SplitMethod::EqualCounts, 255);
-	bbox = bvh->getBVHBBox();
+		//bvh = new BVH({ segments.begin(), segments.end() }, SplitMethod::EqualCounts, 255);
+		//delete bvh;
+		bvh = std::shared_ptr<BVH>(new BVH({ segments.begin(), segments.end() }, SplitMethod::EqualCounts, 255));
+		bbox = bvh->getBVHBBox();
 	}
 }
 
@@ -1024,7 +1026,8 @@ void ContourTree::CheckParents(std::shared_ptr<ContourNode>& n, std::shared_ptr<
 void ContourTree::BuildRootBVH()
 {
 	std::vector<std::shared_ptr<Contour>> root_children_contours = tree_root->GetChildrenContours();
-	root_bvh = new BVH({ root_children_contours.begin(), root_children_contours.end() }, SplitMethod::EqualCounts, 255);
+	root_bvh = std::shared_ptr<BVH>(new BVH({ root_children_contours.begin(), root_children_contours.end() }, SplitMethod::EqualCounts, 255));
+	//root_bvh = std::make_shared<BVH>();
 	bbox = root_bvh->getBVHBBox();
 }
 
@@ -1222,7 +1225,7 @@ bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
 	bool to_print = true;
 #else
 	//release
-	bool to_print = false;
+	bool to_print = true;
 #endif
 
 	int new_contour_counter = 0;
@@ -1230,7 +1233,6 @@ bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
 	int original_contour_counter = 0;
 	for (int i = 0; i < root_descendants.size(); i++) {
 		Contour offset_c;
-		bool is_offset_valid = root_descendants[i]->contour->OffsetContour(-offset, offset_c);
 		if (to_print)
 		{
 			std::cout << "%ORIGINAL CONTOUR" << std::endl;
@@ -1240,7 +1242,11 @@ bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
 				std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
 			}
 			std::cout << "];" << std::endl;;
+		}
 
+		bool is_offset_valid = root_descendants[i]->contour->OffsetContour(-offset, offset_c);
+		if (to_print)
+		{
 			std::cout << "%OFFSET CONTOUR" << std::endl;
 			std::cout << "o" <<  offset_contour_counter++ <<"= [";
 			for (auto s : offset_c.segments)
