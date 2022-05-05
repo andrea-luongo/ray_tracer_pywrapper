@@ -381,7 +381,7 @@ bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
 	//	result = true;
 	//	//s0.v1 = s1.v0;
 	//}
-	if (s_dist.x < epsilon && s_dist.y < epsilon && s_dist.z < epsilon)
+	if (s_dist.x <= epsilon && s_dist.y <= epsilon && s_dist.z <= epsilon)
 	{
 		result = true;
 	}
@@ -408,11 +408,14 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		auto right_loop = Segment::SortSegments(right_segments, epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, min_segment_length);
 		std::vector<int> left_merged_idxs;
 		std::vector<int> right_merged_idxs;
+
 		//check if left loops can be connected with right loops
 		for (int l_idx = 0; l_idx < left_loop.size(); l_idx++)
 		{
 			for (int r_idx = 0; r_idx < right_loop.size(); r_idx++)
 			{
+				if (left_loop[l_idx][0]->v0 == float3(-156943, 187500, 166463) || right_loop[r_idx][0]->v0 == float3(-156943, 187500, 166463))
+					int ocio = 1;
 				if (std::find(right_merged_idxs.begin(), right_merged_idxs.end(), r_idx) != right_merged_idxs.end())
 					continue;
 				

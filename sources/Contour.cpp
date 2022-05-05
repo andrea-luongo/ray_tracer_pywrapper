@@ -1215,18 +1215,12 @@ BBox ContourTree::GetBBox()
 	return bbox;
 }
 
-bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree)
+bool ContourTree::OffsetContourTree(float offset, ContourTree& new_tree, bool to_print)
 {
 	bool succesful_offset = true;
 	std::vector<std::shared_ptr<Contour>> offset_contours;
 	std::vector<std::shared_ptr<ContourNode>> root_descendants = tree_root->GetDescendants();
-#if defined _DEBUG
-	//debug
-	bool to_print = true;
-#else
-	//release
-	bool to_print = true;
-#endif
+
 
 	int new_contour_counter = 0;
 	int offset_contour_counter = 0;

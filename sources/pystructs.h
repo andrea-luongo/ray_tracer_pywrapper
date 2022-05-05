@@ -85,7 +85,7 @@ public:
     bool AllIntersects(PyBindRay& ray, PyBindRayInfo& info);
     bool PlaneAllIntersects(PyBindPlane& plane, PyBindPlaneInfo& info);
     std::vector<py::array_t<float>> PlaneAllIntersectsHits(PyBindPlane& plane, PyBindPlaneInfo& info);
-    std::vector<PyBindContour> PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length);
+    std::vector<PyBindContour> PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length, bool verbose);
 };
 
 class PyBindContour {
@@ -131,6 +131,6 @@ public:
     bool AnyIntersect(PyBindRay& ray);
     bool AllIntersects(PyBindRay& ray, PyBindRayInfo& info);
     //PyBindContourTree OffsetContourTree(float offset);
-    py::tuple OffsetContourTree(float offset);
+    py::tuple OffsetContourTree(float offset, bool verbose);
     std::vector< std::vector<std::vector<py::array_t<float>>>> MultiRayAllIntersects(float laser_width_microns, float density, float overlap, float rot_angle, bool verbose = false);
 };

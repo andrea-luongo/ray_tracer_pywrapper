@@ -304,10 +304,9 @@ std::vector<py::array_t<float>> PyBindBVH::PlaneAllIntersectsHits(PyBindPlane& p
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
     return info.GetHits();
 }
-std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length)
+std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length, bool verbose)
 {
 
-    bool verbose = true;
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
     Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
@@ -361,7 +360,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         std::cout << "%created primitives " << segment_primitives.size() << std::endl;
     }
 
-    float epsilon = 0.00005 * geometry_scaling;
+    float epsilon = 0.001 * geometry_scaling;
     float alignment_epsilon = 1e-3;
     bool remove_aligned_segments = true;
     bool remove_short_segments = true;
@@ -705,10 +704,10 @@ std::vector< std::vector<std::vector<py::array_t<float>>>> PyBindContourTree::Mu
     return reinterpreted_contour_tree_hit_points;
 };
 
-py::tuple PyBindContourTree::OffsetContourTree(float offset)
+py::tuple PyBindContourTree::OffsetContourTree(float offset, bool verbose)
 {
     ContourTree tree;
-    bool succesful_offset = contour_tree->OffsetContourTree(offset, tree);
+    bool succesful_offset = contour_tree->OffsetContourTree(offset, tree, verbose);
     //return PyBindContourTree(result);
     //std::cout << "succesful offset " << succesful_offset << std::endl;
     PyBindContourTree pytree(tree);
