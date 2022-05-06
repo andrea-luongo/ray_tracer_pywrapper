@@ -371,23 +371,6 @@ bool Segment::IntersectSegment(Segment& const s, float3& hit_point, float& t_hit
 	return hit;
 }
 
-bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
-{
-	bool result = false;
-	float3 s_dist = float3::abs(s0.v1 - s1.v0);
-
-	//if (s_dist.length() < epsilon)
-	//{
-	//	result = true;
-	//	//s0.v1 = s1.v0;
-	//}
-	if (s_dist.x <= epsilon && s_dist.y <= epsilon && s_dist.z <= epsilon)
-	{
-		result = true;
-	}
-	return result;
-}
-
 std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::vector<std::shared_ptr<Segment>>& segments, float const epsilon, bool remove_aligned_segments, float const alignment_epsilon, bool remove_short_segments, float const min_segment_length)
 {
 	std::vector<std::vector<std::shared_ptr<Segment>>> sorted_segments;
@@ -470,6 +453,23 @@ std::vector<std::vector<std::shared_ptr<Segment>>> Segment::SortSegments(std::ve
 		}*/
 	}
 	return sorted_segments;
+}
+
+bool Segment::CompareSegments(Segment& s0, Segment& s1, float epsilon)
+{
+	bool result = false;
+	float3 s_dist = float3::abs(s0.v1 - s1.v0);
+
+	if (s_dist.length() <= epsilon)
+	{
+		result = true;
+		//s0.v1 = s1.v0;
+	}
+	//if (s_dist.x <= epsilon && s_dist.y <= epsilon && s_dist.z <= epsilon)
+	//{
+	//	result = true;
+	//}
+	return result;
 }
 
 bool Segment::CheckAlignment(Segment& s0, Segment& s1, float const angle_epsilon)
@@ -575,13 +575,15 @@ bool Segment::MergeSegments(std::vector<std::shared_ptr<Segment>>& s0, std::vect
 		is_merged = true;
 	}
 	//check if start and end are aligned, if yes, remove last segment
-	if (is_merged && s0.size() > 1 && (*s0.begin())->v0 == (*(s0.end() - 1))->v1)
+	//if (is_merged && s0.size() > 1 && (*s0.begin())->v0 == (*(s0.end() - 1))->v1)
+	if (is_merged && s0.size() > 1 && (Segment::CompareSegments(*(*(s0.end() - 1)), *(*s0.begin()), epsilon)))
 	{
+		(*s0.begin())->SetV0((*(s0.end() - 1))->v1);
+		
 		if ((remove_aligned_segments && CheckAlignment(*(*s0.begin()), *(*(s0.end() - 1)), alignment_epsilon)) || (remove_short_segments && CheckMinLength(*(*s0.begin()), *(*(s0.end() - 1)), min_segment_length)))
 		{
-				(*s0.begin())->v0 = (*(s0.end() - 1))->v0;
-				(*s0.begin())->ComputeBBox();
-				s0.pop_back();
+			(*s0.begin())->SetV0((*(s0.end() - 1))->v0);
+			s0.pop_back();
 		}
 	}
 	return is_merged;

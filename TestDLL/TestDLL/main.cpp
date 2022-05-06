@@ -171,7 +171,7 @@ void test_contour_intersection()
 
 };
 
-std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x4& tr_matrix, float const geometry_scaling, bool check_min_length, float const segment_min_length, float const epsilon, bool check_alignment, float const alignment_epsilon, bool print_segments)
+std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x4& tr_matrix, float const geometry_scaling, bool check_min_length, float const segment_min_length, float& epsilon, bool check_alignment, float const alignment_epsilon, bool print_segments)
 {
 	PlaneIntersectionInfo info;
 	bool result = bvh.plane_all_intersects(plane, info);
@@ -182,19 +182,26 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 	for (int idx = 0; idx < hits.size(); idx++)
 	{
 		float4 t_hit = (float4(hits[idx][0], hits[idx][1], hits[idx][2], 1) * tr_matrix.Transpose()) * geometry_scaling;
-		transformed_hits[idx] = float3(int(round(t_hit[0])), int(round(t_hit[1])), int(round(t_hit[2])));
+		//transformed_hits[idx] = float3((round(t_hit[0])), (round(t_hit[1])), (round(t_hit[2])));
+		transformed_hits[idx] = float3(((t_hit[0])), ((t_hit[1])), ((t_hit[2])));
 	}
 	std::cout << "%Trasnformed hits" << std::endl;
 
 	std::vector<std::shared_ptr<Segment>> segment_primitives;
+	float min_square_length = std::numeric_limits<float>::max();
 	std::cout << "primitives" << "=[";
 	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
 	{
 		float3 p0 = transformed_hits[i * 2];
 		float3 p1 = transformed_hits[i * 2 + 1];
-		if (float3::length(p0 - p1) == 0)
+		float square_length = float3::dot(p0 - p1, p0 - p1);
+		if (square_length == 0)
 		{
 			continue;
+		}
+		if (square_length < min_square_length)
+		{
+			min_square_length = square_length;
 		}
 	
 		std::cout << "[" << p0 << "]\n[" << p1 << "]" << std::endl;
@@ -203,6 +210,7 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 	}
 	std::cout << "];" << std::endl;;
 	std::cout << "%created primitives " << segment_primitives.size() << std::endl;
+	epsilon = sqrtf(min_square_length);
 	std::cout << "%epsilon " << epsilon << " remove aligned " << check_alignment << " " << alignment_epsilon << " remove short " << check_min_length << " " << segment_min_length << std::endl;
 
 	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon, check_min_length, segment_min_length);
@@ -215,19 +223,25 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 		std::cout << "%sorted primitives: " << sorted_primitives_counter << std::endl;
 
 		int sc_counter = 0;
+		float min_length = std::numeric_limits<float>::max();
 		for (auto c : sorted_segments)
 		{
 			std::cout << "sc" << sc_counter++ << "=[";
 			for (auto s : c)
 			{
-				std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << std::endl;
+				float square_length = float3::dot(s->v1 - s->v0, s->v1 - s->v0);
+				if (square_length < min_length)
+					min_length = square_length;
+				std::cout << "[" << s->v0 << "]\n[" << s->v1 << "]" << "% length=" << square_length << std::endl;
 			}
 			std::cout << "];" << std::endl;;
 		}
 		std::cout << "sc_contours={";
 		for (int idx = 0; idx < sc_counter; idx++)
 			std::cout << "sc" << idx << ", ";
-		std::cout << "};" << std::endl;;
+		std::cout << "};" << std::endl;
+		std::cout << "%minimum sorted length: " << min_length << std::endl;
+
 	}
 	std::vector<std::shared_ptr<Contour>> sorted_contours;
 	int discarded_contours = 0;
@@ -436,11 +450,11 @@ void test_geometry_precision()
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -417220, 0);
+	float3 plane_x0(0, -419620, 0);
 	float3 plane_n(0, 1e-4, 0);
 	float laser_width_microns = 80;
 	//float laser_width_microns = 10000;
-	float epsilon = 0.0000 * geometry_scaling;
+	float epsilon = 0.0001 * geometry_scaling;
 	float alignment_epsilon = 1e-3;
 	bool check_alignment = true;
 	bool check_min_length = true;
