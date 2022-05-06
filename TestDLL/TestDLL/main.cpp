@@ -8,6 +8,7 @@
 #include <sstream>
 #include <ppl.h>
 #define _USE_MATH_DEFINES
+#include <iomanip>   
 #include <math.h>
 
 bool load_obj(const std::string filename, float geometry_scaling, bool swap_yz, std::vector<float3> &out_vertices, float3 &b_min, float3 &b_max)
@@ -189,6 +190,7 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 
 	std::vector<std::shared_ptr<Segment>> segment_primitives;
 	float min_square_length = std::numeric_limits<float>::max();
+	int min_idx = 0;
 	std::cout << "primitives" << "=[";
 	for (int i = 0; i < (int)(transformed_hits.size() / 2); i++)
 	{
@@ -202,6 +204,7 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 		if (square_length < min_square_length)
 		{
 			min_square_length = square_length;
+			min_idx = i;
 		}
 	
 		std::cout << "[" << p0 << "]\n[" << p1 << "]" << std::endl;
@@ -212,7 +215,7 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 	std::cout << "%created primitives " << segment_primitives.size() << std::endl;
 	epsilon = sqrtf(min_square_length);
 	std::cout << "%epsilon " << epsilon << " remove aligned " << check_alignment << " " << alignment_epsilon << " remove short " << check_min_length << " " << segment_min_length << std::endl;
-
+	std::cout << "% min segment: " << transformed_hits[min_idx * 2] << " " << transformed_hits[min_idx * 2 + 1] << std::endl;
 	auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, check_alignment, alignment_epsilon, check_min_length, segment_min_length);
 
 	if (print_segments)
@@ -262,7 +265,7 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 			discarded_contours++;
 			continue;
 		}
-		if (true)
+	/*	if (true)
 		{
 			c->RemoveShortSegments(segment_min_length);
 			if (!c->is_valid) {
@@ -295,7 +298,7 @@ std::vector<std::shared_ptr<Contour>> OldMethod(BVH& bvh, Plane& plane, Matrix4x
 				discarded_contours++;
 				continue;
 			}
-		}
+		}*/
 		if (print_segments)
 		{
 			std::cout << "%REMOVED ALIGNED CONTOUR" << std::endl;
@@ -450,7 +453,7 @@ void test_geometry_precision()
 	float4 r2(0.00000000e+00, 0.00000000e+00, 9.99999975e-05, 0.00000000e+00);
 	float4 r3(0., 0., 0., 1.);
 	Matrix4x4 t_matrix(r0, r1, r2, r3);
-	float3 plane_x0(0, -419620, 0);
+	float3 plane_x0(0, -359720, 0);
 	float3 plane_n(0, 1e-4, 0);
 	float laser_width_microns = 80;
 	//float laser_width_microns = 10000;
@@ -489,6 +492,8 @@ void test_geometry_precision()
 	std::ofstream out("out.txt");
 	std::streambuf* coutbuf = std::cout.rdbuf(); //save old buf
 	std::cout.rdbuf(out.rdbuf());
+	std::cout.precision(10);
+	std::fixed;
 	bool verbose = true;
 	std::vector<std::shared_ptr<Contour>> sorted_contours2 = OldMethod(bvh, plane, t_matrix, geometry_scaling, check_min_length, min_length, epsilon, check_alignment, alignment_epsilon, verbose);
 	std::cout << "%BUILDING TREE CONTOURS 2" << std::endl;

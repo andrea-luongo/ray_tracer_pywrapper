@@ -307,10 +307,13 @@ std::vector<py::array_t<float>> PyBindBVH::PlaneAllIntersectsHits(PyBindPlane& p
 std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& plane, PyBindPlaneInfo& info, py::array_t<float>& transformation_matrix, float const geometry_scaling, float const segment_min_length, bool verbose)
 {
     //float epsilon = 0.0001 * geometry_scaling;
+
+    std::vector<PyBindContour> sorted_contours;
     float alignment_epsilon = 1e-3;
     bool remove_aligned_segments = true;
     bool remove_short_segments = true;
-
+    std::cout.precision(10);
+    std::fixed;
     Matrix4x4 tr_matrix = reinterpret_matrix(transformation_matrix);
     Matrix4x4 tr_matrix_transposed = tr_matrix.Transpose();
     bool result = bvh->plane_all_intersects(*plane.plane, *info.planeInfo);
@@ -319,6 +322,10 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
     if (verbose)
     {
         std::cout << "%hits: " << hits.size() << std::endl;
+    }
+    if (hits.size() == 0)
+    {
+        return sorted_contours;
     }
     std::vector<float3> transformed_hits(hits.size());
     for (int idx = 0; idx < hits.size(); idx++)
@@ -374,6 +381,7 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         segment_primitives.push_back(std::shared_ptr<Segment>(new Segment(p0, p1)));
     }
     float epsilon = sqrtf(min_square_length);
+    //float epsilon = 1/geometry_scaling;
     if (verbose)
     {
         std::cout << "];" << std::endl;;
@@ -385,7 +393,14 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         std::cout << "%epsilon " << epsilon << " remove aligned " << remove_aligned_segments << " " << alignment_epsilon << " remove short " << remove_short_segments << " " << segment_min_length << std::endl;
     }
     auto sorted_segments = Segment::SortSegments(segment_primitives, epsilon, remove_aligned_segments, alignment_epsilon, remove_short_segments, segment_min_length);
-    
+    for (auto sc : sorted_segments)
+    {
+        //bool are_connected = Segment::CompareSegments(*(*(sc.end() - 1)), *(*sc.begin()), 1.0 / geometry_scaling);
+        if (Segment::CompareSegments(*(*(sc.end() - 1)), *(*sc.begin()), 1.0 ))
+        {
+            (*sc.begin())->SetV0((*(sc.end() - 1))->v1);
+        }
+    }
     if (verbose)
     {
         int sorted_primitives_counter = 0;
@@ -409,7 +424,6 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
         std::cout << "};" << std::endl;;
     }
 
-    std::vector<PyBindContour> sorted_contours;
     int discarded_contours = 0;
     int contour_counter = 0;
     for (int i = 0; i < sorted_segments.size(); i++) {
@@ -419,35 +433,44 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
             if (verbose)
             {
                 std::cout << "%Discarded" << std::endl;
+                std::cout << "%Discarded CONTOUR" << std::endl;
+                std::cout << "dc" << discarded_contours << "=[";
+                for (auto ss : c.segments)
+                    std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+                std::cout << "];" << std::endl;
             }
             discarded_contours++;
             continue;
         }
-
-     /*   if (remove_short_segments)
-        {
-            c.RemoveShortSegments(segment_min_length);
-            if (!c.is_valid) {
-                if (verbose)
-                {
-                    std::cout << "%Discarded" << std::endl;
-                }
-                discarded_contours++;
-                continue;
-            }
-        }
-        if (remove_aligned_segments)
-        {
-            c.RemoveAlignedSegments(alignment_epsilon);
-            if (!c.is_valid) {
-                if (verbose)
-                {
-                    std::cout << "%Discarded" << std::endl;
-                }
-                discarded_contours++;
-                continue;
-            }
-        }*/
+        //c.RemoveShortSegments(segment_min_length);
+        //if (!c.is_valid) {
+        //    if (verbose)
+        //    {
+        //        std::cout << "%Discarded" << std::endl;
+        //        std::cout << "%Discarded CONTOUR" << std::endl;
+        //        std::cout << "dc" << discarded_contours << "=[";
+        //        for (auto ss : c.segments)
+        //            std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+        //        std::cout << "];" << std::endl;
+        //    }
+        //    discarded_contours++;
+        //    continue;
+        //}
+        //c.RemoveAlignedSegments(alignment_epsilon);
+        //if (!c.is_valid) {
+        //    if (verbose)
+        //    {
+        //        std::cout << "%Discarded" << std::endl;
+        //        std::cout << "%Discarded CONTOUR" << std::endl;
+        //        std::cout << "dc" << discarded_contours << "=[";
+        //        for (auto ss : c.segments)
+        //            std::cout << "[" << ss->v0 << "]\n[" << ss->v1 << "]" << std::endl;
+        //        std::cout << "];" << std::endl;
+        //    }
+        //    discarded_contours++;
+        //    continue;
+        //}
+      
 
         if (verbose)
         {
@@ -467,6 +490,10 @@ std::vector<PyBindContour> PyBindBVH::PlaneAllIntersectsContours(PyBindPlane& pl
             std::cout << "cc" << idx << ", ";
         std::cout << "};" << std::endl;;
         std::cout << "%Discarded contours: " << discarded_contours << std::endl;
+        std::cout << "discarded_contours={";
+        for (int idx = 0; idx < discarded_contours; idx++)
+            std::cout << "dc" << idx << ", ";
+        std::cout << "};" << std::endl;;
     }
     return sorted_contours;
 }
