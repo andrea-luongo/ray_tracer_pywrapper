@@ -1,7 +1,7 @@
 #include <pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
-#include <BVH.h>
+//#include <BVH.h>
 //#include <vector>
 #include <time.h>
 #include <ppl.h>
