@@ -49,52 +49,7 @@ void add_rep(uint8_t gray7, uint32_t stride, uint32_t& bits_on, std::vector<uint
 }
 
 
-py::tuple rle_encode_graymap_fast(py::array_t<uint8_t>& grey_array, py::array_t<uint32_t> pic_size, py::array_t<uint32_t> max_size)
-{
-    uint8_t color(0xff);
-    uint32_t stride(0);
-    std::vector<uint8_t> rle;
-    uint32_t bits_on(0);
-
-    uint8_t black_color(0);
-    //Step 1: add top black rows to rle
-    uint32_t top_black_stride = floor(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5 );
-    add_rep(black_color, top_black_stride, bits_on, rle);
-    //Step 2: for each row add black edges plus image row
-    uint32_t left_black_stride = floor((max_size.at(1)  - pic_size.at(1)) * 0.5);
-    uint32_t rigth_black_stride = ceil((max_size.at(1) - pic_size.at(1)) * 0.5);
-    for (int row = 0; row < pic_size.at(0); row++)
-    {
-        add_rep(black_color, left_black_stride, bits_on, rle);
-        for (int col = 0; col < pic_size.at(1); col++)
-        {
-            uint8_t gray7 = grey_array.at(col + row * pic_size.at(1));
-            if (gray7 == color)
-            {
-                stride += uint8_t(1);
-            }
-            else
-            {
-                add_rep(color, stride, bits_on, rle);
-                color = gray7;
-                stride = 1;
-            }
-            add_rep(color, stride, bits_on, rle);
-            color = 0xff;
-            stride = 0;
-        }
-
-        add_rep(black_color, rigth_black_stride, bits_on, rle);
-    }
-    //Step 3: add bottom black rows to rle
-    uint32_t bottom_black_stride = ceil(max_size.at(1) * (max_size.at(0) - pic_size.at(0)) * 0.5);
-    add_rep(black_color, bottom_black_stride, bits_on, rle);
-
-    return py::make_tuple(py::array_t<uint8_t>(rle.size(), rle.data()), bits_on);
-}
-
-
-py::tuple rle_encode_graymap_super_fast(py::array_t<uint8_t>& grey_array, py::array_t<uint32_t> pic_size, py::array_t<uint32_t> max_size)
+py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array, py::array_t<uint32_t> pic_size, py::array_t<uint32_t> max_size)
 {
     uint8_t color(0xff);
     uint32_t stride(0);
@@ -158,35 +113,6 @@ py::tuple rle_encode_graymap_super_fast(py::array_t<uint8_t>& grey_array, py::ar
 }
 
 
-py::tuple rle_encode_graymap(py::array_t<uint8_t>& grey_array)
-{
-    uint8_t color(0xff);
-    uint32_t stride(0);
-    std::vector<uint8_t> rle;
-    uint32_t bits_on(0);
-
-    for (int idx = 0; idx < grey_array.size(); idx++)
-    {
-        uint8_t gray7 = grey_array.at(idx);
-        if (gray7 == color)
-        {
-            stride += uint8_t(1);
-        }
-        else 
-        {
-            add_rep(color, stride, bits_on, rle);
-            color = gray7;
-            stride = 1;
-        }
-    }
-    add_rep(color, stride, bits_on, rle);
-
-
-    return py::make_tuple(py::array_t<uint8_t>(rle.size(), rle.data()), bits_on);
-}
-
-
-
 //py::array_t<int32_t> RGBA(py::array_t<int32_t>& pic)
 py::tuple RGBA(py::array_t<int32_t>& pic, bool compute_gray)
 {
@@ -212,14 +138,6 @@ py::tuple RGBA(py::array_t<int32_t>& pic, bool compute_gray)
     }
 
     for (size_t idx = 0; idx < X; idx++) {
-        //concurrency::parallel_for(0, Y, [&](int idy)
-        //    {
-        //        for (size_t idz = 0; idz < Z; idz++) {
-        //            ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
-        //        }
-        //        if (compute_gray)
-        //            ptr3[idx * Y + idy] = uint16_t(ptr2[idx * Y * Z + idy * Z + 0] | ptr2[idx * Y * Z + idy * Z + 1] | ptr2[idx * Y * Z + idy * Z + 2]) >> uint16_t(9);
-        //    });
         for (size_t idy = 0; idy < Y; idy++) {
             for (size_t idz = 0; idz < Z; idz++) {
                 ptr2[idx * Y * Z + idy * Z + idz] = ptr1[idx * Y * Z + idy * Z + idz] | (ptr1[idx * Y * Z + idy * Z + idz] << 8);
@@ -243,10 +161,25 @@ PYBIND11_MODULE(ctbConverterPyWrapper, m) {
     m.doc() = R"pbdoc(
         Pybind wrapper for .ctb conversion
     )pbdoc";
-    m.def("rle_encode_graymap", &rle_encode_graymap);
-    m.def("rle_encode_graymap_fast", &rle_encode_graymap_fast);
-    m.def("rle_encode_graymap_super_fast", &rle_encode_graymap_super_fast);
-    m.def("RGBA", &RGBA);
+    m.def("rle_encode_graymap", &rle_encode_graymap, R"pbdoc(
+		Optimized RLE encoding of graymap
+
+		:param grey_array: numpy.array of numpy.int8 values
+		:param pic_size: numpy.array of numpy.int32 containing the size of the sliced images
+		:param max_size: numpy.array of numpy.int32 containing the max size of the Elegoo printer
+		:return: 
+			- **rle_size**: int
+			- **rle_data**: np.array of uint8
+			- **bits_on**: uint32
+    )pbdoc");
+    m.def("RGBA", &RGBA, R"pbdoc(
+
+		:param pic: numpy.array of numpy.int32 values
+		:param compute_gray: bool
+		:return: 
+			- **result**: numpy.array of numpy.int32
+			- **gray_result**: numpy.array of numpy.uint8
+    )pbdoc");
   
     
 #ifdef VERSION_INFO
