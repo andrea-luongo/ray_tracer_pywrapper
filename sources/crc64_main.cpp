@@ -1,4 +1,4 @@
-#include <pybind11.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 //#include <BVH.h>
@@ -170,7 +170,7 @@ std::vector<uint8_t> cipher(uint32_t seed, uint32_t cipher_slice, const std::vec
 
 PYBIND11_MODULE(crc64PyWrapper, m) {
     m.doc() = R"pbdoc(
-        Pybind wrapper for crc64 encoding
+        Pybind wrapper for crc64 encoding based on uv3dp implementation: https://github.com/ezrec/uv3dp
     )pbdoc";
     m.def("checksum", &checksum);
     m.def("Make_Table", &Make_Table);
@@ -187,7 +187,7 @@ PYBIND11_MODULE(crc64PyWrapper, m) {
   
     
 #ifdef VERSION_INFO
-    m.attr("__version__") = VERSION_INFO;
+    m.attr("__version__") = "1.0.0";
 #else
     m.attr("__version__") = "dev";
 #endif

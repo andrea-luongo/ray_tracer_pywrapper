@@ -1,4 +1,4 @@
-#include <pybind11.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 //#include <BVH.h>
@@ -159,7 +159,7 @@ py::tuple RGBA(py::array_t<int32_t>& pic, bool compute_gray)
 
 PYBIND11_MODULE(ctbConverterPyWrapper, m) {
     m.doc() = R"pbdoc(
-        Pybind wrapper for .ctb conversion
+        Pybind wrapper for .ctb conversion based on uv3dp implementation: https://github.com/ezrec/uv3dp
     )pbdoc";
     m.def("rle_encode_graymap", &rle_encode_graymap, R"pbdoc(
 		Optimized RLE encoding of graymap
@@ -183,7 +183,7 @@ PYBIND11_MODULE(ctbConverterPyWrapper, m) {
   
     
 #ifdef VERSION_INFO
-    m.attr("__version__") = VERSION_INFO;
+    m.attr("__version__") = "1.0.0";
 #else
     m.attr("__version__") = "dev";
 #endif

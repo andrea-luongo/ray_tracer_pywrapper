@@ -1,4 +1,4 @@
-#include <pybind11.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 //#include <BVH.h>
@@ -778,18 +778,24 @@ std::vector<py::array_t<float>> PyBindContourTree::GetAllSegments()
 
 PYBIND11_MODULE(rayTracerPyWrapper, m) {
     m.doc() = R"pbdoc(
-        Pybind wrapper for BVH build and traversal
+        Pybind wrapper for the RayTracerDLL library. It implements BVH build, intersection tests and traversal.
     )pbdoc";
 
     py::enum_ <PrimitiveType>(m, "PrimitiveType")
         .value("SEGMENT", PrimitiveType::SEGMENT)
         .value("SPHERE", PrimitiveType::SPHERE)
         .value("TRIANGLE", PrimitiveType::TRIANGLE)
-        .value("INT_TRIANGLE", PrimitiveType::INT_TRIANGLE)
         .value("CONTOUR", PrimitiveType::CONTOUR)
         .export_values();
 
-    py::class_<PyBindBVH> bvh(m, "PyBindBVH");
+    py::class_<PyBindBVH> bvh(m, "PyBindBVH", R"pbdoc(
+
+		PyWraper for the BVH class.
+
+        :param vertices: list of vertices
+        :param splitMethod: 
+        :param PrimitiveType: 
+    )pbdoc");
     //bvh.def(py::init());// , SplitMethod > ());
     bvh.def(py::init < std::vector<float>&, SplitMethod, int> ());
     bvh.def(py::init < std::vector<float>&, SplitMethod, int, PrimitiveType> ());
@@ -813,7 +819,13 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
         .value("EqualCounts", SplitMethod::EqualCounts)
         .export_values();
 
-    py::class_<PyBindContour> contour(m, "PyBindContour");
+    py::class_<PyBindContour> contour(m, "PyBindContour", R"pbdoc(
+
+		PyWraper for the Contour class.
+
+        :param vertices: list of vertices
+        :param n: contour normal
+    )pbdoc");
     contour.def(py::init<std::vector<float>&, py::array_t<float>>());
     contour.def("IsValid", &PyBindContour::IsValid);
     contour.def("IsContained", &PyBindContour::IsContained);
@@ -829,7 +841,12 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contour.def("RemoveSelfIntersections", &PyBindContour::RemoveSelfIntersections);
     contour.def("GetSegments", &PyBindContour::GetSegments);
 
-    py::class_<PyBindContourTree> contourtree(m, "PyBindContourTree");
+    py::class_<PyBindContourTree> contourtree(m, "PyBindContourTree", R"pbdoc(
+
+		PyWraper for the ContourTree class.
+
+        :param py_contours: list of PyBindContour
+    )pbdoc");
     contourtree.def(py::init<std::vector<PyBindContour>&>());
     //contourtree.def("GetTreeInternalPyBVHs", &PyBindContourTree::GetTreeInternalPyBVHs);
     contourtree.def("AllIntersects", &PyBindContourTree::AllIntersects);
@@ -841,7 +858,17 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     contourtree.def("GetBBoxMax", &PyBindContourTree::GetBBoxMax);
     contourtree.def("GetAllSegments", &PyBindContourTree::GetAllSegments);
 
-    py::class_<PyBindRay> ray(m, "PyBindRay");
+    py::class_<PyBindRay> ray(m, "PyBindRay", R"pbdoc(
+
+		PyWraper for the Ray class.
+
+        :param o: ray origin
+        :param dir: ray direction
+        :param min: minimum distance
+        :param max: maximum distance
+        :param d: ray depth
+        :param s: seed
+    )pbdoc");
     ray.def(py::init<py::array_t<float>, py::array_t<float>, float, float, int, int>());
     ray.def(py::init<>());
     ray.def("GetDirection", &PyBindRay::GetDirection);
@@ -850,7 +877,12 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     ray.def("GetMax", &PyBindRay::GetMax);
     ray.def("SetMin", &PyBindRay::SetMin);
     ray.def("SetMax", &PyBindRay::SetMax);
-    py::class_<PyBindRayInfo> rayInfo(m, "PyBindRayInfo");
+
+    py::class_<PyBindRayInfo> rayInfo(m, "PyBindRayInfo", R"pbdoc(
+
+		PyWraper for the RayInfo class.
+
+    )pbdoc");
     rayInfo.def(py::init<>());
     rayInfo.def("GetHits", &PyBindRayInfo::GetHits);
     rayInfo.def("SetNormal", &PyBindRayInfo::SetNormal);
@@ -858,19 +890,30 @@ PYBIND11_MODULE(rayTracerPyWrapper, m) {
     rayInfo.def("AddHit", &PyBindRayInfo::AddHit);
     rayInfo.def("AddClosestHit", &PyBindRayInfo::AddClosestHit);
     rayInfo.def("GetHitsSize", &PyBindRayInfo::GetHitsSize);
-    py::class_<PyBindPlane> plane(m, "PyBindPlane");
+
+    py::class_<PyBindPlane> plane(m, "PyBindPlane", R"pbdoc(
+
+		PyWraper for the Plane class.
+
+        :param x: point on the plane
+        :param n: plane normal
+    )pbdoc");
     plane.def(py::init<py::array_t<float>, py::array_t<float>>());
     plane.def(py::init<>());
     plane.def("GetX", &PyBindPlane::GetX);
     plane.def("GetNormal", &PyBindPlane::GetNormal);
-    py::class_<PyBindPlaneInfo> planeInfo(m, "PyBindPlaneInfo");
+
+    py::class_<PyBindPlaneInfo> planeInfo(m, "PyBindPlaneInfo", R"pbdoc(
+
+		PyWraper for the PlaneInfo class.
+    )pbdoc");
     planeInfo.def(py::init<>());
     planeInfo.def("GetHits", &PyBindPlaneInfo::GetHits);
     planeInfo.def("AddHit", &PyBindPlaneInfo::AddHit);
     planeInfo.def("GetHitsSize", &PyBindPlaneInfo::GetHitsSize);
     
 #ifdef VERSION_INFO
-    m.attr("__version__") = VERSION_INFO;
+    m.attr("__version__") = "1.0.0";
 #else
     m.attr("__version__") = "dev";
 #endif

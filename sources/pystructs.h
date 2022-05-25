@@ -1,6 +1,6 @@
 #include "structs.h"
 #include <mutex>
-#include <pybind11.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 #include <BVH.h>
@@ -9,7 +9,7 @@
 #include <time.h>
 #include <ppl.h>
 namespace py = pybind11;
-enum class PrimitiveType { SEGMENT, SPHERE, TRIANGLE, INT_TRIANGLE, CONTOUR };
+enum class PrimitiveType { SEGMENT, SPHERE, TRIANGLE, CONTOUR };
 
 class PyBindPlane
 {
